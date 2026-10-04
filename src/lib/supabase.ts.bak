@@ -1,0 +1,45 @@
+/// <reference types="vite/client" />n/**
+ * src/lib/supabase.ts — Supabase Client Singleton
+ *
+ * Single shared client instance used by AuthContext, SyncManager,
+ * proGatekeeper, and all hooks. Never create a second client instance.
+ *
+ * VITE_ prefix = safe to expose in browser bundle (anon key only).
+ * Service role key lives in Netlify env only (never here).
+ */
+
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL  as string;
+const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+if (!SUPABASE_URL || !SUPABASE_ANON) {
+  throw new Error(
+    '[supabase] VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY must be set in .env.local'
+  );
+}
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: {
+    /**
+     * persistSession=true: JWT stored in localStorage and auto-refreshed.
+     * The AuthContext listens to onAuthStateChange for TOKEN_REFRESHED
+     * and sets isSessionRefreshing to true during the renewal window,
+     * signalling SyncManager to pause its flush queue.
+     */
+    persistSession:    true,
+    autoRefreshToken:  true,
+    detectSessionInUrl: true,
+    storageKey:        'ns_auth_session',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 2,  // rate-limit realtime events on free plan
+    },
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'nutrismart-web/1.0.0',
+    },
+  },
+});

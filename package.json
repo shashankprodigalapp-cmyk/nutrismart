@@ -1,0 +1,42 @@
+{
+  "name": "nutrismart",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext ts,tsx"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "dexie": "^4.0.8",
+    "fuse.js": "^7.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.26.0",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^2.8.1",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "  ^14.5.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "autoprefixer": "^10.4.20",
+    "fake-indexeddb": "^6.0.0",
+    "msw": "^2.3.0",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4",
+    "vite": "^4.5.14",
+    "vite-plugin-pwa": "^0.20.5",
+    "vitest": "^1.6.0"
+  }
+}

@@ -1,0 +1,56 @@
+[build]
+  command   = "npm run build"
+  publish   = "dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION  = "10"
+
+[[redirects]]
+  from   = "/.netlify/functions/*"
+  to     = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["@supabase/supabase-js"]
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options           = "DENY"
+    X-Content-Type-Options    = "nosniff"
+    X-XSS-Protection          = "1; mode=block"
+    Referrer-Policy           = "strict-origin-when-cross-origin"
+    Permissions-Policy        = "camera=(), microphone=(), geolocation=()"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store"
+
+[[headers]]
+  for = "/*.webmanifest"
+  [headers.values]
+    Content-Type  = "application/manifest+json"
+    Cache-Control = "no-cache"
+
+# R4: Morning Verdict push — 02:00 UTC = 07:30 IST daily
+[functions."cron-morning-verdict"]
+  schedule = "0 2 * * *"
+
+# Phase 2B: Energy check-in reminder — every 30 minutes
+# Sends a push to users who logged food 60–90 min ago with no energy_log yet
+[functions."energy-checkin-cron"]
+  schedule = "*/30 * * * *"
