@@ -4,13 +4,8 @@
   functions = "netlify/functions"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
   NPM_VERSION  = "10"
-
-[[redirects]]
-  from   = "/.netlify/functions/*"
-  to     = "/.netlify/functions/:splat"
-  status = 200
 
 [[redirects]]
   from   = "/*"
