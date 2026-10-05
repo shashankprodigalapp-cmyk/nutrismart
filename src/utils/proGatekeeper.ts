@@ -93,8 +93,11 @@ export function usePlan(): PlanState {
   // Realtime: fires when admin activates Pro in Supabase
   useEffect(() => {
     if (!user) return;
+    const channelName = `plan-${user.id}`;
+    const existing = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+    if (existing) supabase.removeChannel(existing);
     const channel = supabase
-      .channel(`plan-${user.id}`)
+      .channel(channelName)
       .on('postgres_changes', {
         event: 'INSERT', schema: 'public', table: 'subscriptions',
         filter: `user_id=eq.${user.id}`,
