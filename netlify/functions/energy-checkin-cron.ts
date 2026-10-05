@@ -1,10 +1,10 @@
 /**
  * netlify/functions/energy-checkin-cron.ts — Energy Check-In Push Reminder
  *
- * SCHEDULE: every 30 minutes (*/30 * * * *)
+ * SCHEDULE: every 30 minutes (*(/30 * * * *)
  * Configured in netlify.toml:
  *   [functions."energy-checkin-cron"]
- *   schedule = "*/30 * * * *"
+ *   schedule = "\/30 * * * *"
  *
  * PHASE 2B.2 — MEAL-LEVEL MATCHING
  *
