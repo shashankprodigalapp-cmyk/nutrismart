@@ -1118,26 +1118,6 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
   }, []);
 
   // ── Edit entry ───────────────────────────────────────────────────────────
-  const [editEntry, setEditEntry] = useState<LogEntry | null>(null);
-
-  const handleEditSave = useCallback(async (updated: LogEntry) => {
-    await localDb.daily_logs.put(updated);
-    try {
-      const sm = getSyncManager();
-      await sm.enqueue('update_log', {
-        id:      updated.id,
-        meal:    updated.meal,
-        qty:     updated.qty,
-        cal:     updated.cal,
-        protein: updated.protein,
-        carbs:   updated.carbs,
-        fat:     updated.fat,
-        gl:      updated.gl,
-        portion: updated.portion,
-      });
-    } catch {}
-    setEntries(prev => prev.map(e => e.id === updated.id ? updated : e));
-  }, []);
 
   // ── Water ─────────────────────────────────────────────────────────────────
   const handleWaterAdd = useCallback(async () => {
