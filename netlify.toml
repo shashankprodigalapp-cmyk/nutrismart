@@ -48,4 +48,4 @@
 # Phase 2B: Energy check-in reminder — every 30 minutes
 # Sends a push to users who logged food 60–90 min ago with no energy_log yet
 [functions."energy-checkin-cron"]
-  schedule = "*/30 * * * *"
+  schedule = "0 * * * *"
