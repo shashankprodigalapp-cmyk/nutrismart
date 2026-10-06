@@ -83,9 +83,15 @@ export default function OnboardingPage() {
       await supabase.from('users').upsert({ id: user.id, plan: 'free' }, { onConflict: 'id' });
       navigate('/app/today', { replace: true });
     } catch (e) {
-      // Silently log via analytics — console.error removed for production
       supabase.from('events').insert({ user_id: user?.id, event_name: 'onboarding_save_error', properties: { msg: String(e) } }).then(() => {});
-      // Navigate anyway — SyncManager will retry
+      // Retry the Supabase write once before giving up
+      try {
+        await supabase.from('kitchen_profiles').upsert({
+          user_id: user.id, oil_usage: answers.oil,
+          who_cooks: answers.cook, cook_style: answers.style,
+        }, { onConflict: 'user_id' });
+        await localDb.user_prefs.put({ key: 'kitchen_profile', value: buildKitchenProfile(answers as KitchenAnswers) });
+      } catch {}
       navigate('/app/today', { replace: true });
     } finally {
       setSaving(false);

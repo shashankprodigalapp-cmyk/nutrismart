@@ -21,16 +21,16 @@ export default function ProfileTab() {
   useEffect(() => {
     if (!user) return;
     supabase
-      .from('user_profiles')
-      .select('full_name, is_pro, pro_expires_at, created_at')
-      .eq('user_id', user.id)
+      .from('users')
+      .select('name, plan, created_at')
+      .eq('id', user.id)
       .single()
       .then(({ data }) => {
         setProfile({
-          full_name:   data?.full_name ?? user.user_metadata?.full_name ?? 'User',
+          full_name:   data?.name ?? user.user_metadata?.name ?? user.email?.split('@')[0] ?? 'User',
           email:       user.email ?? '',
-          is_pro:      data?.is_pro ?? false,
-          pro_expires: data?.pro_expires_at ?? null,
+          is_pro:      data?.plan === 'pro',
+          pro_expires: null,
           created_at:  data?.created_at ?? user.created_at ?? '',
         });
         setLoading(false);
