@@ -132,7 +132,7 @@ export interface UserPref {
 
 export type SyncAction =
   | 'insert_log'
-  | 'delete_log'
+  | 'delete_log'  | 'update_log'
   | 'update_water'
   | 'update_kitchen_profile'
   | 'insert_energy'

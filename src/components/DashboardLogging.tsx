@@ -605,9 +605,70 @@ function AddFoodSheet({
 
 // ── TODAY'S LOG ───────────────────────────────────────────────────────────────
 
+function EditLogModal({
+  entry, onSave, onClose,
+}: {
+  entry: LogEntry;
+  onSave: (updated: LogEntry) => void;
+  onClose: () => void;
+}) {
+  const meals: LogEntry['meal'][] = ['breakfast', 'lunch', 'snack', 'dinner'];
+  const [meal, setMeal] = React.useState<LogEntry['meal']>(entry.meal);
+  const [qty,  setQty]  = React.useState(entry.qty);
+  const base = entry.qty > 0 ? entry.cal / entry.qty : entry.cal;
+  const scaled = {
+    cal:     Math.round(base * qty),
+    protein: parseFloat(((entry.protein / entry.qty) * qty).toFixed(1)),
+    fat:     parseFloat(((entry.fat     / entry.qty) * qty).toFixed(1)),
+    carbs:   parseFloat(((entry.carbs   / entry.qty) * qty).toFixed(1)),
+    gl:      parseFloat(((entry.gl      / entry.qty) * qty).toFixed(1)),
+  };
+  return (
+    <div className="fixed inset-0 z-50 flex items-end" onClick={onClose}>
+      <div className="w-full bg-[#1C1C1E] rounded-t-3xl px-5 pt-3 pb-10" onClick={e => e.stopPropagation()}>
+        <div className="w-9 h-1 bg-[#3C3C3E] rounded-full mx-auto mb-4" />
+        <p className="text-[15px] font-bold text-[#F5F5F5] mb-1 truncate">{entry.food_name}</p>
+        <p className="text-[11px] text-[#636366] mb-4">{entry.portion}</p>
+        <div className="text-[10px] font-bold text-[#636366] uppercase tracking-[1px] mb-2">Meal</div>
+        <div className="flex gap-2 mb-4 overflow-x-auto">
+          {meals.map(m => (
+            <button key={m} onClick={() => setMeal(m)}
+              className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-[11px] font-semibold capitalize transition-all ${meal === m ? 'bg-[#C8F75E] text-[#111113]' : 'bg-[#2C2C2E] text-[#A1A1A1]'}`}>
+              {m}
+            </button>
+          ))}
+        </div>
+        <div className="text-[10px] font-bold text-[#636366] uppercase tracking-[1px] mb-2">Servings</div>
+        <div className="flex items-center justify-between bg-[#242426] rounded-xl px-4 py-3 mb-4">
+          <button onClick={() => setQty(q => Math.max(0.5, parseFloat((q - 0.5).toFixed(1))))}
+            className="w-10 h-10 rounded-full bg-[#2C2C2E] text-[#F5F5F5] text-xl font-bold flex items-center justify-center active:scale-90">-</button>
+          <div className="text-center">
+            <div className="text-[22px] font-bold text-[#F5F5F5]">{qty}</div>
+            <div className="text-[10px] text-[#636366]">x {entry.portion}</div>
+          </div>
+          <button onClick={() => setQty(q => parseFloat((q + 0.5).toFixed(1)))}
+            className="w-10 h-10 rounded-full bg-[#C8F75E]/20 text-[#C8F75E] text-xl font-bold flex items-center justify-center active:scale-90">+</button>
+        </div>
+        <div className="grid grid-cols-4 gap-2 mb-5">
+          {[{label:'kcal',value:scaled.cal,color:'#E8D5B0'},{label:'protein',value:scaled.protein,color:'#8DB4FF'},{label:'fat',value:scaled.fat,color:'#FFB347'},{label:'carbs',value:scaled.carbs,color:'#FF8FAB'}].map(({label,value,color}) => (
+            <div key={label} className="bg-[#2C2C2E] rounded-xl py-2 text-center">
+              <div className="text-[15px] font-bold" style={{color}}>{value}</div>
+              <div className="text-[9px] text-[#636366] uppercase mt-0.5">{label}</div>
+            </div>
+          ))}
+        </div>
+        <button onClick={() => onSave({...entry, meal, qty, ...scaled})}
+          className="w-full bg-[#C8F75E] text-[#111113] font-bold text-[14px] py-3.5 rounded-2xl active:scale-[0.98] transition-transform">
+          Save changes
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function TodayLog({
-  entries, onDelete,
-}: { entries: LogEntry[]; onDelete: (id: string) => void }) {
+  entries, onDelete, onEdit,
+}: { entries: LogEntry[]; onDelete: (id: string) => void; onEdit: (entry: LogEntry) => void }) {
   const grouped = useMemo(() => {
     const map = new Map<Meal, LogEntry[]>();
     const order: Meal[] = ['breakfast', 'lunch', 'snack', 'dinner'];
@@ -672,15 +733,16 @@ function TodayLog({
                       </span>
                     </div>
                   </div>
-                  <div className="text-right flex-shrink-0">
+                  <div className="text-right flex-shrink-0 flex flex-col items-end gap-1">
                     <div className="text-[14px] font-bold text-[#F5F5F5]">{Math.round(entry.cal)}</div>
-                    <button
-                      onClick={() => onDelete(entry.id)}
-                      className="text-[10px] text-[#636366] mt-0.5 hover:text-[#FF6B6B] transition-colors"
-                      aria-label={`Delete ${entry.food_name}`}
-                    >
-                      ✕
-                    </button>
+                    <div className="flex gap-2">
+                      <button onClick={() => onEdit(entry)}
+                        className="text-[10px] text-[#636366] hover:text-[#C8F75E] transition-colors"
+                        aria-label={`Edit ${entry.food_name}`}>✎</button>
+                      <button onClick={() => onDelete(entry.id)}
+                        className="text-[10px] text-[#636366] hover:text-[#FF6B6B] transition-colors"
+                        aria-label={`Delete ${entry.food_name}`}>✕</button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -956,6 +1018,22 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
       await sm.enqueue('delete_log', { id });
     } catch {}
     setEntries(prev => prev.filter(e => e.id !== id));
+  }, []);
+
+  const [editEntry, setEditEntry] = React.useState<LogEntry | null>(null);
+
+  const handleEditSave = useCallback(async (updated: LogEntry) => {
+    await localDb.daily_logs.put(updated);
+    try {
+      const sm = getSyncManager();
+      await sm.enqueue('update_log', {
+        id: updated.id, meal: updated.meal, qty: updated.qty,
+        cal: updated.cal, protein: updated.protein, carbs: updated.carbs,
+        fat: updated.fat, gl: updated.gl, portion: updated.portion,
+      });
+    } catch {}
+    setEntries(prev => prev.map(e => e.id === updated.id ? updated : e));
+    setEditEntry(null);
   }, []);
 
   // ── Water ─────────────────────────────────────────────────────────────────
@@ -1274,7 +1352,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           />
 
           {/* Today's log — left column on desktop */}
-          <TodayLog entries={entries} onDelete={handleDelete} />
+          <TodayLog entries={entries} onDelete={handleDelete} onEdit={setEditEntry} />
         </div>
 
         {/* ══ RIGHT COLUMN — search + usuals + results ══ */}
@@ -1491,6 +1569,14 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
         </div>
         {/* ── end two-column grid ── */}
       </div>
+
+      {editEntry && (
+        <EditLogModal
+          entry={editEntry}
+          onSave={handleEditSave}
+          onClose={() => setEditEntry(null)}
+        />
+      )}
 
       {/* Add food sheet */}
       {sheetFood && (
