@@ -22,6 +22,28 @@ const DEFAULTS = {
   target_cal: 2000, target_protein: 120, target_fat: 65, target_gl: 80, target_water: 8,
 };
 
+// ── SHARED FIELD COMPONENT (must be outside modal to preserve focus on re-render)
+
+function GoalField({
+  label, value, onChange, unit,
+}: { label: string; value: string; onChange: (v: string) => void; unit: string }) {
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-white/[0.06] last:border-0">
+      <div>
+        <p className="text-sm text-white">{label}</p>
+        <p className="text-xs text-[#636366]">{unit}</p>
+      </div>
+      <input
+        type="number"
+        inputMode="numeric"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="w-20 text-right bg-white/[0.07] text-white text-sm font-semibold rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#C8F75E]/50"
+      />
+    </div>
+  );
+}
+
 // ── NUTRITION GOALS MODAL ─────────────────────────────────────────────────────
 
 function NutritionGoalsModal({
@@ -63,26 +85,10 @@ function NutritionGoalsModal({
       return;
     }
     onSaved(payload);
+    // Notify DashboardLogging to re-fetch targets immediately
+    window.dispatchEvent(new Event('nutrismart:targets-updated'));
     onClose();
   };
-
-  const Field = ({
-    label, value, onChange, unit,
-  }: { label: string; value: string; onChange: (v: string) => void; unit: string }) => (
-    <div className="flex items-center justify-between py-3 border-b border-white/[0.06] last:border-0">
-      <div>
-        <p className="text-sm text-white">{label}</p>
-        <p className="text-xs text-[#636366]">{unit}</p>
-      </div>
-      <input
-        type="number"
-        inputMode="numeric"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="w-20 text-right bg-white/[0.07] text-white text-sm font-semibold rounded-lg px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#C8F75E]/50"
-      />
-    </div>
-  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
@@ -98,11 +104,11 @@ function NutritionGoalsModal({
         </div>
 
         <div className="bg-white/[0.04] rounded-2xl px-4 mb-4">
-          <Field label="Calories"  value={cal}     onChange={setCal}     unit="kcal / day" />
-          <Field label="Protein"   value={protein} onChange={setProtein} unit="g / day" />
-          <Field label="Fat"       value={fat}     onChange={setFat}     unit="g / day" />
-          <Field label="Glycaemic Load" value={gl} onChange={setGl}     unit="GL / day" />
-          <Field label="Water"     value={water}   onChange={setWater}   unit="glasses / day" />
+          <GoalField label="Calories"       value={cal}     onChange={setCal}     unit="kcal / day" />
+          <GoalField label="Protein"        value={protein} onChange={setProtein} unit="g / day" />
+          <GoalField label="Fat"            value={fat}     onChange={setFat}     unit="g / day" />
+          <GoalField label="Glycaemic Load" value={gl}      onChange={setGl}      unit="GL / day" />
+          <GoalField label="Water"          value={water}   onChange={setWater}   unit="glasses / day" />
         </div>
 
         {error && <p className="text-xs text-[#FF453A] mb-3 text-center">{error}</p>}

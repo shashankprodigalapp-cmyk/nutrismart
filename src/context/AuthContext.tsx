@@ -77,6 +77,8 @@ type AuthAction =
 interface AuthContextValue extends AuthState {
   signOut: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
+  /** Called by OnboardingPage after it successfully saves the kitchen profile */
+  markKitchenProfileDone: () => void;
 }
 
 // ── REDUCER ───────────────────────────────────────────────────────────────────
@@ -296,6 +298,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   }, []);
 
+  /**
+   * Called by OnboardingPage immediately after a successful kitchen profile
+   * save so ProtectedRoute sees hasKitchenProfile=true without waiting for
+   * the next checkKitchenProfile run.
+   */
+  const markKitchenProfileDone = useCallback(() => {
+    dispatch({ type: 'KITCHEN_PROFILE_STATUS', hasProfile: true });
+  }, []);
+
   // ── refreshSession ─────────────────────────────────────────────────────────
 
   /**
@@ -326,6 +337,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ...state,
     signOut,
     refreshSession,
+    markKitchenProfileDone,
   };
 
   return (

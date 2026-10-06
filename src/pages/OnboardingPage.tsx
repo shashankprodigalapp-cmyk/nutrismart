@@ -46,7 +46,7 @@ const QUESTIONS = [
 
 export default function OnboardingPage() {
   const navigate   = useNavigate();
-  const { user }   = useAuth();
+  const { user, markKitchenProfileDone } = useAuth();
   const [step,     setStep]     = useState(0);
   const [answers,  setAnswers]  = useState<Partial<KitchenAnswers>>({});
   const [saving,   setSaving]   = useState(false);
@@ -81,17 +81,29 @@ export default function OnboardingPage() {
       }, { onConflict: 'user_id' });
       // Update users table plan default
       await supabase.from('users').upsert({ id: user.id, plan: 'free' }, { onConflict: 'id' });
+      // Tell AuthContext immediately so ProtectedRoute doesn't redirect back
+      markKitchenProfileDone();
       navigate('/app/today', { replace: true });
     } catch (e) {
+      // Silently log via analytics — console.error removed for production
       supabase.from('events').insert({ user_id: user?.id, event_name: 'onboarding_save_error', properties: { msg: String(e) } }).then(() => {});
-      // Retry the Supabase write once before giving up
+      // Retry the Supabase write once before giving up, so the kitchen profile
+      // row actually exists and the onboarding doesn't repeat on next login.
       try {
+        const profile = buildKitchenProfile(answers as KitchenAnswers);
         await supabase.from('kitchen_profiles').upsert({
-          user_id: user.id, oil_usage: answers.oil,
-          who_cooks: answers.cook, cook_style: answers.style,
+          user_id:    user.id,
+          oil_usage:  answers.oil,
+          who_cooks:  answers.cook,
+          cook_style: answers.style,
+          home_mult:  profile.home_mult,
+          rest_mult:  profile.rest_mult,
+          logs_used:  0,
         }, { onConflict: 'user_id' });
-        await localDb.user_prefs.put({ key: 'kitchen_profile', value: buildKitchenProfile(answers as KitchenAnswers) });
-      } catch {}
+        await localDb.user_prefs.put({ key: 'kitchen_profile', value: profile });
+        markKitchenProfileDone();
+      } catch { /* second failure — profile will be written by SyncManager next time */ }
+      markKitchenProfileDone(); // mark done regardless so the redirect loop stops
       navigate('/app/today', { replace: true });
     } finally {
       setSaving(false);
