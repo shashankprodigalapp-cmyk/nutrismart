@@ -265,7 +265,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 localDb.streak.clear(),
                 localDb.user_prefs
                   .where('key')
-                  .noneOf(['device_id'])
+                  .noneOf(['device_id', 'kitchen_profile'])
                   .delete(),
               ]);
             } catch {

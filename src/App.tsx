@@ -16,6 +16,7 @@ import { AlertProvider }                 from './components/ContextualAlerts';
 import { ProtectedRoute }                from './components/ProtectedRoute';
 import { UpgradeModal }                  from './components/UpgradeModal';
 import { registerUpgradeModalCallback, type ProFeature } from './utils/proGatekeeper';
+import PWAInstallBanner from './components/PWAInstallBanner';
 
 // ── Lazy page imports ──────────────────────────────────────────────────────────
 const LoginPage      = React.lazy(() => import('./pages/LoginPage'));
@@ -57,6 +58,7 @@ export default function App() {
     <AuthProvider>
       <AlertProvider>
         <UpgradeModalHost>
+          <PWAInstallBanner />
           <React.Suspense fallback={Spinner}>
             <Routes>
               {/* Public */}
