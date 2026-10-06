@@ -339,6 +339,21 @@ export class SyncManager {
       case 'update_log':
         return supabase.from('daily_logs')
           .update({
+            meal:    p.meal,
+            qty:     p.qty,
+            cal:     p.cal,
+            protein: p.protein,
+            carbs:   p.carbs,
+            fat:     p.fat,
+            gl:      p.gl,
+            portion: p.portion,
+          })
+          .eq('id', p.id)
+          .eq('user_id', this.userId);
+
+      case 'update_log':
+        return supabase.from('daily_logs')
+          .update({
             meal:     p.meal,
             qty:      p.qty,
             cal:      p.cal,
