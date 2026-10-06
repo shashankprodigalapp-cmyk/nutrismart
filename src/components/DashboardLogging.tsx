@@ -1235,78 +1235,89 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
       <div className="pt-3">
         <VerdictDashboard />
       </div>
-      {/* Header */}
-      <div className="px-4 pt-5 pb-0 flex justify-between items-start">
+      {/* ── Two-column layout on md+ screens ── */}
+      <div className="md:grid md:grid-cols-2 md:gap-6 md:items-start md:px-6 md:pt-2">
+
+        {/* ══ LEFT COLUMN — stats + today's log ══ */}
         <div>
-          <p className="text-[11px] text-[#636366]">
-            {hour < 12 ? 'good morning' : hour < 17 ? 'good afternoon' : 'good evening'} 👋
-          </p>
-          <h1 className="font-['Playfair_Display'] text-[26px] font-black text-[#F5F5F5] leading-tight mt-0.5">
-            what did<br />you eat?
-          </h1>
-        </div>
-      </div>
-
-      {/* Calorie ring */}
-      <div className="mt-4 flex justify-center">
-        <CalorieRing consumed={Math.round(totals.cal)} target={targets.cal} />
-      </div>
-
-      {/* Macro pills */}
-      <div className="flex gap-2 px-4 mt-4 overflow-x-auto pb-1 scrollbar-hide">
-        <MacroPill label="Protein"  value={parseFloat(totals.protein.toFixed(0))} target={targets.protein} unit="g" color="#8DB4FF" />
-        <MacroPill label="GL"       value={parseFloat(totals.gl.toFixed(0))}      target={targets.gl}      unit=""  color="#C4A8FF" />
-        <MacroPill label="Fat"      value={parseFloat(totals.fat.toFixed(0))}     target={targets.fat}     unit="g" color="#FFB347" />
-        <MacroPill label="Carbs"    value={parseFloat(totals.carbs.toFixed(0))}   target={100}             unit="g" color="#FF8FAB" />
-      </div>
-
-      {/* Water quick-add */}
-      <WaterQuickAdd
-        glasses={glasses}
-        target={targets.water}
-        onAdd={handleWaterAdd}
-        onRemove={handleWaterRemove}
-      />
-
-      {/* My Usual Meals + My Usuals + Recents — shown BEFORE search query */}
-      {!query && (
-        <>
-          {/* My Usual Meals — one-tap full meal logging */}
-          {mealTemplates.length > 0 && (
-            <div className="px-4 mt-4">
-              <div className="text-[10px] font-bold text-[#636366] uppercase tracking-[1px] mb-2">
-                My Usual Meals
-              </div>
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                {mealTemplates.map(t => (
-                  <button
-                    key={t.id}
-                    onPointerDown={(e) => { e.preventDefault(); handleLogTemplate(t); }}
-                    className="flex-shrink-0 bg-[#1C1C1E] border border-[#C8F75E]/25 rounded-xl px-3 py-2.5 flex flex-col items-start gap-0.5 min-w-[120px] max-w-[160px] active:bg-[#242426] transition-colors"
-                  >
-                    <span className="text-[11px] font-bold text-[#C8F75E] truncate w-full">
-                      {t.name}
-                    </span>
-                    <span className="text-[9px] text-[#636366]">
-                      {t.items.length} foods · {Math.round(t.total_cal ?? 0)} kcal
-                    </span>
-                    <span className="text-[9px] text-[#2C2C2E] mt-0.5">Tap to log all</span>
-                  </button>
-                ))}
-              </div>
+          {/* Header */}
+          <div className="px-4 pt-5 pb-0 flex justify-between items-start md:px-0">
+            <div>
+              <p className="text-[11px] text-[#636366]">
+                {hour < 12 ? 'good morning' : hour < 17 ? 'good afternoon' : 'good evening'} 👋
+              </p>
+              <h1 className="font-['Playfair_Display'] text-[26px] font-black text-[#F5F5F5] leading-tight mt-0.5">
+                what did<br />you eat?
+              </h1>
             </div>
-          )}
-          <MyUsualsGrid
-            usuals={usuals}
-            recents={frequents}
-            onSelect={handleFrequentTap}
-            onHide={handleHideUsual}
-          />
-        </>
-      )}
+          </div>
 
-      {/* Search bar */}
-      <div className="px-4 mt-4">
+          {/* Calorie ring */}
+          <div className="mt-4 flex justify-center">
+            <CalorieRing consumed={Math.round(totals.cal)} target={targets.cal} />
+          </div>
+
+          {/* Macro pills */}
+          <div className="flex gap-2 px-4 mt-4 overflow-x-auto pb-1 scrollbar-hide md:px-0">
+            <MacroPill label="Protein"  value={parseFloat(totals.protein.toFixed(0))} target={targets.protein} unit="g" color="#8DB4FF" />
+            <MacroPill label="GL"       value={parseFloat(totals.gl.toFixed(0))}      target={targets.gl}      unit=""  color="#C4A8FF" />
+            <MacroPill label="Fat"      value={parseFloat(totals.fat.toFixed(0))}     target={targets.fat}     unit="g" color="#FFB347" />
+            <MacroPill label="Carbs"    value={parseFloat(totals.carbs.toFixed(0))}   target={100}             unit="g" color="#FF8FAB" />
+          </div>
+
+          {/* Water quick-add */}
+          <WaterQuickAdd
+            glasses={glasses}
+            target={targets.water}
+            onAdd={handleWaterAdd}
+            onRemove={handleWaterRemove}
+          />
+
+          {/* Today's log — left column on desktop */}
+          <TodayLog entries={entries} onDelete={handleDelete} />
+        </div>
+
+        {/* ══ RIGHT COLUMN — search + usuals + results ══ */}
+        <div className="md:pt-5">
+          {/* My Usual Meals + My Usuals + Recents — shown BEFORE search query */}
+          {!query && (
+            <>
+              {/* My Usual Meals — one-tap full meal logging */}
+              {mealTemplates.length > 0 && (
+                <div className="px-4 mt-4 md:px-0 md:mt-0">
+                  <div className="text-[10px] font-bold text-[#636366] uppercase tracking-[1px] mb-2">
+                    My Usual Meals
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                    {mealTemplates.map(t => (
+                      <button
+                        key={t.id}
+                        onPointerDown={(e) => { e.preventDefault(); handleLogTemplate(t); }}
+                        className="flex-shrink-0 bg-[#1C1C1E] border border-[#C8F75E]/25 rounded-xl px-3 py-2.5 flex flex-col items-start gap-0.5 min-w-[120px] max-w-[160px] active:bg-[#242426] transition-colors"
+                      >
+                        <span className="text-[11px] font-bold text-[#C8F75E] truncate w-full">
+                          {t.name}
+                        </span>
+                        <span className="text-[9px] text-[#636366]">
+                          {t.items.length} foods · {Math.round(t.total_cal ?? 0)} kcal
+                        </span>
+                        <span className="text-[9px] text-[#2C2C2E] mt-0.5">Tap to log all</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <MyUsualsGrid
+                usuals={usuals}
+                recents={frequents}
+                onSelect={handleFrequentTap}
+                onHide={handleHideUsual}
+              />
+            </>
+          )}
+
+          {/* Search bar */}
+          <div className="px-4 mt-4 md:px-0">
         <div className="flex items-center gap-2 bg-[#1C1C1E] border border-white/[0.12] rounded-xl px-4 py-3">
           <span className="text-[#636366] text-[13px]">🔍</span>
           <input
@@ -1455,8 +1466,31 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
         </div>
       )}
 
-      {/* Today's log */}
-      <TodayLog entries={entries} onDelete={handleDelete} />
+          {/* Search results */}
+          {results.length > 0 && (
+            <div className="px-4 mt-3 flex flex-col gap-2 md:px-0">
+              {results.map((food) => (
+                <button
+                  key={food.id}
+                  onClick={() => setSheetFood(food)}
+                  className="bg-[#1C1C1E] border border-white/[0.07] rounded-xl px-3 py-3 flex items-center gap-3 text-left active:bg-[#242426]"
+                >
+                  <span className="text-[20px] flex-shrink-0">{getFoodEmoji(food.name)}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-medium text-[#F5F5F5] truncate">{food.name}</div>
+                    <div className="text-[10px] text-[#636366] mt-0.5">{food.portion}</div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-[13px] font-bold text-[#E8D5B0]">{food.calories}</div>
+                    <div className="text-[9px] text-[#636366]">kcal</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        {/* ── end two-column grid ── */}
+      </div>
 
       {/* Add food sheet */}
       {sheetFood && (
