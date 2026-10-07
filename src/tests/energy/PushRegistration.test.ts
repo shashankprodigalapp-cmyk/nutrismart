@@ -328,6 +328,18 @@ describe('Notification click routing', () => {
 // ── SUITE 6: Security ─────────────────────────────────────────────────────────
 
 describe('Security', () => {
+  beforeEach(() => {
+    mockUpsert.mockClear();
+    mockUpsert.mockResolvedValue({ error: null });
+    mockDelete.mockClear();
+    mockDelete.mockResolvedValue({ error: null });
+    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', 'A'.repeat(86) + '==');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('upsert always uses the authenticated user_id', async () => {
     mockServiceWorker('granted');
     const myUserId = 'my-user-id-secure';
