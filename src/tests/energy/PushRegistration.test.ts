@@ -141,7 +141,7 @@ describe('registerPushSubscription', () => {
     mockUpsert.mockResolvedValue({ error: null });
     mockDelete.mockClear();
     mockDelete.mockResolvedValue({ error: null });
-    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', 'BEl62iUYgUivxIkv69yViEuiBIa40mSb0bEbkxVMMOVl3KGv1A_RXEGmKMB2Y1c5mIkYb3w3bX3P3q7GKkwgw==');
+    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==');
   });
 
   afterEach(() => {
