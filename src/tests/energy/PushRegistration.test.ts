@@ -138,14 +138,14 @@ describe('getCurrentPermission', () => {
 describe('registerPushSubscription', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Set up VITE_VAPID_PUBLIC_KEY for tests
-    (import.meta as any).env = {
-      ...(import.meta as any).env,
-      VITE_VAPID_PUBLIC_KEY: 'fake-vapid-public-key',
-    };
+    // Set up VITE_VAPID_PUBLIC_KEY for tests (vi.stubEnv is the correct Vitest API)
+    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', 'fake-vapid-public-key');
   });
 
-  afterEach(() => { vi.restoreAllMocks(); });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
 
   it('returns { supported: false } when PushManager is missing', async () => {
     const orig = (window as any).PushManager;

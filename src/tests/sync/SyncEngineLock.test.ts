@@ -75,13 +75,14 @@ describe('SyncEngineLock — Web Locks cross-tab exclusivity', () => {
 
   it('falls back to isFlushing when navigator.locks absent', async () => {
     const savedLocks = (navigator as any).locks;
-    delete (navigator as any).locks;
+    // Set to undefined — delete leaves prototype property visible to 'in' check
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: undefined, writable: true });
     flushInternalSpy.mockImplementation(async () => {
       await new Promise(r => setTimeout(r, 10));
     });
     await Promise.all([sm.flush(), sm.flush()]);
     expect(flushInternalSpy).toHaveBeenCalledTimes(1);
-    (navigator as any).locks = savedLocks;
+    Object.defineProperty(navigator, 'locks', { configurable: true, value: savedLocks, writable: true });
   });
 
   it('getPendingCount counts only synced=0 items', async () => {
