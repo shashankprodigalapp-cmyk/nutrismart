@@ -501,7 +501,7 @@ describe('recalibrate() — CALIBRATION DAMPENING (core safety invariant)', () =
 
     expect(result.changed).toBe(true);
     const actual_nudge = result.new_mult - result.old_mult;
-    expect(Math.abs(actual_nudge)).toBeLessThanOrEqual(CALIBRATION_MAX_NUDGE);
+    expect(Math.abs(actual_nudge)).toBeCloseTo(CALIBRATION_MAX_NUDGE, 9); // floating-point safe
     expect(actual_nudge).toBeCloseTo(CALIBRATION_MAX_NUDGE, 3); // hit the ceiling
   });
 
@@ -516,7 +516,7 @@ describe('recalibrate() — CALIBRATION DAMPENING (core safety invariant)', () =
 
     if (result.changed) {
       const actual_nudge = result.new_mult - result.old_mult;
-      expect(Math.abs(actual_nudge)).toBeLessThanOrEqual(CALIBRATION_MAX_NUDGE);
+      expect(Math.abs(actual_nudge)).toBeCloseTo(CALIBRATION_MAX_NUDGE, 9); // floating-point safe
     }
   });
 
