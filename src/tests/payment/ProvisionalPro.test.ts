@@ -110,7 +110,7 @@ vi.mock('../../../netlify/functions/_shared/auth', async () => ({
   },
   preflightResponse:  () => new Response('', { status: 200 }),
   jsonResponse: (s: number, b: unknown) =>
-    new Response(JSON.stringify(b), { status: s, headers: { 'Content-Type': 'application/json' } }),
+    ({ statusCode: s, body: JSON.stringify(b) }),
   CORS_HEADERS: {},
 }));
 
