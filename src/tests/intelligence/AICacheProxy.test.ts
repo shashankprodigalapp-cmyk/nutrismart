@@ -34,7 +34,7 @@ vi.mock('../../../netlify/functions/_shared/auth', () => ({
   logEvent:       vi.fn().mockResolvedValue(undefined),
   preflightResponse: () => new Response('', { status: 200 }),
   jsonResponse: (status: number, body: unknown) =>
-    new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }),
+    ({ statusCode: status, body: JSON.stringify(body) }),
   CORS_HEADERS: {},
   supabaseAdmin: {
     rpc: (...args: any[]) => rpcMock(...args),
