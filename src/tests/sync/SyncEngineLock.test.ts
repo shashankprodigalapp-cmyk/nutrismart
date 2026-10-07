@@ -74,9 +74,8 @@ describe('SyncEngineLock — Web Locks cross-tab exclusivity', () => {
   });
 
   it('falls back to isFlushing when navigator.locks absent', async () => {
-    const savedLocks = (navigator as any).locks;
-    // Set to undefined — delete leaves prototype property visible to 'in' check
-    Object.defineProperty(navigator, 'locks', { configurable: true, value: undefined, writable: true });
+    const savedLocksDesc = Object.getOwnPropertyDescriptor((Navigator as any).prototype, 'locks');
+    delete (Navigator as any).prototype.locks;
     flushInternalSpy.mockImplementation(async () => {
       await new Promise(r => setTimeout(r, 10));
     });

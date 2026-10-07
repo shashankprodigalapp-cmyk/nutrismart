@@ -111,7 +111,7 @@ describe('UpiPaymentFlow — extract-utr.ts screenshot parsing', () => {
     const res = await handler(makeEvent('error.jpg'), {} as any);
     expect((res as any).statusCode).toBe(502);
     const body = JSON.parse((res as any).body);
-    expect(body.error).toBe('extraction_failed');
+    expect(body.error).toBe('vision_failed');
   });
 
   it('rejects if image_path does not start with the user ID', async () => {
