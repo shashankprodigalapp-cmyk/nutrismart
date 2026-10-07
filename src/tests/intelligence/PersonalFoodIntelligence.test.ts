@@ -284,10 +284,10 @@ describe('generateInsights', () => {
   });
 
   it('does NOT generate insight when evidence is below minimum', () => {
-    const profiles = new Map(['Dal', makeProfile({
+    const profiles = new Map<string, FoodProfile>([['Dal', makeProfile({
       distinct_days: 2,
       meal_distribution: { breakfast: 0, lunch: 2, snack: 0, dinner: 0 },
-    })].map(([k, v]) => [k, v] as [string, FoodProfile]));
+    })]]);
     // No — lunch count is 2, below MIN_EVIDENCE_LOGS=3
     const insights = generateInsights(profiles, 8);
     const mealInsight = insights.find(i => i.type === 'meal_context' && i.text.includes('Dal'));

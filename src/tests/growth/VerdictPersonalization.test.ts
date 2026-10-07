@@ -305,8 +305,11 @@ describe('Date handling', () => {
       ...nDays(['Curd'], 4, 'dinner'),
     ];
     const result = personalizeVerdict(yLogs, thirty, [], 'scientific');
-    // Should prefer lunch (2 foods > 1 food)
-    if (result) expect(result.headline.toLowerCase()).toContain('lunch');
+    // Should prefer lunch (2 foods > 1 food) — headline contains the lunch foods, not dinner food
+    if (result) {
+      expect(result.headline.toLowerCase()).toContain('dal');
+      expect(result.headline.toLowerCase()).not.toContain('curd');
+    }
   });
 });
 
@@ -324,8 +327,11 @@ describe('Multiple meals in one day', () => {
     const result2 = personalizeVerdict(yLogs, thirty, [], 'scientific');
     // Deterministic: same inputs, same result
     expect(result1?.headline).toBe(result2?.headline);
-    // Should prefer lunch (more foods: 2 vs 1)
-    if (result1) expect(result1.headline.toLowerCase()).toContain('lunch');
+    // Should prefer lunch (more foods: 2 vs 1) — headline contains lunch foods, not dinner food
+    if (result1) {
+      expect(result1.headline.toLowerCase()).toContain('dal');
+      expect(result1.headline.toLowerCase()).not.toContain('rice');
+    }
   });
 
   it('16. same food logged twice in one meal counts once', () => {
