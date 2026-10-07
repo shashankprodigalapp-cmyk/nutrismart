@@ -15,7 +15,7 @@ import { http, HttpResponse } from 'msw';
 import { mswServer } from '../setup';
 
 vi.mock('../../../netlify/functions/_shared/auth', async () => ({
-  verifyJWT: vi.fn().mockResolvedValue({ userId: 'u1', plan: 'free' }),
+  verifyJWT: vi.fn().mockResolvedValue({ userId: 'u1', plan: 'pro' }),
   supabaseAdmin: {
     storage: {
       from: () => ({

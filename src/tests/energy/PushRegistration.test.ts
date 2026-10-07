@@ -139,7 +139,7 @@ describe('registerPushSubscription', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Set up VITE_VAPID_PUBLIC_KEY for tests (vi.stubEnv is the correct Vitest API)
-    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', 'fake-vapid-public-key');
+    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', 'BEl62iUYgUivxIkv69yViEuiBIa40mSb0bEbkxVMMOVl3KGv1A_RXEGmKMB2Y1c5mIkYb3w3bX3P3q7GKkwgw==');
   });
 
   afterEach(() => {

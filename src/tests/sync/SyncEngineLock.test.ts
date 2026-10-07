@@ -82,7 +82,7 @@ describe('SyncEngineLock — Web Locks cross-tab exclusivity', () => {
     });
     await Promise.all([sm.flush(), sm.flush()]);
     expect(flushInternalSpy).toHaveBeenCalledTimes(1);
-    Object.defineProperty(navigator, 'locks', { configurable: true, value: savedLocks, writable: true });
+    if (savedLocksDesc) Object.defineProperty((Navigator as any).prototype, 'locks', savedLocksDesc);
   });
 
   it('getPendingCount counts only synced=0 items', async () => {

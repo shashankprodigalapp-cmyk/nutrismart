@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * AICacheProxy.test.ts — Modules 4 / 9 (cache-first AI search)
  *
