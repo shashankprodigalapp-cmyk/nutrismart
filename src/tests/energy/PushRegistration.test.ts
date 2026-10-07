@@ -137,8 +137,10 @@ describe('getCurrentPermission', () => {
 
 describe('registerPushSubscription', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    // Set up VITE_VAPID_PUBLIC_KEY for tests (vi.stubEnv is the correct Vitest API)
+    mockUpsert.mockClear();
+    mockUpsert.mockResolvedValue({ error: null });
+    mockDelete.mockClear();
+    mockDelete.mockResolvedValue({ error: null });
     vi.stubEnv('VITE_VAPID_PUBLIC_KEY', 'BEl62iUYgUivxIkv69yViEuiBIa40mSb0bEbkxVMMOVl3KGv1A_RXEGmKMB2Y1c5mIkYb3w3bX3P3q7GKkwgw==');
   });
 
@@ -193,11 +195,10 @@ describe('registerPushSubscription', () => {
 
   it('returns supported: false when VAPID key is missing', async () => {
     mockServiceWorker('granted');
-    const origEnv = (import.meta as any).env.VITE_VAPID_PUBLIC_KEY;
-    (import.meta as any).env.VITE_VAPID_PUBLIC_KEY = '';
+    // vi.stubEnv patches import.meta.env in Vitest's Vite pipeline
+    vi.stubEnv('VITE_VAPID_PUBLIC_KEY', '');
     const result = await registerPushSubscription('user-123');
     expect(result.supported).toBe(false);
-    (import.meta as any).env.VITE_VAPID_PUBLIC_KEY = origEnv;
   });
 
   it('stores correct user_id — no cross-user writes', async () => {
