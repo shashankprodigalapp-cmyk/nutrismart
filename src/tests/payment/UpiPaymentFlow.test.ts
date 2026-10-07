@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * UpiPaymentFlow.test.ts — Modules 5 / 13 (screenshot UTR extraction)
  *
