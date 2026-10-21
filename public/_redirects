@@ -1,0 +1,13 @@
+/.netlify/functions/ai-search            /api/ai-search            200
+/.netlify/functions/ai-vision            /api/ai-vision            200
+/.netlify/functions/analyze-energy       /api/analyze-energy       200
+/.netlify/functions/cron-morning-verdict /api/cron-morning-verdict 200
+/.netlify/functions/energy-checkin-cron  /api/energy-checkin-cron  200
+/.netlify/functions/extract-utr          /api/extract-utr          200
+/.netlify/functions/get-admin-analytics  /api/get-admin-analytics  200
+/.netlify/functions/get-upload-url       /api/get-upload-url       200
+/.netlify/functions/promote-food-cache   /api/promote-food-cache   200
+/.netlify/functions/razorpay-webhook     /api/razorpay-webhook     200
+/.netlify/functions/submit-payment       /api/submit-payment       200
+/.netlify/functions/verify-upi-payment   /api/verify-upi-payment   200
+/*                                       /index.html               200
