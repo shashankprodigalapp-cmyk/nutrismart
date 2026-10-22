@@ -1,0 +1,27 @@
+name: Live integration tests (Layer B)
+
+# Does NOT run on every push/PR on purpose: it hits the real deployed
+# Cloudflare Functions and a real Supabase test user, so it runs on a
+# schedule (after deploys have had time to land) and on demand.
+on:
+  schedule:
+    - cron: '0 6 * * *'   # 06:00 UTC = 11:30 IST daily
+  workflow_dispatch: {}
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Run live integration tests
+        env:
+          BASE_URL: ${{ vars.BASE_URL || 'https://nutrismart-3bb.pages.dev' }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+        run: npx vitest run --config tests-integration/vitest.integration.config.ts

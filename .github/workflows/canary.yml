@@ -1,0 +1,40 @@
+name: Post-deploy canary (Layer E)
+
+# Lightweight "is the site even alive" check after every deploy to main.
+#
+# IMPORTANT: this deliberately does NOT call scripts/cron-smoke-test.mjs
+# on a recurring schedule. That script POSTs to cron-morning-verdict and
+# energy-checkin-cron, which send REAL push notifications to REAL users
+# when they run in POST/scheduled mode. Running it every 30 minutes would
+# spam every subscribed user with duplicate notifications. That script is
+# for a ONE-OFF manual run (see scripts/cron-smoke-test.mjs and the
+# "Proposed test plan" doc, Layer D) before wiring up the real recurring
+# schedule for those two endpoints — never as a repeating CI job.
+#
+# This workflow instead pings a couple of side-effect-free, auth-free
+# surfaces: the static site itself, and an OPTIONS preflight (no handler
+# body runs) on one API route, just to confirm the Functions runtime is
+# up after a deploy.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Site responds
+        env:
+          BASE_URL: ${{ vars.BASE_URL || 'https://nutrismart-3bb.pages.dev' }}
+        run: |
+          status=$(curl -s -o /dev/null -w '%{http_code}' "$BASE_URL/")
+          echo "GET / -> $status"
+          test "$status" = "200"
+      - name: Functions runtime responds (OPTIONS preflight, no side effects)
+        env:
+          BASE_URL: ${{ vars.BASE_URL || 'https://nutrismart-3bb.pages.dev' }}
+        run: |
+          status=$(curl -s -o /dev/null -w '%{http_code}' -X OPTIONS "$BASE_URL/api/analyze-energy")
+          echo "OPTIONS /api/analyze-energy -> $status"
+          test "$status" = "200" -o "$status" = "204"

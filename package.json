@@ -9,6 +9,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration": "vitest run --config tests-integration/vitest.integration.config.ts",
+    "test:e2e": "playwright test",
+    "cron:smoke-test": "node scripts/cron-smoke-test.mjs",
     "lint": "eslint src --ext ts,tsx"
   },
   "dependencies": {
@@ -22,6 +25,7 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
     "@cloudflare/workers-types": "^5.20261021.1",
     "@netlify/functions": "^2.8.1",
     "@testing-library/dom": "^10.4.0",
