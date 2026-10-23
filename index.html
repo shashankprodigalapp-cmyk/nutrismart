@@ -19,6 +19,19 @@
   </head>
   <body>
     <div id="root"></div>
+    <script id="ns-selfheal">
+      // If the app is still blank after 6s (stale offline copy after an update),
+      // clear the offline cache and reload once.
+      setTimeout(function () {
+        var root = document.getElementById('root');
+        if (root && root.children.length) return;
+        try { if (sessionStorage.getItem('ns_healed')) return; sessionStorage.setItem('ns_healed', '1'); } catch (e) {}
+        var jobs = [];
+        if (navigator.serviceWorker) jobs.push(navigator.serviceWorker.getRegistrations().then(function (r) { return Promise.all(r.map(function (x) { return x.unregister(); })); }));
+        if (window.caches) jobs.push(caches.keys().then(function (k) { return Promise.all(k.map(function (n) { return caches.delete(n); })); }));
+        Promise.all(jobs).then(function () { location.reload(); }, function () { location.reload(); });
+      }, 6000);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

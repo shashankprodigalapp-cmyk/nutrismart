@@ -27,7 +27,7 @@ import { clientsClaim }                          from 'workbox-core';
 import { ExpirationPlugin }                      from 'workbox-expiration';
 import { precacheAndRoute, cleanupOutdatedCaches } from 'workbox-precaching';
 import { registerRoute }                         from 'workbox-routing';
-import { CacheFirst, StaleWhileRevalidate }      from 'workbox-strategies';
+import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -62,7 +62,7 @@ registerRoute(
   ({ request, url }) =>
     request.mode === 'navigate' &&
     !url.pathname.startsWith('/.netlify'),
-  new CacheFirst({ cacheName: 'nutrismart-shell' }),
+  new NetworkFirst({ cacheName: 'nutrismart-shell-v2', networkTimeoutSeconds: 3 }),
 );
 
 // ── PUSH EVENT HANDLER ───────────────────────────────────────────────────────
