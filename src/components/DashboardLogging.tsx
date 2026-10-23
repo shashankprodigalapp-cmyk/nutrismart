@@ -830,9 +830,18 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
             source:   row.source ?? 'IFCT',
             verified: row.verified ?? true,
           } as Food));
+          try { await localDb.user_prefs.put({ key: 'master_foods_cache', value: masterFoodsDB }); } catch { /* cache is best-effort */ }
         }
       } catch {
         // Network error — continue with custom foods only (offline-safe)
+      }
+
+      // Offline (or server unreachable): use the copy saved on this device.
+      if (masterFoodsDB.length === 0) {
+        try {
+          const cached = await localDb.user_prefs.get('master_foods_cache');
+          if (cached && Array.isArray(cached.value)) masterFoodsDB = cached.value as Food[];
+        } catch { /* no cache yet */ }
       }
 
       // Merge: custom foods first (user-specific), then master foods.

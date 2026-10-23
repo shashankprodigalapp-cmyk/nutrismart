@@ -203,7 +203,7 @@ export function AlertProvider({
     const checkConnectivity = async () => {
       if (!navigator.onLine) { setIsOffline(true); return; }
       try {
-        const res = await fetch('/favicon.ico', { method: 'HEAD', cache: 'no-store' });
+        const res = await fetch('/icon-192.png', { method: 'HEAD', cache: 'no-store' });
         setIsOffline(!res.ok);
       } catch {
         setIsOffline(true);
@@ -213,13 +213,20 @@ export function AlertProvider({
     const handleOnline  = () => checkConnectivity();
     const handleOffline = () => setIsOffline(true);
 
+    const handleVisible = () => { if (document.visibilityState === 'visible') checkConnectivity(); };
+
     window.addEventListener('online',  handleOnline);
     window.addEventListener('offline', handleOffline);
+    document.addEventListener('visibilitychange', handleVisible);
     checkConnectivity();
+    // Keep re-checking: a single check right as the network returns can be too early.
+    const timer = setInterval(checkConnectivity, 8000);
 
     return () => {
       window.removeEventListener('online',  handleOnline);
       window.removeEventListener('offline', handleOffline);
+      document.removeEventListener('visibilitychange', handleVisible);
+      clearInterval(timer);
     };
   }, []);
 
