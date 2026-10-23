@@ -212,6 +212,52 @@ Protein must be less than calories/4. Return [] if you truly cannot identify any
   }
 }
 
+function titleCase(t: string): string {
+  return t.trim().replace(/\s+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/** Exact (case-insensitive) name match in the shared master_foods table. */
+async function findInMasterFoods(name: string, env: Env): Promise<ValidNutrition | null> {
+  try {
+    const { data } = await getSupabaseAdmin(env)
+      .from('master_foods')
+      .select('name, portion, weight_g, calories, protein, carbs, fat, gl, gi')
+      .ilike('name', name.trim().replace(/[%_]/g, ''))
+      .eq('verified', true)
+      .limit(1)
+      .maybeSingle();
+    if (!data) return null;
+    return {
+      name: data.name, portion: data.portion,
+      weight_g: data.weight_g != null ? Number(data.weight_g) : undefined,
+      calories: Number(data.calories), protein: Number(data.protein),
+      carbs: Number(data.carbs), fat: Number(data.fat), gl: Number(data.gl),
+      gi: data.gi ?? undefined,
+      confidence: 'high', source: 'NutriSmart database',
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Add an AI-found food to the shared database so every user can search it. */
+async function addToMasterFoods(query: string, r: ValidNutrition, env: Env): Promise<void> {
+  try {
+    const admin = getSupabaseAdmin(env);
+    const name = titleCase(r.name || query);
+    const { data: existing } = await admin.from('master_foods')
+      .select('id').ilike('name', name.replace(/[%_]/g, '')).limit(1).maybeSingle();
+    if (existing) return;
+    await admin.from('master_foods').insert({
+      name, portion: r.portion || '1 serving', weight_g: r.weight_g ?? null,
+      calories: r.calories, protein: r.protein, carbs: r.carbs, fat: r.fat,
+      gl: r.gl, gi: r.gi ?? null, type: 'MR', source: 'ai_search', verified: true,
+    });
+  } catch (e) {
+    console.error('[ai-search] master_foods insert failed', e);
+  }
+}
+
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
   if (request.method === 'OPTIONS') return preflightResponse(env);
@@ -220,8 +266,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const auth = await verifyJWT(request, env);
   if (!auth) return jsonResponse(env, 401, { error: 'unauthorized' });
 
-  const { allowed, resetAt } = await checkRateLimit(env, auth.userId, auth.plan);
-  if (!allowed) {
+  // Quota is charged only when a real AI call is needed (see charge()).
+  // Repeat searches served from the shared database / cache are free for the user.
+  const charge = async (): Promise<Response | null> => {
+    const { allowed, resetAt } = await checkRateLimit(env, auth.userId, auth.plan);
+    if (allowed) return null;
     return jsonResponse(env, 429, {
       error:    'rate_limit_exceeded',
       plan:     auth.plan,
@@ -230,7 +279,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         ? 'You have used all 5 AI/photo searches for today. They reset tomorrow.'
         : 'You have used 200 AI searches today. Limit resets at midnight IST.',
     });
-  }
+  };
 
   let body: { mode?: string; query?: string };
   try {
@@ -252,6 +301,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   try {
     if (mode === 'name') {
+      // 0. Exact name already in the shared app database? Free + instant.
+      const exact = await findInMasterFoods(query.trim(), env);
+      if (exact) {
+        await logEvent(env, auth.userId, 'ai_search_name', {
+          query: query.trim().slice(0, 100), found: true, cache_hit: true, source: 'master_foods',
+        });
+        return jsonResponse(env, 200, { found: true, result: exact, cached: true });
+      }
+
       const embedding = await embedQuery(query.trim(), env);
       if (embedding) {
         const hit = await checkSemanticCache(embedding, env);
@@ -268,6 +326,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         }
       }
 
+      // Cache miss → this needs a real AI call, so it counts toward today's 5.
+      const limited = await charge();
+      if (limited) return limited;
+
       const result = await geminiNameLookup(query.trim(), env);
       if (!result) {
         return jsonResponse(env, 200, {
@@ -279,6 +341,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       if (embedding && result.confidence !== 'low') {
         await saveToSemanticCache(query.trim(), embedding, result, 'gemini', env);
       }
+      // Share it with every user: add to the app food database (deduped by name).
+      if (result.confidence !== 'low') await addToMasterFoods(query.trim(), result, env);
       await logEvent(env, auth.userId, 'ai_search_name', {
         query: query.trim().slice(0, 100),
         found: true, cache_hit: false,
@@ -288,6 +352,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     }
 
     if (mode === 'describe') {
+      const limited = await charge();
+      if (limited) return limited;
       const results = await claudeDescriptionLookup(query.trim(), env);
       if (results.length === 0) {
         return jsonResponse(env, 200, {
