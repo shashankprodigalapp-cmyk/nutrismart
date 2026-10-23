@@ -21,6 +21,7 @@ import PWAInstallBanner from './components/PWAInstallBanner';
 // ── Lazy page imports ──────────────────────────────────────────────────────────
 const LoginPage      = React.lazy(() => import('./pages/LoginPage'));
 const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage'));
+const ResetPasswordPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const AppShell       = React.lazy(() => import('./pages/AppShell'));
 const AdminPage      = React.lazy(() => import('./pages/AdminPage'));
 
@@ -63,6 +64,7 @@ export default function App() {
             <Routes>
               {/* Public */}
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
 
               {/* Onboarding — auth required but no kitchen profile check */}
               <Route path="/onboarding" element={

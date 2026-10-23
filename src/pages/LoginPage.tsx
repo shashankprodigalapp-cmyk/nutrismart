@@ -28,6 +28,32 @@ export default function LoginPage() {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
   const [notice,   setNotice]   = useState<string | null>(null);
+  const [needsVerify, setNeedsVerify] = useState(false);
+
+  const handleForgot = async () => {
+    setError(null); setNotice(null);
+    if (!email) { setError('Type your email address above first, then tap "Forgot password?".'); return; }
+    setLoading(true);
+    const { error: err } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (err) { setError(err.message); return; }
+    // Same message whether or not the account exists (no account enumeration)
+    setNotice(`If an account exists for ${email}, we sent a password reset link. Check your inbox and spam.`);
+  };
+
+  const handleResend = async () => {
+    setError(null); setNotice(null);
+    setLoading(true);
+    const { error: err } = await supabase.auth.resend({
+      type: 'signup', email,
+      options: { emailRedirectTo: `${window.location.origin}/app/log` },
+    });
+    setLoading(false);
+    if (err) { setError(err.message); return; }
+    setNotice(`Verification link re-sent to ${email}. Check your inbox and spam.`);
+  };
 
   const handleGoogle = async () => {
     setLoading(true);
@@ -41,6 +67,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
     setNotice(null);
+    setNeedsVerify(false);
     setLoading(true);
     try {
       if (mode === 'signup') {
@@ -55,7 +82,8 @@ export default function LoginPage() {
         // (Also the case for an already-registered address: identities is empty.)
         if (!data.session) {
           if (data.user && (data.user.identities?.length ?? 0) === 0) {
-            throw new Error('This email is already registered. Please sign in instead.');
+            setMode('login');
+            throw new Error('This email is already registered. Sign in, or tap "Forgot password?" to reset it.');
           }
           setNotice(`We sent a verification link to ${email}. Click it, then come back and sign in.`);
           setMode('login');
@@ -67,7 +95,16 @@ export default function LoginPage() {
         if (err?.message?.includes('already registered')) {
           setMode('login'); throw new Error('Account exists — signing you in');
         }
-        if (err) throw err;
+        if (err) {
+          if (/not confirmed/i.test(err.message)) {
+            setNeedsVerify(true);
+            throw new Error('Your email is not verified yet. Click the link we emailed you, or resend it below.');
+          }
+          if (/invalid login credentials/i.test(err.message)) {
+            throw new Error('Email or password is incorrect. Try again or reset your password below.');
+          }
+          throw err;
+        }
       }
       navigate(from, { replace: true });
     } catch (e: any) {
@@ -125,6 +162,18 @@ export default function LoginPage() {
 
         {error  && <p className="text-[12px] text-[#FF6B6B] text-center">{error}</p>}
         {notice && <p className="text-[12px] text-[#C8F75E] text-center">{notice}</p>}
+        {needsVerify && (
+          <button type="button" onClick={handleResend} disabled={loading}
+            className="text-[12px] text-[#C8F75E] underline text-center disabled:opacity-50">
+            Resend verification email
+          </button>
+        )}
+        {mode === 'login' && (
+          <button type="button" onClick={handleForgot} disabled={loading}
+            className="text-[12px] text-[#636366] underline text-center disabled:opacity-50">
+            Forgot password?
+          </button>
+        )}
 
         <button type="submit" disabled={loading}
           className="bg-[#C8F75E] text-[#111113] font-bold text-[14px] rounded-xl py-4 disabled:opacity-50 mt-1">
