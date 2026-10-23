@@ -344,16 +344,14 @@ export function OfflineBanner() {
   if (!isOffline && pendingSync === 0) return null;
 
   return (
-    <div className={`mx-4 md:mx-8 mb-3 rounded-xl px-4 py-2.5 flex items-center justify-between ${
-      isOffline
-        ? 'bg-[#1C1C1E] border border-white/[0.07]'
-        : 'bg-[#C8F75E]/6 border border-[#C8F75E]/15'
+    <div role="status" aria-live="polite" className={`fixed left-1/2 -translate-x-1/2 bottom-20 md:bottom-6 z-40 max-w-[calc(100vw-2rem)] rounded-full px-4 py-2 flex items-center gap-3 shadow-lg shadow-black/40 bg-[#1C1C1E] border ${
+      isOffline ? 'border-white/15' : 'border-[#C8F75E]/30'
     }`}>
       <div className="flex items-center gap-2">
         <span className="text-[14px]">{isOffline ? '📵' : '⟳'}</span>
         <p className="text-[11px] text-[#A1A1A1]">
           {isOffline
-            ? `Offline — logs saved locally${pendingSync > 0 ? `, ${pendingSync} pending sync` : ''}`
+            ? `Offline — saved on this device${pendingSync > 0 ? ` (${pendingSync} to sync)` : ''}`
             : `Syncing ${pendingSync} item${pendingSync !== 1 ? 's' : ''}…`}
         </p>
       </div>
