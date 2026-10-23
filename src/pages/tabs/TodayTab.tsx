@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { localDb } from '../../lib/localDb';
+import { useTargets } from '../../lib/useTargets';
 
 interface TodaySummary {
   calories:  number;
@@ -15,12 +16,11 @@ interface TodaySummary {
   meals:     number;
 }
 
-const CALORIE_GOAL = 2000;
-const PROTEIN_GOAL = 60;
 const WATER_GOAL   = 2500;
 
 export default function TodayTab() {
   const { user } = useAuth();
+  const { cal: CALORIE_GOAL, protein: PROTEIN_GOAL } = useTargets();
   const [summary, setSummary] = useState<TodaySummary>({
     calories: 0, protein: 0, carbs: 0, fat: 0, water_ml: 0, meals: 0,
   });

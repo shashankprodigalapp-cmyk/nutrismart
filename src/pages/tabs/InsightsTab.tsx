@@ -48,6 +48,7 @@ import { useAuth } from '../../context/AuthContext';
 import { todayIST }  from '../../lib/kitchenIntelligence';
 import type { KitchenProfile } from '../../lib/localDb';
 import { correlateEnergyToFoods } from '../../lib/energyCorrelation';
+import { WeeklyTrend } from '../../components/WeeklyTrend';
 import { buildFoodProfiles, generateInsights, type PersonalInsight } from '../../lib/personalFoodIntelligence';
 
 // ── DESIGN TOKENS ─────────────────────────────────────────────────────────────
@@ -480,6 +481,8 @@ export default function InsightsTab() {
       )}
 
       <div className="px-4 mt-4 space-y-6">
+
+        <WeeklyTrend />
 
         {/* ── My Usual Meals ─────────────────────────────────────────────── */}
         {hasTemplates && (
