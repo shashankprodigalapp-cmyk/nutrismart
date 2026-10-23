@@ -70,7 +70,7 @@ export default function AppShell() {
       </aside>
 
       {/* ── Main content ── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 w-full max-w-6xl mx-auto">
         <ContextualAlerts />
 
         <div className="flex-1 overflow-y-auto">
