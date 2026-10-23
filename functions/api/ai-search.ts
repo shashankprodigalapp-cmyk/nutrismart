@@ -102,7 +102,7 @@ function getHinglishFallback(description: string): ValidNutrition[] {
     }));
 }
 
-async function geminiNameLookup(foodName: string, env: Env): Promise<ValidNutrition | null> {
+async function geminiNameLookup(foodName: string, env: Env, dbg: { reason?: string } = {}): Promise<ValidNutrition | null> {
   const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
   const prompt = `You are a nutrition database for Indian cuisine. Return ONLY valid JSON, no markdown.
 Food: "${foodName}"
@@ -127,7 +127,9 @@ Calories must be > 0. Protein must be less than calories/4.`;
     clearTimeout(timeout);
 
     if (!res.ok) {
-      console.error('[ai-search] Gemini error', res.status, (await res.text()).slice(0, 300));
+      const errText = (await res.text()).slice(0, 300);
+      console.error('[ai-search] Gemini error', res.status, errText);
+      dbg.reason = `gemini_http_${res.status}: ${errText.replace(/key=[^&\s"]+/g, 'key=…').slice(0, 160)}`;
       return null;
     }
 
@@ -154,9 +156,11 @@ Calories must be > 0. Protein must be less than calories/4.`;
     }
 
     const validation = validateNutrition(parsed);
+    if (!validation.valid) dbg.reason = 'validation_failed: ' + validation.errors.join('; ').slice(0, 160);
     return validation.valid ? validation.data : null;
   } catch (err: any) {
     clearTimeout(timeout);
+    dbg.reason = 'exception: ' + String(err?.message ?? err).slice(0, 120);
     return null;
   }
 }
@@ -330,11 +334,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       const limited = await charge();
       if (limited) return limited;
 
-      const result = await geminiNameLookup(query.trim(), env);
+      const dbg: { reason?: string } = {};
+      const result = await geminiNameLookup(query.trim(), env, dbg);
       if (!result) {
         return jsonResponse(env, 200, {
           found:   false,
           error:   'not_found',
+          reason:  dbg.reason,
           message: 'Could not identify this food. Try describing it instead.',
         });
       }
