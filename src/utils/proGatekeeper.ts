@@ -132,7 +132,9 @@ interface ProGateResult {
 
 export function useProGate(feature: ProFeature): ProGateResult {
   const { plan, isLoading } = usePlan();
-  const allowed = plan === 'pro';
+  // No paid tier: every feature is open; the server enforces 5 AI/photo searches per day.
+  void plan;
+  const allowed = true;
 
   const showUpgrade = useCallback(() => {
     _upgradeCallback?.(feature);

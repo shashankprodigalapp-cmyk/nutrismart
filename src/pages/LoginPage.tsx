@@ -6,6 +6,16 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
+/** Returns a human message if the password is too weak, otherwise null. */
+export function passwordProblem(pw: string): string | null {
+  if (pw.length < 8)        return 'Password must be at least 8 characters.';
+  if (!/[a-z]/.test(pw))    return 'Password needs a lowercase letter.';
+  if (!/[A-Z]/.test(pw))    return 'Password needs an uppercase letter.';
+  if (!/[0-9]/.test(pw))    return 'Password needs a number.';
+  if (!/[^A-Za-z0-9]/.test(pw)) return 'Password needs a symbol (e.g. ! @ # $).';
+  return null;
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,6 +27,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState<string | null>(null);
+  const [notice,   setNotice]   = useState<string | null>(null);
 
   const handleGoogle = async () => {
     setLoading(true);
@@ -29,11 +40,28 @@ export default function LoginPage() {
   const handleEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setNotice(null);
     setLoading(true);
     try {
       if (mode === 'signup') {
-        const { error: err } = await supabase.auth.signUp({ email, password, options: { data: { name } } });
+        const weak = passwordProblem(password);
+        if (weak) throw new Error(weak);
+        const { data, error: err } = await supabase.auth.signUp({
+          email, password,
+          options: { data: { name }, emailRedirectTo: `${window.location.origin}/app/log` },
+        });
         if (err) throw err;
+        // No session = Supabase is waiting for the user to click the email link.
+        // (Also the case for an already-registered address: identities is empty.)
+        if (!data.session) {
+          if (data.user && (data.user.identities?.length ?? 0) === 0) {
+            throw new Error('This email is already registered. Please sign in instead.');
+          }
+          setNotice(`We sent a verification link to ${email}. Click it, then come back and sign in.`);
+          setMode('login');
+          setPassword('');
+          return;
+        }
       } else {
         const { error: err } = await supabase.auth.signInWithPassword({ email, password });
         if (err?.message?.includes('already registered')) {
@@ -92,10 +120,11 @@ export default function LoginPage() {
           placeholder="Email address" type="email"
           className="bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-[14px] text-white outline-none placeholder-[#636366] focus:border-[#C8F75E]/50" />
         <input value={password} onChange={e => setPassword(e.target.value)} required minLength={8}
-          placeholder="Password (min 8 chars)" type="password"
+          placeholder={mode === 'signup' ? 'Password (8+ chars, Aa, 1, !)' : 'Password'} type="password"
           className="bg-[#1C1C1E] border border-white/10 rounded-xl px-4 py-3 text-[14px] text-white outline-none placeholder-[#636366] focus:border-[#C8F75E]/50" />
 
-        {error && <p className="text-[12px] text-[#FF6B6B] text-center">{error}</p>}
+        {error  && <p className="text-[12px] text-[#FF6B6B] text-center">{error}</p>}
+        {notice && <p className="text-[12px] text-[#C8F75E] text-center">{notice}</p>}
 
         <button type="submit" disabled={loading}
           className="bg-[#C8F75E] text-[#111113] font-bold text-[14px] rounded-xl py-4 disabled:opacity-50 mt-1">

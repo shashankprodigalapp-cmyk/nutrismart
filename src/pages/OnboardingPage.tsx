@@ -68,9 +68,9 @@ export default function OnboardingPage() {
     try {
       const profile = buildKitchenProfile(answers as KitchenAnswers);
       // Save to Dexie
-      await localDb.user_prefs.put({ key: 'kitchen_profile', value: profile });
-      // Save to Supabase
-      await supabase.from('kitchen_profiles').upsert({
+      await localDb.user_prefs.put({ key: 'kitchen_profile', value: { ...profile, user_id: user.id } } as any);
+      // Save to Supabase (supabase-js returns errors, it does not throw — check explicitly)
+      const { error: kpErr } = await supabase.from('kitchen_profiles').upsert({
         user_id:           user.id,
         oil_usage:         answers.oil,
         who_cooks:         answers.cook,
@@ -79,6 +79,7 @@ export default function OnboardingPage() {
         rest_mult:         profile.rest_mult,
         logs_used:         0,
       }, { onConflict: 'user_id' });
+      if (kpErr) throw kpErr;
       // Update users table plan default
       await supabase.from('users').upsert({ id: user.id, plan: 'free' }, { onConflict: 'id' });
       // Tell AuthContext immediately so ProtectedRoute doesn't redirect back
@@ -91,7 +92,7 @@ export default function OnboardingPage() {
       // row actually exists and the onboarding doesn't repeat on next login.
       try {
         const profile = buildKitchenProfile(answers as KitchenAnswers);
-        await supabase.from('kitchen_profiles').upsert({
+        const { error: retryErr } = await supabase.from('kitchen_profiles').upsert({
           user_id:    user.id,
           oil_usage:  answers.oil,
           who_cooks:  answers.cook,
@@ -100,7 +101,8 @@ export default function OnboardingPage() {
           rest_mult:  profile.rest_mult,
           logs_used:  0,
         }, { onConflict: 'user_id' });
-        await localDb.user_prefs.put({ key: 'kitchen_profile', value: profile });
+        if (retryErr) throw retryErr;
+        await localDb.user_prefs.put({ key: 'kitchen_profile', value: { ...profile, user_id: user.id } } as any);
         markKitchenProfileDone();
       } catch { /* second failure — profile will be written by SyncManager next time */ }
       markKitchenProfileDone(); // mark done regardless so the redirect loop stops

@@ -308,9 +308,7 @@ export default function ProfileTab() {
               )}
             </div>
             {!profile?.is_pro && (
-              <span className="text-xs bg-[#C8F75E] text-black font-semibold px-3 py-1.5 rounded-full">
-                Upgrade ₹99
-              </span>
+              <span className="text-xs text-[#636366]">5 AI/photo searches per day</span>
             )}
           </div>
         </div>

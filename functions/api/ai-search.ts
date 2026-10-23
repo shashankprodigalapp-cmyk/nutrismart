@@ -223,7 +223,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       plan:     auth.plan,
       reset_at: resetAt,
       message:  auth.plan === 'free'
-        ? 'Free plan allows 5 AI searches/day. Upgrade to Pro for 200/day.'
+        ? 'You have used all 5 AI/photo searches for today. They reset tomorrow.'
         : 'You have used 200 AI searches today. Limit resets at midnight IST.',
     });
   }

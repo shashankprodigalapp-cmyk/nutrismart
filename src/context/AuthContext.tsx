@@ -162,24 +162,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkKitchenProfile = useCallback(async (userId: string) => {
     try {
-      // Check Dexie first (instant, offline-safe)
-      const localPref = await localDb.user_prefs.get('kitchen_profile');
-      if (localPref?.value) {
-        dispatch({ type: 'KITCHEN_PROFILE_STATUS', hasProfile: true });
-        return;
-      }
-      // Fall back to Supabase
+      // The server is the source of truth: the profile follows the account
+      // across devices and sign-in methods.
       const { data, error } = await supabase
         .from('kitchen_profiles')
-        .select('user_id')
+        .select('*')
         .eq('user_id', userId)
         .maybeSingle();
 
-      const hasProfile = !error && data !== null;
-      dispatch({ type: 'KITCHEN_PROFILE_STATUS', hasProfile });
+      if (!error) {
+        if (data) {
+          // Cache locally, tagged with the owner so another account never reuses it
+          const existing: any = await localDb.user_prefs.get('kitchen_profile');
+          if (existing?.value?.user_id !== userId) {
+            await localDb.user_prefs.put({
+              key: 'kitchen_profile',
+              value: { user_id: userId, home_mult: data.home_mult, rest_mult: data.rest_mult,
+                       oil_usage: data.oil_usage, who_cooks: data.who_cooks, cook_style: data.cook_style },
+            } as any);
+          }
+        }
+        dispatch({ type: 'KITCHEN_PROFILE_STATUS', hasProfile: data !== null });
+        return;
+      }
+      // Server unreachable → trust the local copy only if it belongs to THIS user
+      const localPref: any = await localDb.user_prefs.get('kitchen_profile');
+      dispatch({
+        type: 'KITCHEN_PROFILE_STATUS',
+        hasProfile: !!localPref?.value && localPref.value.user_id === userId,
+      });
     } catch {
-      // Network error — assume no profile, prompt setup
-      dispatch({ type: 'KITCHEN_PROFILE_STATUS', hasProfile: false });
+      const localPref: any = await localDb.user_prefs.get('kitchen_profile').catch(() => undefined);
+      dispatch({
+        type: 'KITCHEN_PROFILE_STATUS',
+        hasProfile: !!localPref?.value && localPref.value.user_id === userId,
+      });
     }
   }, []);
 

@@ -136,15 +136,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const auth = await verifyJWT(request, env);
   if (!auth) return jsonResponse(env, 401, { error: 'unauthorized' });
 
-  if (auth.plan !== 'pro') {
-    return jsonResponse(env, 403, {
-      error:   'pro_required',
-      feature: 'photo_recognition',
-      message: 'Photo food recognition is a Pro feature. Upgrade to NutriSmart Pro for ₹99/month.',
-    });
-  }
-
-  const { allowed, resetAt } = await checkRateLimit(env, auth.userId, 'pro');
+  // Everyone is on the free plan: 5 AI/photo searches per day (shared counter).
+  const { allowed, resetAt } = await checkRateLimit(env, auth.userId, auth.plan);
   if (!allowed) {
     return jsonResponse(env, 429, {
       error:    'rate_limit_exceeded',
