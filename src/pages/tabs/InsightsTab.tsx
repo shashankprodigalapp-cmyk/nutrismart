@@ -458,7 +458,7 @@ export default function InsightsTab() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-dvh bg-[#111113] pb-24">
+    <div className="min-h-dvh bg-[#111113] pb-24 md:px-4 md:max-w-3xl lg:max-w-4xl md:mx-auto">
       {/* Header */}
       <div className="px-4 pt-8 pb-2">
         <h1 className="font-['Playfair_Display'] text-[26px] font-black text-[#F5F5F5] leading-tight">
