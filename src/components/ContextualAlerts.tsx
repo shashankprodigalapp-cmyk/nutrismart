@@ -322,7 +322,7 @@ export function FestivalBanner() {
   const textColor = festival.type === 'fast' ? 'text-sky-400' : 'text-[#C8F75E]';
 
   return (
-    <div className={`mx-4 mb-3 ${bg} border rounded-2xl px-4 py-3 flex items-center justify-between`}>
+    <div className={`mx-4 md:mx-8 mb-3 ${bg} border rounded-2xl px-4 py-3 flex items-center justify-between`}>
       <div className="flex items-center gap-3">
         <span className="text-xl">{festival.emoji}</span>
         <div>
@@ -344,7 +344,7 @@ export function OfflineBanner() {
   if (!isOffline && pendingSync === 0) return null;
 
   return (
-    <div className={`mx-4 mb-3 rounded-xl px-4 py-2.5 flex items-center justify-between ${
+    <div className={`mx-4 md:mx-8 mb-3 rounded-xl px-4 py-2.5 flex items-center justify-between ${
       isOffline
         ? 'bg-[#1C1C1E] border border-white/[0.07]'
         : 'bg-[#C8F75E]/6 border border-[#C8F75E]/15'
@@ -369,7 +369,7 @@ export function GracePeriodBanner() {
   if (graceDaysLeft === null) return null;
 
   return (
-    <div className="mx-4 mb-3 bg-yellow-500/8 border border-yellow-500/30 rounded-xl px-4 py-3 flex items-center justify-between">
+    <div className="mx-4 md:mx-8 mb-3 bg-yellow-500/8 border border-yellow-500/30 rounded-xl px-4 py-3 flex items-center justify-between">
       <div>
         <p className="text-[12px] font-bold text-yellow-400">⚠️ Payment failed</p>
         <p className="text-[11px] text-[#A1A1A1] mt-0.5">
@@ -440,7 +440,7 @@ export function PendingValidationBanner() {
 
   if (!pending) return null;
   return (
-    <div className="mx-4 mb-3 bg-[#C8F75E]/8 border border-[#C8F75E]/25 rounded-xl px-4 py-3 flex items-center gap-3">
+    <div className="mx-4 md:mx-8 mb-3 bg-[#C8F75E]/8 border border-[#C8F75E]/25 rounded-xl px-4 py-3 flex items-center gap-3">
       <span className="text-[16px]">⏳</span>
       <div>
         <p className="text-[12px] font-bold text-[#C8F75E]">Pro access pending validation</p>
@@ -460,7 +460,7 @@ export function EventBudgetCard() {
 
   if (eventBudget.active) {
     return (
-      <div className="mx-4 mb-3 bg-[#1C1C1E] border border-white/[0.07] rounded-xl px-4 py-3 flex items-center justify-between">
+      <div className="mx-4 md:mx-8 mb-3 bg-[#1C1C1E] border border-white/[0.07] rounded-xl px-4 py-3 flex items-center justify-between">
         <div>
           <p className="text-[11px] font-bold text-[#C8F75E]">
             {EVENT_DEFAULTS[eventBudget.eventType ?? 'restaurant'].emoji} {eventBudget.eventName} tonight
@@ -480,7 +480,7 @@ export function EventBudgetCard() {
   }
 
   return (
-    <div className="mx-4 mb-3 bg-[#1C1C1E] border border-white/[0.07] rounded-xl overflow-hidden">
+    <div className="mx-4 md:mx-8 mb-3 bg-[#1C1C1E] border border-white/[0.07] rounded-xl overflow-hidden">
       <button
         onClick={() => setOpen(o => !o)}
         className="w-full px-4 py-3 flex items-center gap-3 text-left"
