@@ -234,7 +234,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           case 'SIGNED_IN':
             if (!session) break;
             dispatch({ type: 'SIGNED_IN', user: session.user, session });
-            await checkKitchenProfile(session.user.id);
+            // IMPORTANT: never await a supabase call inside onAuthStateChange — supabase-js
+            // holds an internal lock while this callback runs, so the query deadlocks
+            // (blank screen after Google login). Defer it to the next tick instead.
+            setTimeout(() => { void checkKitchenProfile(session.user.id); }, 0);
             // Navigation handled by ProtectedRoute — don't navigate here
             break;
 
