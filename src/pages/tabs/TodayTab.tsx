@@ -36,20 +36,23 @@ export default function TodayTab() {
     if (!user) return;
     const todayIST = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
-    localDb.daily_logs
-      .where('logged_date').equals(todayIST)
-      .toArray()
-      .then(logs => {
-        const s = logs.reduce<TodaySummary>((acc: any, l: any) => ({
-          calories: acc.calories + (l.calories ?? 0),
-          protein:  acc.protein  + (l.protein_g ?? 0),
-          carbs:    acc.carbs    + (l.carbs_g ?? 0),
-          fat:      acc.fat      + (l.fat_g ?? 0),
+    Promise.all([
+      localDb.daily_logs.where('log_date').equals(todayIST).toArray(),
+      localDb.water_logs.get([user.id, todayIST]),
+    ])
+      .then(([logs, water]) => {
+        const mine = logs.filter(l => l.user_id === user.id);
+        const s = mine.reduce<TodaySummary>((acc, l) => ({
+          calories: acc.calories + (l.cal ?? 0),
+          protein:  acc.protein  + (l.protein ?? 0),
+          carbs:    acc.carbs    + (l.carbs ?? 0),
+          fat:      acc.fat      + (l.fat ?? 0),
           water_ml: acc.water_ml,
           meals:    acc.meals + 1,
-        }), { calories: 0, protein: 0, carbs: 0, fat: 0, water_ml: 0, meals: 0 });
+        }), { calories: 0, protein: 0, carbs: 0, fat: 0, water_ml: (water?.glasses ?? 0) * 250, meals: 0 });
         setSummary(s);
-      });
+      })
+      .catch(err => console.error('[TodayTab] load failed', err));
   }, [user]);
 
   const calPct     = Math.min(100, Math.round((summary.calories / CALORIE_GOAL) * 100));
