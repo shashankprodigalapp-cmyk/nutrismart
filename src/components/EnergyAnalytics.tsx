@@ -1,7 +1,7 @@
 /**
  * EnergyAnalytics.tsx — TASK 2 UI: "Foods that crash you vs sustain you"
  *
- * Fetches /.netlify/functions/analyze-energy and renders:
+ * Fetches /api/analyze-energy and renders:
  *   - GL gap headline (crash meals avg GL vs steady meals avg GL)
  *   - "Crash triggers" list (red) — foods followed by 'low' energy ≥60% of the time
  *   - "Energy sustainers" list (green) — foods followed by steady/high energy
@@ -97,7 +97,7 @@ export function EnergyAnalytics() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setError('Please log in again.'); return; }
-      const res = await fetch('/.netlify/functions/analyze-energy', {
+      const res = await fetch('/api/analyze-energy', {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (!res.ok) throw new Error(`Server error ${res.status}`);

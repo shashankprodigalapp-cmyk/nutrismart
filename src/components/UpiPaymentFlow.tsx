@@ -2,7 +2,7 @@
  * UpiPaymentFlow.tsx — Module 5 UI: UPI Payment Submission
  *
  * Steps: pay (QR + copy UPI ID) → proof (UTR + optional screenshot URL) → pending
- * POSTs to /.netlify/functions/submit-payment.
+ * POSTs to /api/submit-payment.
  * Used inside UpgradeModal, replacing the Razorpay checkout.
  */
 
@@ -48,7 +48,7 @@ export function UpiPaymentFlow({ onDone }: { onDone: () => void }) {
 
       // 1. Get signed upload URL (payment-proof purpose = not Pro-gated)
       const ext = (file.name.split('.').pop() ?? 'jpg').toLowerCase();
-      const urlRes = await fetch('/.netlify/functions/get-upload-url', {
+      const urlRes = await fetch('/api/get-upload-url', {
         method: 'POST', headers,
         body: JSON.stringify({ ext, purpose: 'payment-proof' }),
       });
@@ -64,7 +64,7 @@ export function UpiPaymentFlow({ onDone }: { onDone: () => void }) {
       if (!putRes.ok) throw new Error('Upload failed — try again');
 
       // 3. Extract UTR server-side
-      const exRes = await fetch('/.netlify/functions/extract-utr', {
+      const exRes = await fetch('/api/extract-utr', {
         method: 'POST', headers,
         body: JSON.stringify({ image_path: urlData.path }),
       });
@@ -93,7 +93,7 @@ export function UpiPaymentFlow({ onDone }: { onDone: () => void }) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setErrorMsg('Session expired — please log in again.'); setStep('error'); return; }
 
-      const res = await fetch('/.netlify/functions/submit-payment', {
+      const res = await fetch('/api/submit-payment', {
         method:  'POST',
         headers: {
           'Content-Type':  'application/json',

@@ -9,7 +9,7 @@
  *   AIUsageBreakdown    — Name / Describe / Photo search volumes
  *   TimeFrameFilter     — 24h / 7d / 30d / YTD, smooth data refresh
  *
- * Data fetched from /.netlify/functions/get-admin-analytics.
+ * Data fetched from /api/get-admin-analytics.
  * All charts are pure SVG — no external chart library dependency.
  * IST timezone shown on timestamps.
  */
@@ -255,7 +255,7 @@ export function AnalyticsDashboard() {
       if (!token) throw new Error('Not authenticated');
 
       const res = await fetch(
-        `/.netlify/functions/get-admin-analytics?frame=${f}`,
+        `/api/get-admin-analytics?frame=${f}`,
         {
           headers:  { Authorization: `Bearer ${token}` },
           signal:   abortRef.current.signal,

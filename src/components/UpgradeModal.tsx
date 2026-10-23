@@ -68,7 +68,7 @@ export function UpgradeModal({ feature, onClose }: UpgradeModalProps) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { setErrorMsg('Session expired. Please log in again.'); setStep('error'); return; }
 
-      const res = await fetch('/.netlify/functions/verify-upi-payment', {
+      const res = await fetch('/api/verify-upi-payment', {
         method:  'POST',
         headers: {
           'Content-Type':  'application/json',

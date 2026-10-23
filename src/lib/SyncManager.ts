@@ -315,7 +315,7 @@ export class SyncManager {
         // (service-role only — clients can't write vectors directly, by RLS design).
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) throw new Error('no_session');
-        const res = await fetch('/.netlify/functions/promote-food-cache', {
+        const res = await fetch('/api/promote-food-cache', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

@@ -1115,7 +1115,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
       const session = (await supabase.auth.getSession()).data.session;
       if (!session) throw new Error('Not authenticated');
 
-      const urlRes = await fetch('/.netlify/functions/get-upload-url', {
+      const urlRes = await fetch('/api/get-upload-url', {
         method:  'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1144,7 +1144,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
       if (!uploadRes.ok) throw new Error('Image upload failed — please try again');
 
       // Step 3: Call ai-vision with only the storage path (not the image bytes)
-      const visionRes = await fetch('/.netlify/functions/ai-vision', {
+      const visionRes = await fetch('/api/ai-vision', {
         method:  'POST',
         headers: {
           'Content-Type': 'application/json',

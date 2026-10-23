@@ -57,7 +57,7 @@ export function VerdictDashboard() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
-      const res = await fetch('/.netlify/functions/cron-morning-verdict', {
+      const res = await fetch('/api/cron-morning-verdict', {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (!res.ok) return;
