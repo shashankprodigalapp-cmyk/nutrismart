@@ -123,7 +123,7 @@ export function VerdictDashboard() {
 
   return (
     <div onClick={trackInteraction}
-      className="mx-4 mb-3 bg-gradient-to-br from-[#C8F75E]/12 to-[#C8F75E]/4 border border-[#C8F75E]/30 rounded-2xl p-4">
+      className="mx-4 md:mx-8 mb-3 bg-gradient-to-br from-[#C8F75E]/12 to-[#C8F75E]/4 border border-[#C8F75E]/30 rounded-2xl p-4">
       <div className="flex items-start justify-between gap-2 mb-2">
         <p className="text-[10px] font-bold text-[#C8F75E] uppercase tracking-[1px]">{greeting}</p>
         <button onClick={dismiss} aria-label="Dismiss"

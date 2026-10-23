@@ -315,7 +315,7 @@ function MyUsualsGrid({
         <div>
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] font-bold text-[#636366] uppercase tracking-[1px]">My Usuals</span>
-            <span className="text-[9px] text-[#2C2C2E]">hold to hide</span>
+            <span className="text-[10px] text-[#636366]">press and hold to hide</span>
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {usuals.map((item) => (
@@ -331,7 +331,7 @@ function MyUsualsGrid({
       )}
 
       {/* Recents */}
-      {recents.length > 0 && (
+      {recents.filter(r => !usuals.find(u => u.food_id === r.food_id)).length > 0 && (
         <div>
           <div className="text-[10px] font-bold text-[#636366] uppercase tracking-[1px] mb-2">Recents</div>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -618,12 +618,14 @@ function TodayLog({
     return map;
   }, [entries]);
 
+  const [confirmId, setConfirmId] = React.useState<string | null>(null);
+
   if (!entries.length) {
     return (
       <div className="mx-4 mt-6 text-center">
         <div className="text-[32px] mb-2">🍽️</div>
         <p className="text-[13px] text-[#636366]">nothing logged yet</p>
-        <p className="text-[11px] text-[#2C2C2E] mt-1">search above or tap a recent food</p>
+        <p className="text-[12px] text-[#8E8E93] mt-1">Search for a food, or tap one of your usuals</p>
       </div>
     );
   }
@@ -632,7 +634,7 @@ function TodayLog({
     <div className="px-4 mt-4 pb-6">
       <div className="flex justify-between items-center mb-3">
         <span className="text-[10px] font-bold text-[#636366] uppercase tracking-[1px]">Today</span>
-        <span className="text-[10px] text-[#636366]">{entries.length} items</span>
+        <span className="text-[10px] text-[#636366]">{entries.length} {entries.length === 1 ? 'item' : 'items'}</span>
       </div>
       {(['breakfast', 'lunch', 'snack', 'dinner'] as Meal[]).map((meal) => {
         const items = grouped.get(meal) ?? [];
@@ -675,11 +677,14 @@ function TodayLog({
                   <div className="text-right flex-shrink-0">
                     <div className="text-[14px] font-bold text-[#F5F5F5]">{Math.round(entry.cal)}</div>
                     <button
-                      onClick={() => onDelete(entry.id)}
-                      className="text-[10px] text-[#636366] mt-0.5 hover:text-[#FF6B6B] transition-colors"
-                      aria-label={`Delete ${entry.food_name}`}
+                      onClick={() => {
+                        if (confirmId === entry.id) { setConfirmId(null); onDelete(entry.id); }
+                        else { setConfirmId(entry.id); setTimeout(() => setConfirmId(c => (c === entry.id ? null : c)), 3000); }
+                      }}
+                      className={`mt-0.5 min-h-[32px] min-w-[44px] px-2 rounded-lg text-[11px] font-semibold transition-colors ${confirmId === entry.id ? 'bg-[#FF6B6B]/15 text-[#FF6B6B]' : 'text-[#8E8E93] hover:text-[#FF6B6B]'}`}
+                      aria-label={confirmId === entry.id ? `Confirm remove ${entry.food_name}` : `Remove ${entry.food_name}`}
                     >
-                      ✕
+                      {confirmId === entry.id ? 'Remove?' : '✕'}
                     </button>
                   </div>
                 </div>
@@ -845,7 +850,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           { name: 'name_gu', weight: 1.5 }, // Gujarati alias
           // 'category' is not in the Food interface — omitted
         ],
-        threshold:    0.4,
+        threshold:    0.3,
         includeScore: true,
       });
 
@@ -918,7 +923,10 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
   useEffect(() => {
     if (!query.trim()) { setResults([]); return; }
     const raw = fuseRef.current?.search(query) ?? [];
-    setResults(raw.map(r => r.item).slice(0, 12));
+    const q = query.trim().toLowerCase();
+    const rank = (n: string) => { const l = n.toLowerCase(); return l.startsWith(q) ? 0 : l.split(/[^a-z0-9]+/).some(w => w.startsWith(q)) ? 1 : l.includes(q) ? 2 : 3; };
+    const ranked = raw.map((r, i) => ({ r, i, k: rank(r.item.name) })).sort((a, b) => a.k - b.k || a.i - b.i);
+    setResults(ranked.map(x => x.r.item).slice(0, 12));
   }, [query]);
 
   // ── Totals ───────────────────────────────────────────────────────────────
@@ -1296,7 +1304,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
         <VerdictDashboard />
       </div>
       {/* ── Two-column layout on md+ screens ── */}
-      <div className="md:grid md:grid-cols-2 md:gap-6 md:items-start md:px-6 md:pt-2">
+      <div className="md:grid md:grid-cols-2 md:gap-6 md:items-start md:px-8 md:pt-2">
 
         {/* ══ LEFT COLUMN — stats + today's log ══ */}
         <div>
