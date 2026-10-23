@@ -63,6 +63,8 @@ export class SyncManager {
   private getIsRefreshing: RefreshCheck;
   private isFlushing:      boolean = false;
   private flushTimer:      ReturnType<typeof setTimeout> | null = null;
+  private retryTimer:      ReturnType<typeof setInterval> | null = null;
+  private flushStartedAt:  number = 0;
 
   constructor(opts: SyncManagerOptions) {
     this.userId          = opts.userId;
@@ -77,17 +79,23 @@ export class SyncManager {
    * Registers network listeners and pulls today's server data.
    */
   async init(): Promise<void> {
-    // Pull today's data from Supabase into Dexie on startup
-    await this.pullToday();
+    // Listen for network restoration FIRST — a slow/hung server pull while
+    // offline must never stop these listeners from being registered.
+    window.addEventListener('online', this.handleOnline);
+    window.addEventListener('offline', this.handleOffline);
 
-    // Flush any pending items immediately if online
+    // Flush any pending items immediately if online (pull is queue-aware, so
+    // it is safe to run alongside the flush).
     if (navigator.onLine) {
       this.scheduleFlush();
     }
 
-    // Listen for network restoration
-    window.addEventListener('online', this.handleOnline);
-    window.addEventListener('offline', this.handleOffline);
+    // Pull today's data in the background — never block start-up on it.
+    void this.pullToday().catch(() => {});
+
+    // Safety net: retry every 30s while online, in case an 'online' event was
+    // missed or the first attempt ran before the network was fully ready.
+    this.retryTimer = setInterval(() => { if (navigator.onLine) void this.flush(); }, 30_000);
 
     // Register Background Sync (Android Chrome)
     this.registerBackgroundSync();
@@ -101,6 +109,7 @@ export class SyncManager {
     window.removeEventListener('offline', this.handleOffline);
     document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     if (this.flushTimer) clearTimeout(this.flushTimer);
+    if (this.retryTimer) clearInterval(this.retryTimer);
   }
 
   // ── EVENT HANDLERS ────────────────────────────────────────────────────────
@@ -227,6 +236,8 @@ export class SyncManager {
    * Sequential — never parallel — to preserve insert-before-delete ordering.
    */
   async flush(): Promise<void> {
+    // Watchdog: a flush stuck for >60s (e.g. a request hung while the signal dropped) is reset.
+    if (this.isFlushing && Date.now() - this.flushStartedAt > 60_000) this.isFlushing = false;
     if (this.isFlushing || !navigator.onLine) return;
 
     // Cross-tab exclusivity: two open tabs must not double-flush the same
@@ -251,6 +262,7 @@ export class SyncManager {
     }
 
     this.isFlushing = true;
+    this.flushStartedAt = Date.now();
     try {
       // AUDIT FIX R1: proper indexed query — no undefined-value semantics.
       // sortBy('id') preserves insertion order (sequential flush invariant).
@@ -260,37 +272,55 @@ export class SyncManager {
         .filter(item => !item.failed);
 
       for (const item of pending) {
-        await this.processQueueItem(item);
+        const r = await this.processQueueItem(item);
+        if (r === 'network') { setTimeout(() => this.scheduleFlush(), 15_000); break; }
       }
     } finally {
       this.isFlushing = false;
     }
   }
 
-  private async processQueueItem(item: SyncQueueItem): Promise<void> {
-    const attempt = async (): Promise<void> => {
-      const { error } = await this.executeAction(item);
+  /** True when the request never reached the server (offline, or network just came back). */
+  private isNetworkError(e: any): boolean {
+    if (!e) return false;
+    if (e.status === 0) return true;
+    const msg = String(e.message ?? e);
+    return !e.code && /failed to fetch|networkerror|network request failed|load failed|fetch failed|timed out/i.test(msg);
+  }
+
+  private async processQueueItem(item: SyncQueueItem): Promise<'ok' | 'network'> {
+    const attempt = async (): Promise<'ok' | 'network'> => {
+      let result: { error: any };
+      try {
+        result = await this.executeAction(item);
+      } catch (e) {
+        if (this.isNetworkError(e)) return 'network';
+        throw e;
+      }
+      const { error } = result;
 
       if (!error) {
-        // Mark synced
         await localDb.sync_queue.update(item.id!, {
           synced:    1,
           synced_at: new Date().toISOString(),
         });
-        return;
+        return 'ok';
       }
+
+      // Network trouble: keep the item queued — it is NOT a failure.
+      if (this.isNetworkError(error)) return 'network';
 
       // 4xx: data error — mark failed, do not retry
       if (error.status && error.status >= 400 && error.status < 500) {
         await localDb.sync_queue.update(item.id!, { failed: true });
-        return;
+        return 'ok';
       }
 
-      // 5xx / network: retry with exponential backoff
+      // 5xx: retry with exponential backoff
       const retries = item.retry_count;
       if (retries >= MAX_RETRY) {
         await localDb.sync_queue.update(item.id!, { failed: true });
-        return;
+        return 'ok';
       }
 
       await localDb.sync_queue.update(item.id!, {
@@ -299,10 +329,10 @@ export class SyncManager {
 
       const delay = RETRY_DELAYS_MS[Math.min(retries, RETRY_DELAYS_MS.length - 1)];
       await new Promise(r => setTimeout(r, delay));
-      await attempt();
+      return attempt();
     };
 
-    await attempt();
+    return attempt();
   }
 
   private async executeAction(item: SyncQueueItem): Promise<{ error: any }> {
