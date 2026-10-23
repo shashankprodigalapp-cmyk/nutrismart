@@ -62,7 +62,7 @@ export default function TodayTab() {
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] ?? 'there';
 
   return (
-    <div className="p-4 pb-24 max-w-lg mx-auto space-y-4">
+    <div className="p-4 pb-24 max-w-lg md:max-w-3xl md:p-8 lg:max-w-4xl mx-auto space-y-4">
       {/* Greeting */}
       <div className="pt-2">
         <h1 className="text-xl font-semibold text-white">{greeting}, {firstName} 👋</h1>

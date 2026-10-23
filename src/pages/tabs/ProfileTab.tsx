@@ -93,10 +93,10 @@ function NutritionGoalsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60" />
       <div
-        className="relative w-full max-w-md bg-[#1C1C1E] border border-white/[0.08] rounded-t-3xl px-5 pt-5 pb-8"
+        className="relative w-full max-w-md bg-[#1C1C1E] border border-white/[0.08] rounded-t-3xl md:rounded-3xl px-5 pt-5 pb-8"
         onClick={e => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
@@ -144,10 +144,10 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60" />
       <div
-        className="relative w-full max-w-md bg-[#1C1C1E] border border-white/[0.08] rounded-t-3xl px-5 pt-5 pb-8"
+        className="relative w-full max-w-md bg-[#1C1C1E] border border-white/[0.08] rounded-t-3xl md:rounded-3xl px-5 pt-5 pb-8"
         onClick={e => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
@@ -186,10 +186,10 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
 
 function DataPrivacyModal({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60" />
       <div
-        className="relative w-full max-w-md bg-[#1C1C1E] border border-white/[0.08] rounded-t-3xl px-5 pt-5 pb-8"
+        className="relative w-full max-w-md bg-[#1C1C1E] border border-white/[0.08] rounded-t-3xl md:rounded-3xl px-5 pt-5 pb-8"
         onClick={e => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
@@ -289,7 +289,7 @@ export default function ProfileTab() {
 
   return (
     <>
-      <div className="p-4 pb-24 max-w-lg mx-auto space-y-4">
+      <div className="p-4 pb-24 max-w-lg md:max-w-2xl md:p-8 mx-auto space-y-4">
         {/* Avatar + name */}
         <div className="bg-[#1C1C1E] rounded-2xl p-5 flex items-center gap-4">
           <div className="w-16 h-16 rounded-full bg-[#C8F75E] flex items-center justify-center">

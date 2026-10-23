@@ -109,7 +109,7 @@ export function PushPermissionPrompt({ shouldPrompt }: PushPermissionPromptProps
       />
 
       {/* Prompt card — positioned near bottom, above nav */}
-      <div className="fixed bottom-20 inset-x-4 z-50 bg-[#1C1C1E] border border-[#C8F75E]/20 rounded-2xl px-4 py-4 shadow-xl">
+      <div className="fixed bottom-20 inset-x-4 md:bottom-6 md:inset-x-auto md:right-6 md:w-96 z-50 bg-[#1C1C1E] border border-[#C8F75E]/20 rounded-2xl px-4 py-4 shadow-xl">
         {result === 'idle' && (
           <>
             <div className="flex items-start gap-3 mb-3">
