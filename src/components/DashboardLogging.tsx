@@ -1049,12 +1049,48 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
     // Smart Quick-Log bypass — local cache first, AI only on miss
     const served = await trySmartQuickLog(query);
     if (served) return;
-    // Trigger AI text search via the search button — the actual network call
-    // is handled by ai-search.ts Netlify function. For now, open the camera
-    // photo flow if the query is empty, otherwise the user meant text AI search.
-    // The ns:ai-search event is still dispatched for any listeners (e.g. a
-    // dedicated AI search modal that may be added in Phase 2).
-    window.dispatchEvent(new CustomEvent('ns:ai-search', { detail: { query } }));
+    const q = query.trim();
+    if (!q) { setPhotoError('Type a food name first, then tap "Search with AI".'); return; }
+    setPhotoLoading(true);
+    setPhotoError(null);
+    try {
+      const session = (await supabase.auth.getSession()).data.session;
+      if (!session) throw new Error('Not authenticated');
+      const res = await fetch('/api/ai-search', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body:    JSON.stringify({ mode: 'name', query: q }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 429) {
+        setPhotoError(data.message ?? 'You have used all 5 AI searches for today. They reset tomorrow.');
+        return;
+      }
+      if (!res.ok) throw new Error(data.message ?? 'AI search failed — please try again');
+      if (!data.found || !data.result) {
+        setPhotoError(data.message ?? 'Could not identify this food. Try a simpler name.');
+        return;
+      }
+      const n = data.result;
+      setSheetFood({
+        id:       crypto.randomUUID(),
+        name:     n.name || q,
+        portion:  n.portion,
+        weight_g: n.weight_g,
+        calories: n.calories,
+        protein:  n.protein,
+        carbs:    n.carbs,
+        fat:      n.fat,
+        gl:       n.gl,
+        gi:       n.gi,
+        type:     'MR',
+        source:   'ai_search',
+      } as Food);
+    } catch (err: any) {
+      setPhotoError(err.message ?? 'AI search failed — please try again');
+    } finally {
+      setPhotoLoading(false);
+    }
   }, [aiOk, query, showUpgrade, trySmartQuickLog]);
 
   // ── PHOTO FOOD LOGGING ────────────────────────────────────────────────────

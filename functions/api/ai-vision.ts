@@ -40,7 +40,7 @@ async function identifyDishesFromPhoto(
   mimeType: string,
   env:      Env,
 ): Promise<IdentifiedDish[]> {
-  const GEMINI_VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const GEMINI_VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
   const prompt = `You are an expert in identifying Indian food from photos.
 Identify ALL food items visible in this image.
 Return ONLY a valid JSON array:
@@ -68,7 +68,7 @@ Rules:
             { inline_data: { mime_type: mimeType, data: base64 } },
           ],
         }],
-        generationConfig: { temperature: 0.2, maxOutputTokens: 600 },
+        generationConfig: { temperature: 0.2, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
       }),
     });
     clearTimeout(timeout);
@@ -94,7 +94,7 @@ async function getNutritionForDish(
   portion: string,
   env:     Env,
 ): Promise<ValidNutrition | null> {
-  const GEMINI_VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const GEMINI_VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
   const prompt = `Nutrition for Indian dish: "${name}" (${portion}).
 Return ONLY valid JSON:
 {"name":"${name}","portion":"${portion}","weight_g":0,"calories":0,"protein":0,"carbs":0,"fat":0,"gl":0,"gi":0,"confidence":"medium","source":"IFCT","notes":""}
@@ -110,7 +110,7 @@ Use IFCT values. Protein must be less than calories/4.`;
       signal:  controller.signal,
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 400 },
+        generationConfig: { temperature: 0.1, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
       }),
     });
     clearTimeout(timeout);

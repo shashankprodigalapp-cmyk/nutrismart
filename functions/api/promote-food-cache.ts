@@ -22,7 +22,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     return jsonResponse(env, 422, { error: 'invalid_nutrition', issues: validation.errors });
   }
 
-  const EMBED_URL = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${env.GEMINI_API_KEY}`;
+  const EMBED_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${env.GEMINI_API_KEY}`;
 
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), 4000);
@@ -32,7 +32,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'models/text-embedding-004',
+        model: 'models/gemini-embedding-001',
+        outputDimensionality: 768,
         content: { parts: [{ text: food_name.toLowerCase().trim() }] },
       }),
       signal: controller.signal,

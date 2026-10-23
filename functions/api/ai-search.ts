@@ -17,7 +17,7 @@ const REQUEST_TIMEOUT_MS = 8000;
 const CACHE_SIMILARITY_THRESHOLD = 0.9;
 
 async function embedQuery(text: string, env: Env): Promise<number[] | null> {
-  const EMBED_URL = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${env.GEMINI_API_KEY}`;
+  const EMBED_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent?key=${env.GEMINI_API_KEY}`;
   try {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), 3000);
@@ -25,7 +25,8 @@ async function embedQuery(text: string, env: Env): Promise<number[] | null> {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model:   'models/text-embedding-004',
+        model:   'models/gemini-embedding-001',
+        outputDimensionality: 768,
         content: { parts: [{ text: text.toLowerCase().trim() }] },
       }),
       signal: controller.signal,
@@ -102,7 +103,7 @@ function getHinglishFallback(description: string): ValidNutrition[] {
 }
 
 async function geminiNameLookup(foodName: string, env: Env): Promise<ValidNutrition | null> {
-  const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
   const prompt = `You are a nutrition database for Indian cuisine. Return ONLY valid JSON, no markdown.
 Food: "${foodName}"
 Return exactly this schema:
@@ -120,12 +121,15 @@ Calories must be > 0. Protein must be less than calories/4.`;
       signal:  controller.signal,
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 400 },
+        generationConfig: { temperature: 0.1, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
       }),
     });
     clearTimeout(timeout);
 
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error('[ai-search] Gemini error', res.status, (await res.text()).slice(0, 300));
+      return null;
+    }
 
     const data = await res.json() as any;
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
@@ -140,7 +144,7 @@ Calories must be > 0. Protein must be less than calories/4.`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: retryPrompt }] }],
-          generationConfig: { temperature: 0.0, maxOutputTokens: 400 },
+          generationConfig: { temperature: 0.0, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
         }),
       });
       if (!retryRes.ok) return null;
