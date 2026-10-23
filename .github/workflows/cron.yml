@@ -1,0 +1,51 @@
+name: Scheduled push jobs
+
+# Cloudflare Pages has no built-in cron, so GitHub triggers the two push
+# endpoints on a schedule (replaces the old netlify.toml schedules).
+#
+#   morning verdict : daily 02:00 UTC  = 07:30 IST
+#   energy check-in : hourly
+#
+# These send REAL push notifications. They run ONLY on the schedule below
+# (or a manual "Run workflow"), never on push/PR.
+#
+# One-time setup: GitHub repo -> Settings -> Secrets and variables -> Actions
+#   -> New repository secret -> name CRON_SECRET, value = the same CRON_SECRET
+#   configured in Cloudflare Pages.
+on:
+  schedule:
+    - cron: '0 2 * * *'
+    - cron: '5 * * * *'
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Which job to run now'
+        type: choice
+        options: [morning-verdict, energy-checkin]
+        default: morning-verdict
+
+env:
+  BASE_URL: ${{ vars.BASE_URL || 'https://nutrismart-3bb.pages.dev' }}
+
+jobs:
+  morning-verdict:
+    if: github.event_name == 'workflow_dispatch' && inputs.job == 'morning-verdict' || github.event.schedule == '0 2 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/cron-morning-verdict
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          test -n "$CRON_SECRET" || { echo "CRON_SECRET secret is not set"; exit 1; }
+          curl -sS --fail-with-body -X POST -H "x-cron-secret: $CRON_SECRET" "$BASE_URL/api/cron-morning-verdict"
+
+  energy-checkin:
+    if: github.event_name == 'workflow_dispatch' && inputs.job == 'energy-checkin' || github.event.schedule == '5 * * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/energy-checkin-cron
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          test -n "$CRON_SECRET" || { echo "CRON_SECRET secret is not set"; exit 1; }
+          curl -sS --fail-with-body -X POST -H "x-cron-secret: $CRON_SECRET" "$BASE_URL/api/energy-checkin-cron"
