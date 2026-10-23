@@ -37,7 +37,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
   const base64 = btoa(binary);
 
-  const GEMINI_VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const GEMINI_VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${env.GEMINI_API_KEY}`;
 
   const prompt = `This is a screenshot of a UPI payment confirmation from an Indian
 payment app (GPay/PhonePe/Paytm/BHIM). Extract:
@@ -60,7 +60,7 @@ If no transaction ID is visible: {"utr":null,"amount":null}`;
             { inline_data: { mime_type: 'image/jpeg', data: base64 } },
           ],
         }],
-        generationConfig: { temperature: 0, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
+        generationConfig: { temperature: 0, maxOutputTokens: 2048 },
       }),
     });
     clearTimeout(t);

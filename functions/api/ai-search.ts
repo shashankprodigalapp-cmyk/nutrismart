@@ -103,7 +103,7 @@ function getHinglishFallback(description: string): ValidNutrition[] {
 }
 
 async function geminiNameLookup(foodName: string, env: Env, dbg: { reason?: string } = {}): Promise<ValidNutrition | null> {
-  const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${env.GEMINI_API_KEY}`;
   const prompt = `You are a nutrition database for Indian cuisine. Return ONLY valid JSON, no markdown.
 Food: "${foodName}"
 Return exactly this schema:
@@ -121,7 +121,7 @@ Calories must be > 0. Protein must be less than calories/4.`;
       signal:  controller.signal,
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
+        generationConfig: { temperature: 0.1, maxOutputTokens: 2048 },
       }),
     });
     clearTimeout(timeout);
@@ -146,7 +146,7 @@ Calories must be > 0. Protein must be less than calories/4.`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: retryPrompt }] }],
-          generationConfig: { temperature: 0.0, maxOutputTokens: 1024, thinkingConfig: { thinkingBudget: 0 } },
+          generationConfig: { temperature: 0.0, maxOutputTokens: 2048 },
         }),
       });
       if (!retryRes.ok) return null;
