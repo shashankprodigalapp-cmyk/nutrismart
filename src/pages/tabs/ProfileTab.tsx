@@ -4,6 +4,8 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { usePWAInstall } from '../../lib/pwaInstall';
+import { InstallHelpModal } from '../../components/InstallHelpModal';
 
 interface Profile {
   full_name:      string;
@@ -229,7 +231,8 @@ export default function ProfileTab() {
   const { user, signOut } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState<'goals' | 'notifications' | 'privacy' | null>(null);
+  const [modal, setModal] = useState<'goals' | 'notifications' | 'privacy' | 'install' | null>(null);
+  const { installed, canPrompt, promptInstall } = usePWAInstall();
 
   useEffect(() => {
     if (!user) return;
@@ -274,6 +277,14 @@ export default function ProfileTab() {
     { icon: '🎯', label: 'Nutrition Goals',  onClick: () => setModal('goals') },
     { icon: '🔔', label: 'Notifications',    onClick: () => setModal('notifications') },
     { icon: '📊', label: 'Data & Privacy',   onClick: () => setModal('privacy') },
+    // Always available while the app isn't installed (dismissed the pop-up, or uninstalled later)
+    ...(installed ? [] : [{
+      icon: '📲', label: 'Install app',
+      onClick: async () => {
+        if (canPrompt) { const r = await promptInstall(); if (r !== 'unavailable') return; }
+        setModal('install');
+      },
+    }]),
   ];
 
   return (
@@ -371,6 +382,9 @@ export default function ProfileTab() {
       )}
       {modal === 'privacy' && (
         <DataPrivacyModal onClose={() => setModal(null)} />
+      )}
+      {modal === 'install' && (
+        <InstallHelpModal onClose={() => setModal(null)} />
       )}
     </>
   );

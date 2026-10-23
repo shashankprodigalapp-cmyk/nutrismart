@@ -1,67 +1,58 @@
 /**
  * PWAInstallBanner.test.tsx
  *
- * Tests the PWA install prompt banner component behaviour:
- *   1. Hidden by default (no beforeinstallprompt event fired)
- *   2. Shown when beforeinstallprompt fires (and not in standalone mode)
- *   3. Not shown when already in standalone display mode
- *   4. Not shown when pwa_banner_dismissed in sessionStorage
- *   5. Dismiss button writes to sessionStorage and hides banner
- *   6. Install button calls deferredPrompt.prompt()
- *   7. Banner hides after user accepts the install prompt
+ *   1. Hidden when logged out
+ *   2. Hidden until the browser offers an install prompt
+ *   3. Shown to a logged-in user when beforeinstallprompt fires
+ *   4. Not shown when already installed (standalone / iOS standalone)
+ *   5. Not shown while snoozed (dismissed < 7 days ago); shown again after expiry
+ *   6. Dismiss snoozes it for 7 days
+ *   7. Install button calls deferredPrompt.prompt() and hides on accept
+ *   8. Declining the native dialog snoozes it
  */
-
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import PWAInstallBanner from '../../components/PWAInstallBanner';
 
-// ── matchMedia mock ────────────────────────────────────────────────────────
+let mockUser: any = { id: 'u1' };
+vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: mockUser }) }));
+
+import PWAInstallBanner from '../../components/PWAInstallBanner';
+import { __resetPwaInstallForTests } from '../../lib/pwaInstall';
 
 function setStandaloneMode(matches: boolean) {
   Object.defineProperty(window, 'matchMedia', {
-    configurable: true,
-    writable: true,
+    configurable: true, writable: true,
     value: vi.fn().mockReturnValue({
-      matches,
-      media: '(display-mode: standalone)',
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
+      matches, media: '(display-mode: standalone)', onchange: null,
+      addListener: vi.fn(), removeListener: vi.fn(),
+      addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
     }),
   });
 }
 
-// ── Helper: fire beforeinstallprompt ─────────────────────────────────────
-
-function fireInstallPromptEvent(promptFn = vi.fn().mockResolvedValue(undefined)) {
-  const userChoicePromise = Promise.resolve({ outcome: 'accepted' as const });
+function fireInstallPromptEvent(
+  promptFn = vi.fn().mockResolvedValue(undefined),
+  outcome: 'accepted' | 'dismissed' = 'accepted',
+) {
   const event = Object.assign(new Event('beforeinstallprompt'), {
     prompt: promptFn,
-    userChoice: userChoicePromise,
+    userChoice: Promise.resolve({ outcome }),
     preventDefault: vi.fn(),
   });
   window.dispatchEvent(event);
-  return { event, promptFn, userChoicePromise };
+  return { promptFn };
 }
 
-// ── Setup ─────────────────────────────────────────────────────────────────
-
 beforeEach(() => {
+  localStorage.clear();
   sessionStorage.clear();
+  __resetPwaInstallForTests();
+  mockUser = { id: 'u1' };
   setStandaloneMode(false);
-  // Clear navigator.standalone
   Object.defineProperty(navigator, 'standalone', { configurable: true, value: undefined });
 });
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-// ── Tests ─────────────────────────────────────────────────────────────────
+afterEach(() => { vi.restoreAllMocks(); });
 
 describe('PWAInstallBanner', () => {
   it('renders nothing before beforeinstallprompt fires', () => {
@@ -69,7 +60,14 @@ describe('PWAInstallBanner', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('shows the banner when beforeinstallprompt fires', async () => {
+  it('renders nothing when logged out, even if the browser offers install', async () => {
+    mockUser = null;
+    render(<PWAInstallBanner />);
+    await act(async () => { fireInstallPromptEvent(); });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('shows to a logged-in user when beforeinstallprompt fires', async () => {
     render(<PWAInstallBanner />);
     await act(async () => { fireInstallPromptEvent(); });
     expect(screen.getByRole('dialog', { name: 'Install NutriSmart' })).toBeTruthy();
@@ -83,56 +81,50 @@ describe('PWAInstallBanner', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('does NOT show when navigator.standalone is true (iOS Safari)', async () => {
+  it('does NOT show when navigator.standalone is true (iOS home-screen app)', async () => {
     Object.defineProperty(navigator, 'standalone', { configurable: true, value: true });
     render(<PWAInstallBanner />);
     await act(async () => { fireInstallPromptEvent(); });
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('does NOT show when pwa_banner_dismissed is set in sessionStorage', async () => {
-    sessionStorage.setItem('pwa_banner_dismissed', '1');
+  it('does NOT show while snoozed', async () => {
+    localStorage.setItem('pwa_install_snoozed_until', String(Date.now() + 86_400_000));
     render(<PWAInstallBanner />);
     await act(async () => { fireInstallPromptEvent(); });
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('dismiss button sets sessionStorage and hides banner', async () => {
+  it('shows again once the snooze has expired', async () => {
+    localStorage.setItem('pwa_install_snoozed_until', String(Date.now() - 1000));
     render(<PWAInstallBanner />);
     await act(async () => { fireInstallPromptEvent(); });
-
-    const dismissBtn = screen.getByLabelText('Dismiss');
-    fireEvent.click(dismissBtn);
-
-    expect(sessionStorage.getItem('pwa_banner_dismissed')).toBe('1');
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('Install button calls deferredPrompt.prompt()', async () => {
-    const promptFn = vi.fn().mockResolvedValue(undefined);
-    render(<PWAInstallBanner />);
-    await act(async () => { fireInstallPromptEvent(promptFn); });
-
-    const installBtn = screen.getByText('Install');
-    await act(async () => { fireEvent.click(installBtn); });
-
-    expect(promptFn).toHaveBeenCalledOnce();
-  });
-
-  it('hides banner after user accepts the install prompt', async () => {
-    const promptFn = vi.fn().mockResolvedValue(undefined);
-    render(<PWAInstallBanner />);
-    await act(async () => { fireInstallPromptEvent(promptFn); });
-
-    // Banner is visible
     expect(screen.getByRole('dialog')).toBeTruthy();
+  });
 
-    // Click Install → outcome = 'accepted' → banner should hide
-    const installBtn = screen.getByText('Install');
-    await act(async () => { fireEvent.click(installBtn); });
+  it('dismiss button snoozes for ~7 days and hides the banner', async () => {
+    render(<PWAInstallBanner />);
+    await act(async () => { fireInstallPromptEvent(); });
+    fireEvent.click(screen.getByLabelText('Dismiss'));
+    const until = Number(localStorage.getItem('pwa_install_snoozed_until'));
+    expect(until).toBeGreaterThan(Date.now() + 6 * 86_400_000);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
 
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
+  it('Install button calls deferredPrompt.prompt() and hides after accept', async () => {
+    const promptFn = vi.fn().mockResolvedValue(undefined);
+    render(<PWAInstallBanner />);
+    await act(async () => { fireInstallPromptEvent(promptFn); });
+    await act(async () => { fireEvent.click(screen.getByText('Install')); });
+    expect(promptFn).toHaveBeenCalledOnce();
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('declining the native dialog snoozes the banner', async () => {
+    render(<PWAInstallBanner />);
+    await act(async () => { fireInstallPromptEvent(vi.fn().mockResolvedValue(undefined), 'dismissed'); });
+    await act(async () => { fireEvent.click(screen.getByText('Install')); });
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(Number(localStorage.getItem('pwa_install_snoozed_until'))).toBeGreaterThan(Date.now());
   });
 });
