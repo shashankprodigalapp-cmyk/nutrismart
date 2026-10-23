@@ -353,7 +353,7 @@ function MyUsualsGrid({
 
       {/* Hide confirmation sheet */}
       {hiding && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 md:items-center md:p-6" onClick={() => setHiding(null)}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 md:items-center md:p-6" onClick={() => setHiding(null)}>
           <div className="w-full max-w-xl bg-[#1C1C1E] rounded-t-3xl md:rounded-3xl px-5 pt-3 pb-10 md:pb-6" onClick={e => e.stopPropagation()}>
             <div className="w-9 h-1 bg-[#3C3C3E] rounded-full mx-auto mb-4" />
             <p className="text-[14px] font-semibold text-[#F5F5F5] mb-1">Hide from My Usuals?</p>
@@ -457,7 +457,7 @@ function AddFoodSheet({
   const meals: Meal[] = ['breakfast', 'lunch', 'snack', 'dinner'];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 md:items-center md:p-6" onClick={onClose}>
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 md:items-center md:p-6" onClick={onClose}>
       <div
         className="w-full max-w-xl bg-[#1C1C1E] rounded-t-3xl md:rounded-3xl px-5 pt-3 pb-10 md:pb-6 max-h-[90dvh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
