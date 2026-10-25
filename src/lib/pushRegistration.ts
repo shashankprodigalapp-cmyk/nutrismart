@@ -52,6 +52,20 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
 
+/** If this device was subscribed with an older VAPID key, drop that subscription so a fresh one can be made. */
+async function dropStaleSubscription(reg: ServiceWorkerRegistration, keyStr: string, userId: string): Promise<void> {
+  try {
+    const existing = await reg.pushManager.getSubscription();
+    if (!existing) return;
+    const cur  = existing.options?.applicationServerKey;
+    const want = urlBase64ToUint8Array(keyStr);
+    const same = !!cur && cur.byteLength === want.length && new Uint8Array(cur).every((b, i) => b === want[i]);
+    if (same) return;
+    await supabase.from('push_subscriptions').delete().eq('user_id', userId).eq('endpoint', existing.endpoint);
+    await existing.unsubscribe();
+  } catch { /* best effort */ }
+}
+
 // ── MAIN API ──────────────────────────────────────────────────────────────────
 
 /**
@@ -113,6 +127,7 @@ export async function registerPushSubscription(
   }
 
   // 5. Subscribe via PushManager
+  await dropStaleSubscription(registration, vapidPublicKey, userId);
   let subscription: PushSubscription;
   try {
     subscription = await registration.pushManager.subscribe({
@@ -163,6 +178,7 @@ export async function ensurePushSubscription(userId: string): Promise<boolean> {
     if (!vapidPublicKey) return false;
 
     const registration = await navigator.serviceWorker.ready;
+    await dropStaleSubscription(registration, vapidPublicKey, userId);
     let subscription = await registration.pushManager.getSubscription();
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({
