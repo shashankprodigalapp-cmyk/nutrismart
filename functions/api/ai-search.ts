@@ -293,7 +293,6 @@ async function findInMasterFoods(name: string, env: Env): Promise<ValidNutrition
       .from('master_foods')
       .select('name, portion, weight_g, calories, protein, carbs, fat, gl, gi')
       .ilike('name', name.trim().replace(/[%_]/g, ''))
-      .eq('verified', true)
       .limit(1)
       .maybeSingle();
     if (!data) return null;
@@ -398,6 +397,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         });
         return jsonResponse(env, 200, { found: true, result: exact, cached: true });
       }
+
+      // Same words already answered before? Free, and no embedding call needed.
+      try {
+        const keys = Array.from(new Set([query.trim().toLowerCase(), normalizeFoodKey(query)]));
+        const { data: same } = await supabaseAdmin.from('food_semantic_cache')
+          .select('id, nutritional_jsonb').in('food_name', keys).limit(1).maybeSingle();
+        if (same?.nutritional_jsonb) {
+          supabaseAdmin.rpc('record_cache_hit', { p_cache_id: same.id }).then(() => {});
+          await logEvent(env, auth.userId, 'ai_search_name', { query: query.trim().slice(0, 100), found: true, cache_hit: true, source: 'cache_exact' });
+          return jsonResponse(env, 200, { found: true, result: same.nutritional_jsonb, cached: true });
+        }
+      } catch { /* fall through to the next check */ }
 
       const embedding = await embedQuery(query.trim(), env);
       if (embedding) {
