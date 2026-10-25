@@ -1,4 +1,5 @@
 import type { Env } from '../_shared/auth';
+import { aiFetch } from '../_shared/aiLog';
 import {
   verifyJWT,
   checkRateLimit,
@@ -57,7 +58,7 @@ Rules:
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const res = await fetch(GEMINI_VISION_URL, {
+    const res = await aiFetch(env, 'vision', 'gemini', GEMINI_VISION_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       signal:  controller.signal,
@@ -104,7 +105,7 @@ Use IFCT values. Protein must be less than calories/4.`;
   const timeout = setTimeout(() => controller.abort(), 8000);
 
   try {
-    const res = await fetch(GEMINI_VISION_URL, {
+    const res = await aiFetch(env, 'vision_lookup', 'gemini', GEMINI_VISION_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       signal:  controller.signal,

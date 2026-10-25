@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { usePWAInstall } from '../../lib/pwaInstall';
 import { InstallHelpModal } from '../../components/InstallHelpModal';
+import { track } from '../../lib/analytics';
 import { fitMacros, matchPreset, presetGrams, splitPercent, PRESETS, type PresetKey } from '../../lib/macroMath';
 import { registerPushSubscription, ensurePushSubscription } from '../../lib/pushRegistration';
 
@@ -97,6 +98,7 @@ function NutritionGoalsModal({
     onSaved(payload);
     // Notify DashboardLogging to re-fetch targets immediately
     window.dispatchEvent(new Event('nutrismart:targets-updated'));
+    track('goals_saved');
     onClose();
   };
 
@@ -212,6 +214,7 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
     const ok = res.supported && res.granted;
     setPushEnabled(ok || Notification.permission === 'granted');
     setRegistered(ok);
+    if (ok) track('notifications_enabled');
     if (!res.supported) setTestMsg('This browser does not support notifications. On iPhone, add NutriSmart to your Home Screen first.');
     else if (!res.granted) setTestMsg('Notifications are blocked. Allow them for this site in your browser or phone settings, then try again.');
     setRequesting(false);

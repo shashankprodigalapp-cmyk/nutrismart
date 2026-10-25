@@ -10,6 +10,7 @@ import { ContextualAlerts }         from '../components/ContextualAlerts';
 import { initSyncManager }          from '../lib/SyncManager';
 import { localDb }                  from '../lib/localDb';
 import { ensurePushSubscription }   from '../lib/pushRegistration';
+import { track }                    from '../lib/analytics';
 
 const TodayTab    = React.lazy(() => import('./tabs/TodayTab'));
 const LogTab      = React.lazy(() => import('./tabs/LogTab'));
@@ -53,6 +54,13 @@ export default function AppShell() {
     const t = setTimeout(() => { void ensurePushSubscription(user.id); }, 3000);
     return () => clearTimeout(t);
   }, [user]);
+
+  const loc = useLocation();
+  useEffect(() => {
+    if (!user) return;
+    const screen = loc.pathname.replace('/app/', '').split('/')[0] || 'today';
+    track('screen_view', { screen }, 30 * 60 * 1000);
+  }, [user, loc.pathname]);
 
   return (
     <div className="min-h-dvh bg-[#111113] flex">

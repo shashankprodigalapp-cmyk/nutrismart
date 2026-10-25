@@ -1,4 +1,5 @@
 import type { Env } from '../_shared/auth';
+import { aiFetch } from '../_shared/aiLog';
 import {
   verifyJWT,
   checkRateLimit,
@@ -21,7 +22,7 @@ async function embedQuery(text: string, env: Env): Promise<number[] | null> {
   try {
     const controller = new AbortController();
     const t = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch(EMBED_URL, {
+    const res = await aiFetch(env, 'embed', 'gemini', EMBED_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -115,7 +116,7 @@ Calories must be > 0. Protein must be less than calories/4.`;
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const res = await fetch(GEMINI_URL, {
+    const res = await aiFetch(env, 'name', 'gemini', GEMINI_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       signal:  controller.signal,
@@ -141,7 +142,7 @@ Calories must be > 0. Protein must be less than calories/4.`;
       parsed = safeParseJSON(text);
     } catch {
       const retryPrompt = prompt + '\nIMPORTANT: Your previous response was not valid JSON. Return ONLY the JSON object, absolutely nothing else.';
-      const retryRes = await fetch(GEMINI_URL, {
+      const retryRes = await aiFetch(env, 'name', 'gemini', GEMINI_URL, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -171,7 +172,7 @@ async function claudeDescriptionLookup(description: string, env: Env): Promise<V
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const res = await fetch(CLAUDE_URL, {
+    const res = await aiFetch(env, 'describe', 'claude', CLAUDE_URL, {
       method:  'POST',
       headers: {
         'Content-Type':      'application/json',

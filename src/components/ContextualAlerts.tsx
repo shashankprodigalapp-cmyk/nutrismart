@@ -18,6 +18,7 @@
  */
 
 import { useTargets } from '../lib/useTargets';
+import { track } from '../lib/analytics';
 import React, {
   createContext,
   useCallback,
@@ -179,6 +180,7 @@ export function AlertProvider({
 
   const applyEventBudget = useCallback((type: EventType, estCals: number, name: string) => {
     const daytimeBudget = Math.max(200, baseCal - estCals);
+    track('planner_applied', { type });
     setEventBudget({
       active:        true,
       eventType:     type,

@@ -48,6 +48,7 @@ import { useProGate } from '../utils/proGatekeeper';
 import { todayIST } from '../lib/kitchenIntelligence';
 import { fitMacros } from '../lib/macroMath';
 import { useAlerts } from './ContextualAlerts';
+import { track } from '../lib/analytics';
 
 // ── DESIGN TOKENS ─────────────────────────────────────────────────────────────
 // Matches the CRED-style dark palette from the original app
@@ -749,6 +750,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
   const [photoResults,  setPhotoResults]  = useState<PhotoDish[] | null>(null);
   const [photoError,    setPhotoError]    = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const viaUsualRef   = useRef(false);   // true when the add-sheet was opened from My Usuals / frequents (usage stats only)
 
   const today   = todayIST();
   const fuseRef = useRef<Fuse<Food> | null>(null);
@@ -947,6 +949,11 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
     const rank = (n: string) => { const l = n.toLowerCase(); return l.startsWith(q) ? 0 : l.split(/[^a-z0-9]+/).some(w => w.startsWith(q)) ? 1 : l.includes(q) ? 2 : 3; };
     const ranked = raw.map((r, i) => ({ r, i, k: rank(r.item.name) })).sort((a, b) => a.k - b.k || a.i - b.i);
     setResults(ranked.map(x => x.r.item).slice(0, 12));
+    // Usage stat: a search that found nothing, so the food list can be improved. Waits 1.2 s so half-typed words are skipped.
+    if (ranked.length === 0 && q.length >= 3) {
+      const t = setTimeout(() => track('search_no_result', { q: q.slice(0, 60) }, 60_000), 1200);
+      return () => clearTimeout(t);
+    }
   }, [query]);
 
   // ── Totals ───────────────────────────────────────────────────────────────
@@ -984,6 +991,12 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
       await sm.enqueue('insert_log', entry);
     } catch { /* SyncManager may not be init yet — offline ok */ }
 
+    {
+      const src = sheetFood?.source ?? '';
+      const method = viaUsualRef.current ? 'usual' : src === 'ai_photo' ? 'photo' : /ai/i.test(src) ? 'ai_search' : 'search';
+      viaUsualRef.current = false;
+      track('food_logged', { method, meal: entryData.meal });
+    }
     setEntries(prev => [...prev, entry]);
     setSheetFood(null);
     setQuery('');
@@ -1257,6 +1270,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
       try { await getSyncManager().enqueue('insert_log', entry); } catch {}
       setEntries(prev => [...prev, entry]);
     }
+    track('food_logged', { method: 'template', meal });
     const updated = { ...template, use_count: template.use_count + 1 };
     await localDb.meal_templates.put(updated);
     try { await getSyncManager().enqueue('upsert_template', updated); } catch {}
@@ -1300,18 +1314,18 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
   const handleFrequentTap = useCallback(async (item: FoodAnalytic) => {
     // Try local custom_foods first (fast path)
     const localFood = await localDb.custom_foods.get(item.food_id);
-    if (localFood) { setSheetFood(localFood); return; }
+    if (localFood) { viaUsualRef.current = true; setSheetFood(localFood); return; }
 
     // Fall back to the master foods already in memory
     const masterFood = masterFoods.find(f => f.id === item.food_id);
-    if (masterFood) { setSheetFood(masterFood); return; }
+    if (masterFood) { viaUsualRef.current = true; setSheetFood(masterFood); return; }
 
     // Last resort: search by name in case food_id no longer matches
     // (edge case: food was re-seeded with different UUID)
     const byName = masterFoods.find(
       f => f.name.toLowerCase() === item.food_name.toLowerCase()
     );
-    if (byName) setSheetFood(byName);
+    if (byName) { viaUsualRef.current = true; setSheetFood(byName); }
   }, [masterFoods]);
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -1587,7 +1601,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           profile={profile}
           initialMeal={mealForHour(hour)}
           onConfirm={handleConfirmEntry}
-          onClose={() => setSheetFood(null)}
+          onClose={() => { viaUsualRef.current = false; setSheetFood(null); }}
         />
       )}
     </div>
