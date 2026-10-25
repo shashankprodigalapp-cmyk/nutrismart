@@ -91,6 +91,20 @@ async function profileBonus(admin: ReturnType<typeof getSupabaseAdmin>, userId: 
   } catch { return 0; }
 }
 
+/** Look at today's counter without changing it. */
+export async function peekRateLimit(
+  env: Env,
+  userId: string,
+  plan: 'free' | 'pro',
+  kind: RateKind = 'photo',
+): Promise<{ used: number; limit: number }> {
+  const admin = getSupabaseAdmin(env);
+  const istDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+  const { data } = await admin.from('rate_limits').select('count')
+    .eq('user_id', userId).eq('window_start', windowStartFor(istDate, kind)).maybeSingle();
+  return { used: data?.count ?? 0, limit: RATE_LIMITS[kind][plan] };
+}
+
 export async function checkRateLimit(
   env: Env,
   userId: string,

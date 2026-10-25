@@ -3,8 +3,7 @@ import {
   verifyJWT,
   getSupabaseAdmin,
   preflightResponse,
-  jsonResponse,
-} from '../_shared/auth';
+  jsonResponse, peekRateLimit } from '../_shared/auth';
 
 const BUCKET = 'meal-photos';
 const ALLOWED_EXT = new Set(['jpg', 'jpeg', 'png', 'webp']);
@@ -23,11 +22,18 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   const purpose = body.purpose ?? 'meal-photo';
 
-  if (purpose === 'meal-photo' && auth.plan !== 'pro') {
-    return jsonResponse(env, 403, {
-      error:   'pro_required',
-      message: 'Photo food recognition is a Pro feature.',
-    });
+  // Photo search is open to everyone, with a daily allowance (1 free, 20 Pro). Stop here if today's is used,
+  // so no photo is uploaded for nothing.
+  if (purpose === 'meal-photo') {
+    const { used, limit } = await peekRateLimit(env, auth.userId, auth.plan === 'pro' ? 'pro' : 'free', 'photo');
+    if (used >= limit) {
+      return jsonResponse(env, 429, {
+        error:   'photo_limit',
+        message: auth.plan === 'pro'
+          ? 'You have used all of today\'s photo searches. They reset at midnight. You can still search by typing the food name.'
+          : 'You have used today\'s free photo search. It resets at midnight. You can still search by typing the food name.',
+      });
+    }
   }
 
   const ext = (body.ext ?? 'jpg').toLowerCase().replace('.', '');

@@ -15,6 +15,7 @@
  * Gram conversion formula: (inputGrams / food.weight_g) * food.calories
  */
 
+import { plausibleFoodQuery, NOT_FOOD_MESSAGE } from '../lib/foodQuery';
 import React, {
   useState,
   useEffect,
@@ -1092,6 +1093,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
     if (served) return;
     const q = query.trim();
     if (!q) { setPhotoError('Type a food name first, then tap "Search with AI".'); return; }
+    if (!plausibleFoodQuery(q)) { setPhotoError(NOT_FOOD_MESSAGE); return; }
     setPhotoLoading(true);
     setPhotoError(null);
     try {
@@ -1439,7 +1441,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
             disabled={photoLoading}
             className="text-[20px] opacity-60 hover:opacity-100 active:scale-90 transition-all disabled:opacity-30"
             aria-label="Photograph your meal"
-            title={aiOk ? 'Photograph your meal' : 'Photo recognition — Pro feature'}
+            title="Photograph your meal (1 free a day)"
           >
             {photoLoading ? '⏳' : '📷'}
           </button>
