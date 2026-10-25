@@ -8,6 +8,7 @@ import { AdminInsights }       from '../components/admin/AdminInsights';
 import { AdminFreeTier }       from '../components/admin/AdminFreeTier';
 import { AdminBehaviour }      from '../components/admin/AdminBehaviour';
 import { AdminWhoTheyAre }     from '../components/admin/AdminWhoTheyAre';
+import { AdminSearchReview }   from '../components/admin/AdminSearchReview';
 import { useAdminInsights }    from '../components/admin/useAdminInsights';
 
 export default function AdminPage() {
@@ -21,6 +22,7 @@ export default function AdminPage() {
     { to: '/admin/users',         label: '👥 Users' },
     { to: '/admin/payments',      label: '💳 Payments' },
     { to: '/admin/contributions', label: '🍽️ Contributions' },
+    { to: '/admin/search-review', label: '🚫 Search review' },
   ];
 
   return (
@@ -45,6 +47,7 @@ export default function AdminPage() {
         <Route path="users"         element={<UserManagement />} />
         <Route path="payments"      element={<SubscriptionModerator />} />
         <Route path="contributions" element={<ContributionModerator />} />
+        <Route path="search-review" element={<AdminSearchReview />} />
         <Route path="*"             element={<AdminInsights />} />
       </Routes>
     </div>

@@ -1,4 +1,4 @@
-import { plausibleFoodQuery, plausibleDescription, NOT_FOOD_MESSAGE, cleanQuery, normalizeFoodKey, cleanAiText } from '../_shared/foodQuery';
+import { plausibleFoodQuery, plausibleDescription, NOT_FOOD_MESSAGE, cleanQuery, normalizeFoodKey, cleanAiText, hitsBlockedTerm } from '../_shared/foodQuery';
 import { resolveLimits } from '../_shared/freeTier';
 import type { Env } from '../_shared/auth';
 import { aiFetch } from '../_shared/aiLog';
@@ -237,6 +237,24 @@ function tidyResult(r: ValidNutrition, fallbackName: string): ValidNutrition {
 }
 
 let busyCache: { at: number; busy: boolean } | null = null;
+let blockCache: { at: number; terms: Set<string> } | null = null;
+
+/** Terms the admin chose to block (Search review screen). Read at most once a minute. */
+async function blockedTerms(env: Env): Promise<Set<string>> {
+  if (blockCache && Date.now() - blockCache.at < 60_000) return blockCache.terms;
+  const terms = new Set<string>();
+  try {
+    const { data } = await getSupabaseAdmin(env).from('search_review').select('term').eq('status', 'blocked').limit(2000);
+    for (const r of data ?? []) terms.add(String(r.term));
+  } catch { /* if we cannot read it, nothing extra is blocked */ }
+  blockCache = { at: Date.now(), terms };
+  return terms;
+}
+
+/** Tell the admin a new word was refused by the AI, so they can block it. */
+async function noteForReview(env: Env, term: string): Promise<void> {
+  try { await getSupabaseAdmin(env).rpc('note_search_term', { p_term: term, p_source: 'ai' }); } catch { /* best effort */ }
+}
 
 /** Google day starts at midnight US Pacific. */
 function pacificStartIso(now: Date): string {
@@ -374,7 +392,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
   // Obvious non-food (greetings, keyboard mash, links): refuse for free, before any AI call or counter.
   const activity = await recentActivity(env, auth.userId);
-  if ((mode === 'name' && !plausibleFoodQuery(query)) || (mode === 'describe' && !plausibleDescription(query))) {
+  const adminBlocked = mode === 'name' && hitsBlockedTerm(query, await blockedTerms(env));
+  if (adminBlocked || (mode === 'name' && !plausibleFoodQuery(query)) || (mode === 'describe' && !plausibleDescription(query))) {
     await logEvent(env, auth.userId, 'search_blocked_not_food', { stage: 'pre_check' });
     return jsonResponse(env, 200, { found: false, error: 'not_food', message: NOT_FOOD_MESSAGE });
   }
@@ -438,6 +457,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         if (isNotFood) {
           // The AI said it is not a food: the search stays used, and counts as a strike.
           await logEvent(env, auth.userId, 'search_blocked_not_food', { stage: 'ai' });
+          await noteForReview(env, normalizeFoodKey(query));
         } else if (providerFault || activity.notFound < 3) {
           await refundRateLimit(env, auth.userId, 'search');
           if (!providerFault) await logEvent(env, auth.userId, 'search_not_found', {});

@@ -9,6 +9,32 @@ const NOT_FOOD = new Set([
   'what', 'who', 'why', 'how', 'nothing', 'none', 'na', 'n/a', 'null', 'undefined', 'random', 'something', 'food',
 ]);
 
+/** Adult words and swear words (English and Hindi). Blocked for free, in names and in descriptions. */
+const ADULT_WORDS = new Set([
+  'sex', 'sexy', 'sexual', 'porn', 'porno', 'nude', 'nudes', 'naked', 'xxx', 'nsfw', 'horny', 'erotic', 'fetish', 'slut', 'whore', 'hooker',
+  'fuck', 'fucking', 'fucker', 'shit', 'bitch', 'bastard', 'asshole', 'dick', 'pussy', 'cunt', 'rape', 'incest',
+  'chutiya', 'madarchod', 'behenchod', 'bhenchod', 'bhosdi', 'bhosdike', 'gaand', 'gandu', 'randi', 'harami', 'lauda', 'lund', 'chut',
+]);
+
+/** Common words that are never a food. Blocked for free in food names only. */
+const NON_FOOD_WORDS = new Set([
+  'bitcoin', 'crypto', 'ethereum', 'phone', 'iphone', 'android', 'laptop', 'computer', 'car', 'bike', 'google', 'facebook', 'whatsapp',
+  'instagram', 'youtube', 'twitter', 'netflix', 'password', 'passwd', 'girlfriend', 'boyfriend', 'love', 'money', 'politics', 'election',
+  'modi', 'trump', 'god', 'weather', 'news', 'movie', 'song', 'poem', 'joke', 'story', 'essay', 'code', 'python', 'javascript', 'hack',
+  'virus', 'gun', 'bomb', 'kill', 'murder', 'suicide', 'drugs', 'cocaine', 'heroin', 'weed', 'ganja', 'charas', 'viagra', 'casino', 'bet',
+]);
+
+function hasWordIn(set: Set<string>, text: string): boolean {
+  return text.toLowerCase().split(/[^a-z0-9ऀ-ॿ઀-૿]+/).some(w => w && set.has(w));
+}
+
+/** True when any word, or the whole text, is on the admin's block list (terms the admin chose to block). */
+export function hitsBlockedTerm(raw: string, blocked: Set<string>): boolean {
+  if (!blocked.size) return false;
+  const key = normalizeFoodKey(raw);
+  return blocked.has(key) || key.split(' ').some(w => blocked.has(w));
+}
+
 export const NOT_FOOD_MESSAGE = 'That does not look like a food. Type a dish or ingredient, like "paneer bhurji" or "2 rotis".';
 
 /** Phrases people use to try to talk the AI into doing something other than looking up a food. */
@@ -44,6 +70,7 @@ export function plausibleFoodQuery(raw: string): boolean {
   if (t.length < 3 || t.length > 80) return false;
   if (t.split(' ').length > 10) return false;
   if (looksLikeInjection(t)) return false;
+  if (hasWordIn(ADULT_WORDS, t) || hasWordIn(NON_FOOD_WORDS, t)) return false;
   if (!/[a-zऀ-ॿ઀-૿]{3}/.test(t)) return false;
   if (NOT_FOOD.has(t)) return false;
   if (/^(.)\1+$/.test(t.replace(/\s/g, ''))) return false;
@@ -54,6 +81,6 @@ export function plausibleFoodQuery(raw: string): boolean {
 
 export function plausibleDescription(raw: string): boolean {
   const t = cleanQuery(raw);
-  if (t.length > 300 || t.split(' ').length > 60 || looksLikeInjection(t)) return false;
+  if (t.length > 300 || t.split(' ').length > 60 || looksLikeInjection(t) || hasWordIn(ADULT_WORDS, t)) return false;
   return t.length >= 4 && /[A-Za-zऀ-ॿ઀-૿]{3}/.test(t) && !/https?:|www\./i.test(t);
 }

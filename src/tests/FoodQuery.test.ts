@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { plausibleFoodQuery, plausibleDescription, cleanQuery, looksLikeInjection, normalizeFoodKey, cleanAiText } from '../lib/foodQuery';
+import { plausibleFoodQuery, plausibleDescription, cleanQuery, looksLikeInjection, normalizeFoodKey, cleanAiText, hitsBlockedTerm } from '../lib/foodQuery';
 import * as server from '../../functions/_shared/foodQuery';
 
 describe('food query pre-check', () => {
@@ -34,5 +34,17 @@ describe('food query pre-check', () => {
     expect(looksLikeInjection('masala dosa')).toBe(false);
     expect(cleanAiText('see http://spam.com', 50)).toBe('');
     expect(cleanAiText('Fresh  paneer', 50)).toBe('Fresh paneer');
+  });
+  it('blocks adult and non-food words for free, but not real foods', () => {
+    for (const q of ['sexy', 'porn', 'fuck', 'bitcoin', 'my girlfriend', 'chutiya']) expect(plausibleFoodQuery(q), q).toBe(false);
+    for (const q of ['chicken breast', 'cocktail sausage', 'class paneer', 'masala dosa', 'butter chicken']) expect(plausibleFoodQuery(q), q).toBe(true);
+    expect(plausibleDescription('ate dal and fuck')).toBe(false);
+  });
+  it('uses the words the admin blocked', () => {
+    const blocked = new Set(['pizzaman', 'tiger']);
+    expect(hitsBlockedTerm('Pizzaman!!', blocked)).toBe(true);
+    expect(hitsBlockedTerm('tiger prawns', blocked)).toBe(true);
+    expect(hitsBlockedTerm('paneer tikka', blocked)).toBe(false);
+    expect(hitsBlockedTerm('anything', new Set())).toBe(false);
   });
 });
