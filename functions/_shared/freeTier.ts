@@ -45,3 +45,54 @@ export function projectToEndOfDay(used: number, fraction: number): number | null
   if (!(fraction >= 0.1)) return null;
   return Math.round(used / fraction);
 }
+
+// ── Per-model Gemini meters ──────────────────────────────────────────────────
+export interface ModelLimit { rpd: number | null; rpm: number | null }
+export interface ModelUsage { model: string; calls: number; limited: number; peak_per_minute: number }
+
+/** The three Gemini models the app calls, with the limits read from Google AI Studio on 2026-10-25. */
+export const GEMINI_MODELS: { model: string; label: string; what: string; defaults: ModelLimit }[] = [
+  { model: 'gemini-3.5-flash-lite', label: 'Flash Lite', what: 'name search and photo nutrition', defaults: { rpd: 500, rpm: 15 } },
+  { model: 'gemini-3.8-flash', label: '3.8 Flash', what: 'photo identify', defaults: { rpd: 20, rpm: 5 } },
+  { model: 'gemini-embedding-001', label: 'Embedding', what: 'matching similar foods', defaults: { rpd: 1000, rpm: 100 } },
+];
+
+export interface ModelMeter {
+  key: string; label: string; used: number; limit: number | null; status: Status;
+  projected: number | null; note: string;
+}
+
+/** Merge saved limits over the defaults. A saved value of null means "unknown". */
+export function resolveLimits(saved: Record<string, Partial<ModelLimit>> | null | undefined): Record<string, ModelLimit> {
+  const out: Record<string, ModelLimit> = {};
+  for (const m of GEMINI_MODELS) {
+    const s = saved?.[m.model];
+    out[m.model] = {
+      rpd: s && 'rpd' in s ? (s.rpd ?? null) : m.defaults.rpd,
+      rpm: s && 'rpm' in s ? (s.rpm ?? null) : m.defaults.rpm,
+    };
+  }
+  return out;
+}
+
+/** Two meters (day, busiest minute) per model. A refusal from Google today makes that model red. */
+export function buildModelMeters(usage: ModelUsage[], limits: Record<string, ModelLimit>, fraction: number): ModelMeter[] {
+  const meters: ModelMeter[] = [];
+  for (const m of GEMINI_MODELS) {
+    const u = usage.find(x => x.model === m.model) ?? { model: m.model, calls: 0, limited: 0, peak_per_minute: 0 };
+    const lim = limits[m.model] ?? { rpd: null, rpm: null };
+    const projected = projectToEndOfDay(u.calls, fraction);
+    let dayStatus = statusFor(Math.max(u.calls, projected ?? 0), lim.rpd);
+    if (u.limited > 0) dayStatus = 'critical';
+    meters.push({
+      key: `${m.model}:day`, label: `${m.label} today (${m.what})`, used: u.calls, limit: lim.rpd, status: dayStatus, projected,
+      note: u.limited > 0 ? `Google refused ${u.limited} request(s) today. This model's daily limit has been hit.` : 'Real calls today, on Google’s US Pacific day.',
+    });
+    meters.push({
+      key: `${m.model}:min`, label: `${m.label} busiest minute today`, used: u.peak_per_minute, limit: lim.rpm,
+      status: statusFor(u.peak_per_minute, lim.rpm), projected: null,
+      note: 'Most requests in any single minute today. Google also limits per minute.',
+    });
+  }
+  return meters;
+}

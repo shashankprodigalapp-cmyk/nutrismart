@@ -32,7 +32,7 @@ export interface Insights {
 
 export interface AdminInsightsResponse {
   generated_at: string; days: number; health: Status; limits_checked_on: string;
-  settings: { gemini_rpd_limit: number | null; gemini_rpm_limit: number | null };
+  settings: { model_limits: Record<string, { rpd: number | null; rpm: number | null }> };
   meters: MeterData[]; insights: Insights;
 }
 
@@ -62,13 +62,13 @@ export function useAdminInsights(days: number) {
   return { data, error, loading, reload: load };
 }
 
-export async function saveGeminiLimits(v: { gemini_rpd_limit: number | null; gemini_rpm_limit: number | null }): Promise<boolean> {
+export async function saveGeminiLimits(model_limits: Record<string, { rpd: number | null; rpm: number | null }>): Promise<boolean> {
   try {
     const { data: s } = await supabase.auth.getSession();
     const res = await fetch('/api/admin-insights', {
       method: 'POST',
       headers: { Authorization: `Bearer ${s.session?.access_token ?? ''}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(v),
+      body: JSON.stringify({ model_limits }),
     });
     return res.ok;
   } catch { return false; }

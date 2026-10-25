@@ -1104,7 +1104,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 429) {
-        setPhotoError(data.message ?? 'You have used all 5 AI searches for today. They reset tomorrow.');
+        setPhotoError(data.message ?? 'You have used all 5 AI searches for today. They reset tomorrow. Photo search has its own daily allowance.');
         return;
       }
       if (!res.ok) throw new Error(data.message ?? 'AI search failed — please try again');

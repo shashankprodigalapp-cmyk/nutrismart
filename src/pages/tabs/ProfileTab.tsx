@@ -431,7 +431,7 @@ export default function ProfileTab() {
               )}
             </div>
             {!profile?.is_pro && (
-              <span className="text-xs text-[#636366]">5 AI/photo searches per day</span>
+              <span className="text-xs text-[#636366]">5 AI searches + 1 photo search per day</span>
             )}
           </div>
         </div>

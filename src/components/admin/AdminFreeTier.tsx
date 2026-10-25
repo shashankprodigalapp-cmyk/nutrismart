@@ -5,23 +5,34 @@ import React, { useEffect, useState } from 'react';
 import { saveGeminiLimits, useAdminInsights } from './useAdminInsights';
 import { Bars, Card, Empty, Meter, STATUS_STYLE, fmtBytes, fmtNum } from './adminUi';
 
+const MODELS = [
+  { model: 'gemini-3.5-flash-lite', label: 'Flash Lite', what: 'name search and photo nutrition' },
+  { model: 'gemini-3.8-flash', label: '3.8 Flash', what: 'photo identify' },
+  { model: 'gemini-embedding-001', label: 'Embedding', what: 'matching similar foods' },
+];
+
 const shortDate = (d: string) => { const [, m, day] = d.split('-'); return `${Number(day)}/${Number(m)}`; };
 
 export function AdminFreeTier() {
   const { data, error, loading, reload } = useAdminInsights(30);
-  const [rpd, setRpd] = useState('');
-  const [rpm, setRpm] = useState('');
+  const [lim, setLim] = useState<Record<string, { rpd: string; rpm: string }>>({});
   const [saved, setSaved] = useState<'idle' | 'ok' | 'fail'>('idle');
 
   useEffect(() => {
     if (!data) return;
-    setRpd(data.settings.gemini_rpd_limit ? String(data.settings.gemini_rpd_limit) : '');
-    setRpm(data.settings.gemini_rpm_limit ? String(data.settings.gemini_rpm_limit) : '');
+    const next: Record<string, { rpd: string; rpm: string }> = {};
+    for (const m of MODELS) {
+      const v = data.settings.model_limits?.[m.model];
+      next[m.model] = { rpd: v?.rpd ? String(v.rpd) : '', rpm: v?.rpm ? String(v.rpm) : '' };
+    }
+    setLim(next);
   }, [data?.generated_at]);
 
   const save = async () => {
     const toNum = (s: string) => { const n = parseInt(s.replace(/[^0-9]/g, ''), 10); return n > 0 ? n : null; };
-    const ok = await saveGeminiLimits({ gemini_rpd_limit: toNum(rpd), gemini_rpm_limit: toNum(rpm) });
+    const payload: Record<string, { rpd: number | null; rpm: number | null }> = {};
+    for (const m of MODELS) payload[m.model] = { rpd: toNum(lim[m.model]?.rpd ?? ''), rpm: toNum(lim[m.model]?.rpm ?? '') };
+    const ok = await saveGeminiLimits(payload);
     setSaved(ok ? 'ok' : 'fail');
     if (ok) void reload();
   };
@@ -52,7 +63,6 @@ export function AdminFreeTier() {
               {data.health === 'warn' && 'Something is getting close to its free limit. See the amber card below.'}
               {data.health === 'critical' && 'A free limit is hit or almost hit. See the red card below and the steps at the bottom.'}
               {data.health === 'unknown' && 'Nothing could be measured yet.'}
-              {!data.settings.gemini_rpd_limit && ' Enter your Gemini daily limit below so the biggest risk turns into a percentage.'}
             </p>
           </div>
 
@@ -63,26 +73,33 @@ export function AdminFreeTier() {
             ))}
           </div>
 
-          <Card title="Your Gemini limit" hint="Google does not publish one number for every model and it changes. Open Google AI Studio, find your model, and type its daily and per-minute request limits here once. The meters above then turn into percentages.">
-            <div className="grid sm:grid-cols-3 gap-3 items-end">
-              <label className="text-xs text-[#8E8E93]">Requests per day
-                <input inputMode="numeric" value={rpd} onChange={e => { setRpd(e.target.value); setSaved('idle'); }}
-                  placeholder="for example 1000"
-                  className="mt-1 w-full rounded-xl bg-[#111113] border border-white/[0.1] px-3 py-2 text-sm text-white" />
-              </label>
-              <label className="text-xs text-[#8E8E93]">Requests per minute
-                <input inputMode="numeric" value={rpm} onChange={e => { setRpm(e.target.value); setSaved('idle'); }}
-                  placeholder="for example 15"
-                  className="mt-1 w-full rounded-xl bg-[#111113] border border-white/[0.1] px-3 py-2 text-sm text-white" />
-              </label>
-              <div className="flex items-center gap-3">
-                <button onClick={() => void save()} className="px-4 py-2 rounded-xl bg-[#C8F75E] text-[#111113] text-sm font-bold">Save</button>
-                <a href="https://aistudio.google.com/rate-limit" target="_blank" rel="noreferrer" className="text-xs text-[#C8F75E] underline">Open AI Studio</a>
-              </div>
+          <Card title="Your Gemini limits" hint="Read from Google AI Studio (Rate limits page) on 2026-10-25 and filled in for you. If Google changes them, or you move to a paid plan, edit and save. Leave a box empty if you do not know it.">
+            <div className="space-y-3">
+              {MODELS.map(m => (
+                <div key={m.model} className="grid sm:grid-cols-[1fr_120px_120px] gap-3 items-end">
+                  <div>
+                    <p className="text-sm text-white font-semibold">{m.label}</p>
+                    <p className="text-[11px] text-[#8E8E93]">{m.what}</p>
+                  </div>
+                  <label className="text-xs text-[#8E8E93]">Per day
+                    <input inputMode="numeric" value={lim[m.model]?.rpd ?? ''}
+                      onChange={e => { setLim(l => ({ ...l, [m.model]: { ...(l[m.model] ?? { rpd: '', rpm: '' }), rpd: e.target.value } })); setSaved('idle'); }}
+                      className="mt-1 w-full rounded-xl bg-[#111113] border border-white/[0.1] px-3 py-2 text-sm text-white" />
+                  </label>
+                  <label className="text-xs text-[#8E8E93]">Per minute
+                    <input inputMode="numeric" value={lim[m.model]?.rpm ?? ''}
+                      onChange={e => { setLim(l => ({ ...l, [m.model]: { ...(l[m.model] ?? { rpd: '', rpm: '' }), rpm: e.target.value } })); setSaved('idle'); }}
+                      className="mt-1 w-full rounded-xl bg-[#111113] border border-white/[0.1] px-3 py-2 text-sm text-white" />
+                  </label>
+                </div>
+              ))}
             </div>
-            {saved === 'ok' && <p className="text-xs text-[#C8F75E] mt-2">Saved.</p>}
-            {saved === 'fail' && <p className="text-xs text-[#FF5D5D] mt-2">Could not save. Try again.</p>}
-            <p className="text-[11px] text-[#636366] mt-2">The examples above are placeholders, not your real limits.</p>
+            <div className="flex items-center gap-3 mt-3">
+              <button onClick={() => void save()} className="px-4 py-2 rounded-xl bg-[#C8F75E] text-[#111113] text-sm font-bold">Save</button>
+              <a href="https://aistudio.google.com/rate-limit" target="_blank" rel="noreferrer" className="text-xs text-[#C8F75E] underline">Open AI Studio</a>
+              {saved === 'ok' && <span className="text-xs text-[#C8F75E]">Saved.</span>}
+              {saved === 'fail' && <span className="text-xs text-[#FF5D5D]">Could not save. Try again.</span>}
+            </div>
           </Card>
 
           <div className="grid md:grid-cols-2 gap-4">
@@ -126,7 +143,7 @@ export function AdminFreeTier() {
 
           <Card title="What to do if a card turns red">
             <ol className="list-decimal pl-5 space-y-1.5 text-xs text-[#E5E5EA]">
-              <li><b>Gemini limit hit:</b> the app still works. People see "could not identify" for new AI lookups until Google's day resets (about 12:30 or 13:30 IST). Repeat searches stay free through the cache. Fix: lower the 5 a day per user, or turn on paid billing in Google AI Studio.</li>
+              <li><b>Gemini limit hit:</b> the app still works. People see "could not identify" for new AI lookups until Google's day resets (about 12:30 or 13:30 IST). Repeat searches stay free through the cache. Fix: lower the daily allowance per user (5 AI searches, 1 photo), or turn on paid billing in Google AI Studio.</li>
               <li><b>Database near 500 MB:</b> old log rows are trimmed automatically. If it keeps growing, tell Claude which table is the biggest from the list above.</li>
               <li><b>Cloudflare or Supabase transfer:</b> not measurable here. Open the provider link on the card now and then.</li>
             </ol>

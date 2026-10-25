@@ -3,6 +3,7 @@ import { aiFetch } from '../_shared/aiLog';
 import {
   verifyJWT,
   checkRateLimit,
+  refundRateLimit,
   logEvent,
   preflightResponse,
   jsonResponse,
@@ -40,6 +41,7 @@ async function identifyDishesFromPhoto(
   base64:   string,
   mimeType: string,
   env:      Env,
+  dbg:      { busy?: boolean } = {},
 ): Promise<IdentifiedDish[]> {
   const GEMINI_VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${env.GEMINI_API_KEY}`;
   const prompt = `You are an expert in identifying Indian food from photos.
@@ -74,7 +76,10 @@ Rules:
     });
     clearTimeout(timeout);
 
-    if (!res.ok) return [];
+    if (!res.ok) {
+      if (res.status === 429 || res.status >= 500) dbg.busy = true; // Google quota full or Google having trouble
+      return [];
+    }
 
     const data = await res.json() as any;
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
@@ -86,6 +91,7 @@ Rules:
     return parsed as IdentifiedDish[];
   } catch {
     clearTimeout(timeout);
+    dbg.busy = true; // timed out or network error
     return [];
   }
 }
@@ -95,7 +101,7 @@ async function getNutritionForDish(
   portion: string,
   env:     Env,
 ): Promise<ValidNutrition | null> {
-  const GEMINI_VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${env.GEMINI_API_KEY}`;
+  const GEMINI_VISION_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${env.GEMINI_API_KEY}`;
   const prompt = `Nutrition for Indian dish: "${name}" (${portion}).
 Return ONLY valid JSON:
 {"name":"${name}","portion":"${portion}","weight_g":0,"calories":0,"protein":0,"carbs":0,"fat":0,"gl":0,"gi":0,"confidence":"medium","source":"IFCT","notes":""}
@@ -137,12 +143,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const auth = await verifyJWT(request, env);
   if (!auth) return jsonResponse(env, 401, { error: 'unauthorized' });
 
-  // Everyone is on the free plan: 5 AI/photo searches per day (shared counter).
-  const { allowed, resetAt } = await checkRateLimit(env, auth.userId, auth.plan);
+  // Everyone is on the free plan: 1 photo search per day (its own counter, separate from the 5 AI searches).
+  const { allowed, resetAt } = await checkRateLimit(env, auth.userId, auth.plan, 'photo');
   if (!allowed) {
     return jsonResponse(env, 429, {
       error:    'rate_limit_exceeded',
       reset_at: resetAt,
+      message:  auth.plan === 'free'
+        ? 'You have used today\'s photo search (1 per day). It resets tomorrow. You can still search by name.'
+        : 'You have used all of today\'s photo searches. They reset tomorrow.',
     });
   }
 
@@ -180,6 +189,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     .download(image_path);
 
   if (dlError || !blob) {
+    await refundRateLimit(env, auth.userId, 'photo');
     return jsonResponse(env, 404, {
       error:   'image_not_found',
       message: 'Uploaded image not found — the upload may have failed. Please retry.',
@@ -188,6 +198,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   const arrayBuffer = await blob.arrayBuffer();
   if (arrayBuffer.byteLength > MAX_IMAGE_BYTES) {
+    await refundRateLimit(env, auth.userId, 'photo');
     return jsonResponse(env, 413, {
       error:   'image_too_large',
       max_mb:  4,
@@ -204,11 +215,23 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
   const image_base64 = btoa(binary);
 
-  const identified = await identifyDishesFromPhoto(image_base64, mime_type, env);
+  const busy: { busy?: boolean } = {};
+  const identified = await identifyDishesFromPhoto(image_base64, mime_type, env, busy);
 
   supabaseAdmin.storage.from('meal-photos').remove([image_path]).then(() => {});
 
-  if (identified.length === 0 || (identified[0] as any).error === 'no_food_detected') {
+  if (identified.length === 0) {
+    await refundRateLimit(env, auth.userId, 'photo');
+    return jsonResponse(env, 200, {
+      found:   false,
+      error:   busy.busy ? 'busy' : 'identify_failed',
+      message: busy.busy
+        ? 'Photo search is busy right now. Your photo search was not used. Please try again in a little while, or type the food name in the search box instead.'
+        : 'Could not analyse this photo right now. Your photo search was not used. Try again later, or search by name.',
+    });
+  }
+
+  if ((identified[0] as any).error === 'no_food_detected') {
     return jsonResponse(env, 200, {
       found:   false,
       error:   'no_food_detected',
@@ -217,6 +240,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   if ((identified[0] as any).error === 'image_unclear') {
+    await refundRateLimit(env, auth.userId, 'photo');
     return jsonResponse(env, 200, {
       found:   false,
       error:   'image_unclear',
@@ -237,10 +261,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const successful = results.filter(r => r.nutrition !== null);
 
   if (successful.length === 0) {
+    await refundRateLimit(env, auth.userId, 'photo');
     return jsonResponse(env, 200, {
       found:   false,
       error:   'nutrition_lookup_failed',
-      message: 'Dishes identified but nutrition data unavailable. Please search by name.',
+      message: 'Photo search is busy right now. Your photo search was not used. Please try again in a little while, or type the food name in the search box instead.',
       identified_names: dishes.map(d => d.name),
     });
   }

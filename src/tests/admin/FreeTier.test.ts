@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { statusFor, worst, projectToEndOfDay, pacificDayFraction } from '../../../functions/_shared/freeTier';
+import { statusFor, worst, projectToEndOfDay, pacificDayFraction, resolveLimits, buildModelMeters } from '../../../functions/_shared/freeTier';
 import { outcomeFor, modelFrom, usageFrom } from '../../../functions/_shared/aiLog';
 
 describe('free tier traffic light', () => {
@@ -48,5 +48,37 @@ describe('AI call log helpers', () => {
     expect(usageFrom('gemini', { usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5 } })).toEqual({ input: 10, output: 5 });
     expect(usageFrom('claude', { usage: { input_tokens: 7, output_tokens: 3 } })).toEqual({ input: 7, output: 3 });
     expect(usageFrom('gemini', {})).toEqual({ input: undefined, output: undefined });
+  });
+});
+
+describe('per-model Gemini meters', () => {
+  it('fills the three models with the Google AI Studio defaults', () => {
+    const l = resolveLimits(null);
+    expect(l['gemini-3.5-flash-lite']).toEqual({ rpd: 500, rpm: 15 });
+    expect(l['gemini-3.8-flash']).toEqual({ rpd: 20, rpm: 5 });
+    expect(l['gemini-embedding-001']).toEqual({ rpd: 1000, rpm: 100 });
+  });
+  it('lets saved values win, and null means unknown', () => {
+    const l = resolveLimits({ 'gemini-3.8-flash': { rpd: 100, rpm: null } });
+    expect(l['gemini-3.8-flash']).toEqual({ rpd: 100, rpm: null });
+    expect(l['gemini-3.5-flash-lite'].rpd).toBe(500);
+  });
+  it('turns the photo model red when a Google refusal happened', () => {
+    const m = buildModelMeters([{ model: 'gemini-3.8-flash', calls: 3, limited: 1, peak_per_minute: 1 }], resolveLimits(null), 0.5);
+    expect(m.find(x => x.key === 'gemini-3.8-flash:day')!.status).toBe('critical');
+    expect(m.find(x => x.key === 'gemini-3.5-flash-lite:day')!.status).toBe('ok');
+  });
+  it('warns when the busy-minute count nears the limit', () => {
+    const m = buildModelMeters([{ model: 'gemini-3.5-flash-lite', calls: 10, limited: 0, peak_per_minute: 12 }], resolveLimits(null), 0.5);
+    expect(m.find(x => x.key === 'gemini-3.5-flash-lite:min')!.status).toBe('warn');
+  });
+  it('projects the day for a model and flags a projected overrun', () => {
+    const m = buildModelMeters([{ model: 'gemini-3.8-flash', calls: 12, limited: 0, peak_per_minute: 2 }], resolveLimits(null), 0.5);
+    const day = m.find(x => x.key === 'gemini-3.8-flash:day')!;
+    expect(day.projected).toBe(24);
+    expect(day.status).toBe('critical');
+  });
+  it('always returns six meters, even with no calls', () => {
+    expect(buildModelMeters([], resolveLimits(null), 0.5)).toHaveLength(6);
   });
 });

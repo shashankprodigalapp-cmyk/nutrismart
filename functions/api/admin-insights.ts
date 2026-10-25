@@ -1,9 +1,9 @@
 import type { Env } from '../_shared/auth';
 import { getSupabaseAdmin, verifyJWT, preflightResponse, jsonResponse } from '../_shared/auth';
-import { FREE_TIER, statusFor, worst, pacificDayFraction, projectToEndOfDay, type Status } from '../_shared/freeTier';
+import { FREE_TIER, GEMINI_MODELS, statusFor, worst, pacificDayFraction, buildModelMeters, resolveLimits, type Status, type ModelLimit } from '../_shared/freeTier';
 
 // GET  /api/admin-insights?days=30  -> every number the admin dashboards need (admins only)
-// POST /api/admin-insights          -> save the Gemini limits you read from Google AI Studio (admins only)
+// POST /api/admin-insights          -> save the per-model Gemini limits from Google AI Studio (admins only)
 
 interface Meter {
   key: string; label: string; used: number | null; limit: number | null; unit: 'count' | 'bytes';
@@ -29,17 +29,25 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const admin = getSupabaseAdmin(env);
 
   if (request.method === 'POST') {
-    let body: { gemini_rpd_limit?: number | null; gemini_rpm_limit?: number | null };
+    let body: { model_limits?: Record<string, { rpd?: number | null; rpm?: number | null }> };
     try { body = await request.json(); } catch { return jsonResponse(env, 400, { error: 'invalid_json' }); }
-    const rows = (['gemini_rpd_limit', 'gemini_rpm_limit'] as const)
-      .filter(k => k in body)
-      .map(k => ({ key: k, value: body[k] ?? null, updated_at: new Date().toISOString(), updated_by: who.userId }));
-    for (const r of rows) {
-      if (r.value !== null && !(typeof r.value === 'number' && r.value > 0 && r.value < 1e9)) {
-        return jsonResponse(env, 400, { error: 'bad_value', key: r.key });
+    const incoming = body.model_limits;
+    if (!incoming || typeof incoming !== 'object') return jsonResponse(env, 400, { error: 'model_limits_required' });
+    const clean: Record<string, ModelLimit> = {};
+    for (const m of GEMINI_MODELS) {
+      const v = incoming[m.model];
+      if (!v) continue;
+      for (const k of ['rpd', 'rpm'] as const) {
+        const n = v[k];
+        if (n !== null && n !== undefined && !(typeof n === 'number' && n > 0 && n < 1e9)) {
+          return jsonResponse(env, 400, { error: 'bad_value', key: `${m.model}.${k}` });
+        }
       }
+      clean[m.model] = { rpd: v.rpd ?? null, rpm: v.rpm ?? null };
     }
-    if (rows.length) await admin.from('admin_settings').upsert(rows, { onConflict: 'key' });
+    await admin.from('admin_settings').upsert(
+      { key: 'gemini_model_limits', value: clean, updated_at: new Date().toISOString(), updated_by: who.userId },
+      { onConflict: 'key' });
     return jsonResponse(env, 200, { ok: true });
   }
 
@@ -52,36 +60,22 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       return jsonResponse(env, 500, { error: 'insights_unavailable', hint: 'Run migration 013_admin_insights.sql in Supabase.' });
     }
 
-    const { data: setRows } = await admin.from('admin_settings').select('key, value')
-      .in('key', ['gemini_rpd_limit', 'gemini_rpm_limit']);
-    const settings: Record<string, number | null> = { gemini_rpd_limit: null, gemini_rpm_limit: null };
-    for (const r of setRows ?? []) settings[r.key] = typeof r.value === 'number' ? r.value : null;
+    const { data: setRow } = await admin.from('admin_settings').select('value').eq('key', 'gemini_model_limits').maybeSingle();
+    const limits = resolveLimits((setRow?.value ?? null) as Record<string, Partial<ModelLimit>> | null);
+
+    const { data: byModel, error: bmErr } = await admin.rpc('admin_ai_by_model');
+    if (bmErr) console.error('[admin-insights] admin_ai_by_model failed (run migration 014)', bmErr.message);
 
     const sys = insights.system ?? {};
-    const today = insights.ai_today ?? {};
-    const geminiToday = Number(today.gemini_calls ?? 0);
-    const limited = Number(today.gemini_limited ?? 0);
     const fraction = pacificDayFraction(new Date());
-    const projected = projectToEndOfDay(geminiToday, fraction);
-
-    let rpdStatus = statusFor(Math.max(geminiToday, projected ?? 0), settings.gemini_rpd_limit);
-    if (limited > 0) rpdStatus = 'critical';
+    const geminiMeters: Meter[] = buildModelMeters(Array.isArray(byModel) ? byModel : [], limits, fraction).map(m => ({
+      key: m.key, label: m.label, used: m.used, limit: m.limit, unit: 'count' as const,
+      status: m.status, projected: m.projected, note: bmErr ? 'Run migration 014_ai_by_model.sql in Supabase to see this.' : m.note,
+      link: 'https://aistudio.google.com/rate-limit',
+    }));
 
     const meters: Meter[] = [
-      {
-        key: 'gemini_rpd', label: 'Gemini requests today', used: geminiToday, limit: settings.gemini_rpd_limit, unit: 'count',
-        status: rpdStatus, projected,
-        note: limited > 0
-          ? `Google refused ${limited} request(s) today. The free daily limit has been hit.`
-          : settings.gemini_rpd_limit ? 'Counts every real Gemini call today (US Pacific day, resets 12:30 or 13:30 IST).'
-          : 'Enter your daily limit from Google AI Studio to turn this into a percentage.',
-        link: 'https://aistudio.google.com/rate-limit',
-      },
-      {
-        key: 'gemini_rpm', label: 'Gemini busiest minute (last 24h)', used: Number(today.peak_per_minute_24h ?? 0),
-        limit: settings.gemini_rpm_limit, unit: 'count', status: statusFor(Number(today.peak_per_minute_24h ?? 0), settings.gemini_rpm_limit),
-        note: 'Requests in the busiest single minute. Google also limits per minute.', link: 'https://aistudio.google.com/rate-limit',
-      },
+      ...geminiMeters,
       {
         key: 'supabase_db', label: 'Supabase database size', used: Number(sys.db_bytes ?? 0), limit: FREE_TIER.supabase_db_bytes, unit: 'bytes',
         status: statusFor(Number(sys.db_bytes ?? 0), FREE_TIER.supabase_db_bytes),
@@ -120,7 +114,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       days,
       health: worst(meters.map(m => m.status)),
       limits_checked_on: FREE_TIER.checked_on,
-      settings,
+      settings: { model_limits: limits },
       meters,
       insights,
     });

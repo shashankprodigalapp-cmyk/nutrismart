@@ -72,19 +72,27 @@ export async function verifyJWT(request: Request, env: Env): Promise<AuthResult 
   }
 }
 
-const RATE_LIMITS = { free: 5, pro: 200 } as const;
+// Two separate daily allowances (reset at IST midnight): AI searches and photo searches.
+export type RateKind = 'search' | 'photo';
+const RATE_LIMITS = { search: { free: 5, pro: 200 }, photo: { free: 1, pro: 20 } } as const;
+
+// The photo counter lives in the same table, one second after midnight, so it is a different row from the search counter.
+function windowStartFor(istDate: string, kind: RateKind): string {
+  return new Date(new Date(istDate + 'T00:00:00+05:30').getTime() + (kind === 'photo' ? 1000 : 0)).toISOString();
+}
 
 export async function checkRateLimit(
   env: Env,
   userId: string,
   plan: 'free' | 'pro',
+  kind: RateKind = 'search',
 ): Promise<{ allowed: boolean; resetAt?: string }> {
   const supabaseAdmin = getSupabaseAdmin(env);
-  const limit = RATE_LIMITS[plan];
+  const limit = RATE_LIMITS[kind][plan];
   const now = new Date();
 
   const istDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(now);
-  const windowStart = new Date(istDate + 'T00:00:00+05:30').toISOString();
+  const windowStart = windowStartFor(istDate, kind);
   const resetAt = new Date(new Date(now.toDateString()).getTime() + 86_400_000).toISOString();
 
   const { data, error } = await supabaseAdmin.rpc('increment_rate_limit', {
@@ -98,6 +106,19 @@ export async function checkRateLimit(
     return { allowed: true };
   }
   return { allowed: data?.allowed ?? true, resetAt };
+}
+
+/** Give one search back when our side failed (Google error, unreadable result), so the person does not lose their allowance for nothing. */
+export async function refundRateLimit(env: Env, userId: string, kind: RateKind = 'search'): Promise<void> {
+  try {
+    const admin = getSupabaseAdmin(env);
+    const istDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    const windowStart = windowStartFor(istDate, kind);
+    const { data } = await admin.from('rate_limits').select('count').eq('user_id', userId).eq('window_start', windowStart).maybeSingle();
+    if (data && data.count > 0) {
+      await admin.from('rate_limits').update({ count: data.count - 1 }).eq('user_id', userId).eq('window_start', windowStart);
+    }
+  } catch { /* never block a response over a refund */ }
 }
 
 export async function logEvent(

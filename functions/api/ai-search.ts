@@ -3,6 +3,7 @@ import { aiFetch } from '../_shared/aiLog';
 import {
   verifyJWT,
   checkRateLimit,
+  refundRateLimit,
   logEvent,
   preflightResponse,
   jsonResponse,
@@ -281,7 +282,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       plan:     auth.plan,
       reset_at: resetAt,
       message:  auth.plan === 'free'
-        ? 'You have used all 5 AI/photo searches for today. They reset tomorrow.'
+        ? 'You have used all 5 AI searches for today. They reset tomorrow. (Photo search has its own daily allowance.)'
         : 'You have used 200 AI searches today. Limit resets at midnight IST.',
     });
   };
@@ -338,6 +339,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       const dbg: { reason?: string } = {};
       const result = await geminiNameLookup(query.trim(), env, dbg);
       if (!result) {
+        await refundRateLimit(env, auth.userId, 'search');
         return jsonResponse(env, 200, {
           found:   false,
           error:   'not_found',
@@ -363,6 +365,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       if (limited) return limited;
       const results = await claudeDescriptionLookup(query.trim(), env);
       if (results.length === 0) {
+        await refundRateLimit(env, auth.userId, 'search');
         return jsonResponse(env, 200, {
           found:   false,
           error:   'too_vague',
