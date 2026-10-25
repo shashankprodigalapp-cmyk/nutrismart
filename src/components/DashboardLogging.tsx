@@ -951,7 +951,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
     const ranked = raw.map((r, i) => ({ r, i, k: rank(r.item.name) })).sort((a, b) => a.k - b.k || a.i - b.i);
     setResults(ranked.map(x => x.r.item).slice(0, 12));
     // Usage stat: a search that found nothing, so the food list can be improved. Waits 1.2 s so half-typed words are skipped.
-    if (ranked.length === 0 && q.length >= 3) {
+    if (ranked.length === 0 && q.length >= 3 && plausibleFoodQuery(q)) {
       const t = setTimeout(() => track('search_no_result', { q: q.slice(0, 60) }, 60_000), 1200);
       return () => clearTimeout(t);
     }
