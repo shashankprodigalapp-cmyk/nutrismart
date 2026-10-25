@@ -76,9 +76,19 @@ export async function verifyJWT(request: Request, env: Env): Promise<AuthResult 
 export type RateKind = 'search' | 'photo';
 const RATE_LIMITS = { search: { free: 5, pro: 200 }, photo: { free: 1, pro: 20 } } as const;
 
+/** Extra daily AI searches for free users who have completed their profile (all five answers and consent). */
+export const PROFILE_BONUS_SEARCHES = 5;
+
 // The photo counter lives in the same table, one second after midnight, so it is a different row from the search counter.
 function windowStartFor(istDate: string, kind: RateKind): string {
   return new Date(new Date(istDate + 'T00:00:00+05:30').getTime() + (kind === 'photo' ? 1000 : 0)).toISOString();
+}
+
+async function profileBonus(admin: ReturnType<typeof getSupabaseAdmin>, userId: string): Promise<number> {
+  try {
+    const { data } = await admin.from('user_profile').select('completed_at').eq('user_id', userId).maybeSingle();
+    return data?.completed_at ? PROFILE_BONUS_SEARCHES : 0;
+  } catch { return 0; }
 }
 
 export async function checkRateLimit(
@@ -86,9 +96,10 @@ export async function checkRateLimit(
   userId: string,
   plan: 'free' | 'pro',
   kind: RateKind = 'search',
-): Promise<{ allowed: boolean; resetAt?: string }> {
+): Promise<{ allowed: boolean; resetAt?: string; limit?: number }> {
   const supabaseAdmin = getSupabaseAdmin(env);
-  const limit = RATE_LIMITS[kind][plan];
+  let limit: number = RATE_LIMITS[kind][plan];
+  if (kind === 'search' && plan === 'free') limit += await profileBonus(supabaseAdmin, userId);
   const now = new Date();
 
   const istDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(now);
@@ -105,7 +116,7 @@ export async function checkRateLimit(
     console.error('[rate_limit] RPC error:', error.message);
     return { allowed: true };
   }
-  return { allowed: data?.allowed ?? true, resetAt };
+  return { allowed: data?.allowed ?? true, resetAt, limit };
 }
 
 /** Give one search back when our side failed (Google error, unreadable result), so the person does not lose their allowance for nothing. */

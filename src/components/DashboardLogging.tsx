@@ -995,7 +995,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
       const src = sheetFood?.source ?? '';
       const method = viaUsualRef.current ? 'usual' : src === 'ai_photo' ? 'photo' : /ai/i.test(src) ? 'ai_search' : 'search';
       viaUsualRef.current = false;
-      track('food_logged', { method, meal: entryData.meal });
+      track('food_logged', { method, meal: entryData.meal, adjusted: entryData.qty !== 1 || (!!sheetFood && entryData.portion !== sheetFood.portion) });
     }
     setEntries(prev => [...prev, entry]);
     setSheetFood(null);

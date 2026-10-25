@@ -275,14 +275,14 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // Quota is charged only when a real AI call is needed (see charge()).
   // Repeat searches served from the shared database / cache are free for the user.
   const charge = async (): Promise<Response | null> => {
-    const { allowed, resetAt } = await checkRateLimit(env, auth.userId, auth.plan);
+    const { allowed, resetAt, limit } = await checkRateLimit(env, auth.userId, auth.plan);
     if (allowed) return null;
     return jsonResponse(env, 429, {
       error:    'rate_limit_exceeded',
       plan:     auth.plan,
       reset_at: resetAt,
       message:  auth.plan === 'free'
-        ? 'You have used all 5 AI searches for today. They reset tomorrow. (Photo search has its own daily allowance.)'
+        ? `You have used all ${limit ?? 5} AI searches for today. They reset tomorrow.${(limit ?? 5) <= 5 ? ' Complete your profile (Profile tab) to get 5 more every day.' : ''} Photo search has its own daily allowance.`
         : 'You have used 200 AI searches today. Limit resets at midnight IST.',
     });
   };

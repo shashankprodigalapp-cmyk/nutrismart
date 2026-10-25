@@ -6,12 +6,16 @@ import { UserManagement }       from '../components/admin/UserManagement';
 import { SubscriptionModerator } from '../components/admin/SubscriptionModerator';
 import { AdminInsights }       from '../components/admin/AdminInsights';
 import { AdminFreeTier }       from '../components/admin/AdminFreeTier';
+import { AdminBehaviour }      from '../components/admin/AdminBehaviour';
+import { AdminWhoTheyAre }     from '../components/admin/AdminWhoTheyAre';
 import { useAdminInsights }    from '../components/admin/useAdminInsights';
 
 export default function AdminPage() {
   const { data: watch } = useAdminInsights(7);
   const tabs = [
     { to: '/admin/insights',      label: '📈 Insights' },
+    { to: '/admin/behaviour',     label: '🧭 Behaviour' },
+    { to: '/admin/who',           label: '👥 Who they are' },
     { to: '/admin/free-tier',     label: '🧮 Free tier' },
     { to: '/admin/analytics',     label: '📊 Analytics' },
     { to: '/admin/users',         label: '👥 Users' },
@@ -34,6 +38,8 @@ export default function AdminPage() {
       </div>
       <Routes>
         <Route path="insights"      element={<AdminInsights />} />
+        <Route path="behaviour"     element={<AdminBehaviour />} />
+        <Route path="who"           element={<AdminWhoTheyAre />} />
         <Route path="free-tier"     element={<AdminFreeTier />} />
         <Route path="analytics"     element={<AnalyticsDashboard />} />
         <Route path="users"         element={<UserManagement />} />

@@ -47,6 +47,7 @@ import { localDb, type EnergyLog } from '../lib/localDb';
 import { getSyncManager } from '../lib/SyncManager';
 import { useAuth } from '../context/AuthContext';
 import { todayIST } from '../lib/kitchenIntelligence';
+import { track } from '../lib/analytics';
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
 
@@ -279,6 +280,7 @@ export function EnergyCheckIn() {
         // Enqueue for Supabase sync — cron will see skipped=TRUE and stop notifying
         const sm = getSyncManager();
         await sm.enqueue('insert_energy', skipLog);
+        track('checkin_skipped');
       }
     } catch {
       // Non-fatal — the worst outcome is one extra push notification
@@ -315,6 +317,7 @@ export function EnergyCheckIn() {
       await localDb.energy_logs.put(log);
       const sm = getSyncManager();
       await sm.enqueue('insert_energy', log);
+      track('checkin_answered', { level: rating.level });
 
       await localDb.user_prefs.delete(current.key);
       setCurrent(null);

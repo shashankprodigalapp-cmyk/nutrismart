@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { localDb } from '../../lib/localDb';
 import { useTargets } from '../../lib/useTargets';
+import { ProfileNudge } from '../../components/ProfileCompletion';
 
 interface TodaySummary {
   calories:  number;
@@ -70,6 +71,8 @@ export default function TodayTab() {
           {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' })}
         </p>
       </div>
+
+      <ProfileNudge />
 
       {/* Calories ring card */}
       <div className="bg-[#1C1C1E] rounded-2xl p-4">

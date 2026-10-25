@@ -10,6 +10,7 @@
  * - After uninstalling, browsers fire beforeinstallprompt again, so the button reappears.
  */
 import { useEffect, useState, useCallback } from 'react';
+import { track } from './analytics';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -32,6 +33,7 @@ if (typeof window !== 'undefined') {
     notify();
   });
   window.addEventListener('appinstalled', () => {
+    track('app_installed');
     deferred = null;
     installedFlag = true;
     notify();

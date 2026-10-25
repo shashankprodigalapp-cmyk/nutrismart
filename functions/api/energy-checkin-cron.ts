@@ -103,7 +103,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
           title: 'How\'s your energy?',
           body:  'It\'s been about an hour since your meal. Take a quick energy check-in.',
           tag,
-          url:   '/app/log',
+          url:   '/app/log?source=checkin',
         });
         if (ok) {
           sent++;

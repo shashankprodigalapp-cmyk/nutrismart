@@ -20,7 +20,8 @@ function trackPushAttribution(): void {
     const variant = params.get('variant');
     const eventName =
       source === 'verdict'  ? 'app_opened_from_verdict' :
-      source === 'reengage' ? 'app_opened_from_reengagement' : null;
+      source === 'reengage' ? 'app_opened_from_reengagement' :
+      source === 'checkin'  ? 'app_opened_from_checkin' : null;
     if (!eventName) return;
 
     // One-time guard per browser session (StrictMode double-invoke + reloads)
@@ -49,6 +50,15 @@ function trackPushAttribution(): void {
 }
 
 trackPushAttribution();
+
+// Remember the first ?ref=... (or utm_source) tag the person arrived with, so the admin can see which source brings habit users.
+(function rememberSource() {
+  try {
+    const p = new URLSearchParams(window.location.search);
+    const r = (p.get('ref') || p.get('utm_source') || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 30);
+    if (r && !localStorage.getItem('ns_ref')) localStorage.setItem('ns_ref', r);
+  } catch { /* ignore */ }
+})();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

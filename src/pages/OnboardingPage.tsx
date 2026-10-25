@@ -3,6 +3,7 @@
  * Writes profile to Supabase + Dexie then redirects to /app/log.
  */
 import React, { useState } from 'react';
+import { track } from '../lib/analytics';
 import { useNavigate } from 'react-router-dom';
 import { supabase }    from '../lib/supabase';
 import { localDb }     from '../lib/localDb';
@@ -84,6 +85,7 @@ export default function OnboardingPage() {
       await supabase.from('users').upsert({ id: user.id, plan: 'free' }, { onConflict: 'id' });
       // Tell AuthContext immediately so ProtectedRoute doesn't redirect back
       markKitchenProfileDone();
+      track('kitchen_profile_completed');
       navigate('/app/today', { replace: true });
     } catch (e) {
       // Silently log via analytics — console.error removed for production

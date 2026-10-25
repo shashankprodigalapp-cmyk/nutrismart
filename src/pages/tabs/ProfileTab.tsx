@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { usePWAInstall } from '../../lib/pwaInstall';
 import { InstallHelpModal } from '../../components/InstallHelpModal';
 import { track } from '../../lib/analytics';
+import ProfileCompletionCard from '../../components/ProfileCompletion';
 import { fitMacros, matchPreset, presetGrams, splitPercent, PRESETS, type PresetKey } from '../../lib/macroMath';
 import { registerPushSubscription, ensurePushSubscription } from '../../lib/pushRegistration';
 
@@ -122,7 +123,7 @@ function NutritionGoalsModal({
               <button
                 key={k}
                 type="button"
-                onClick={() => { const g = presetGrams(k, calN || DEFAULTS.target_cal); setProtein(String(g.protein)); setFat(String(g.fat)); }}
+                onClick={() => { const g = presetGrams(k, calN || DEFAULTS.target_cal); setProtein(String(g.protein)); setFat(String(g.fat)); track('preset_applied', { preset: k }); }}
                 className={`rounded-xl px-2 py-2.5 text-[11px] font-semibold leading-tight border ${current === k ? 'bg-[#C8F75E]/15 border-[#C8F75E]/50 text-[#C8F75E]' : 'bg-white/[0.04] border-white/[0.08] text-white'}`}
               >
                 {PRESETS[k].label}
@@ -416,6 +417,8 @@ export default function ProfileTab() {
           </div>
         </div>
 
+        <ProfileCompletionCard />
+
         {/* Subscription badge */}
         <div className={`rounded-2xl p-4 ${profile?.is_pro ? 'bg-[#C8F75E]/10 border border-[#C8F75E]/30' : 'bg-[#1C1C1E]'}`}>
           <div className="flex items-center justify-between">
@@ -431,7 +434,7 @@ export default function ProfileTab() {
               )}
             </div>
             {!profile?.is_pro && (
-              <span className="text-xs text-[#636366]">5 AI searches + 1 photo search per day</span>
+              <span className="text-xs text-[#636366]">5 AI searches + 1 photo search a day. Complete your profile for 10 AI searches.</span>
             )}
           </div>
         </div>

@@ -10,7 +10,8 @@ import { ContextualAlerts }         from '../components/ContextualAlerts';
 import { initSyncManager }          from '../lib/SyncManager';
 import { localDb }                  from '../lib/localDb';
 import { ensurePushSubscription }   from '../lib/pushRegistration';
-import { track }                    from '../lib/analytics';
+import { track, trackSessionStart, installHealthTracking } from '../lib/analytics';
+import FeedbackPrompts              from '../components/FeedbackPrompts';
 
 const TodayTab    = React.lazy(() => import('./tabs/TodayTab'));
 const LogTab      = React.lazy(() => import('./tabs/LogTab'));
@@ -62,8 +63,15 @@ export default function AppShell() {
     track('screen_view', { screen }, 30 * 60 * 1000);
   }, [user, loc.pathname]);
 
+  useEffect(() => {
+    if (!user) return;
+    installHealthTracking();
+    trackSessionStart();
+  }, [user?.id]);
+
   return (
     <div className="min-h-dvh bg-[#111113] flex">
+      <FeedbackPrompts />
       {/* ── Desktop sidebar (md+) ── */}
       <aside className="hidden md:flex flex-col w-56 lg:w-64 border-r border-white/[0.07] bg-[#111113] sticky top-0 h-screen shrink-0">
         <div className="px-5 py-6">
