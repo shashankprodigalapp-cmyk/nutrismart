@@ -46,6 +46,8 @@ import { useAuth } from '../context/AuthContext';
 import { VerdictDashboard } from './VerdictDashboard';
 import { useProGate } from '../utils/proGatekeeper';
 import { todayIST } from '../lib/kitchenIntelligence';
+import { fitMacros } from '../lib/macroMath';
+import { useAlerts } from './ContextualAlerts';
 
 // ── DESIGN TOKENS ─────────────────────────────────────────────────────────────
 // Matches the CRED-style dark palette from the original app
@@ -81,6 +83,7 @@ interface DailyTargets {
   protein: number;
   gl:      number;
   fat:     number;
+  carbs:   number;
   water:   number;
 }
 
@@ -131,7 +134,7 @@ const MEAL_LABELS: Record<Meal, string> = {
 };
 
 const DEFAULT_TARGETS: DailyTargets = {
-  cal: 1400, protein: 150, gl: 50, fat: 65, water: 8,
+  cal: 1400, protein: 150, gl: 50, fat: 65, carbs: 53, water: 8,
 };
 
 function mealForHour(h: number): Meal {
@@ -737,6 +740,8 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
   const [sheetFood,     setSheetFood]     = useState<Food | null>(null);
   const [glasses,       setGlasses]       = useState(0);
   const [targets,       setTargets]       = useState<DailyTargets>(DEFAULT_TARGETS);
+  const { eventBudget } = useAlerts();
+  const effectiveCal = eventBudget.active ? eventBudget.daytimeBudget : targets.cal;
   const [profile,       setProfile]       = useState<KitchenProfile | null>(null);
   const [mealTemplates, setMealTemplates] = useState<MealTemplate[]>([]);
   // Photo logging state
@@ -775,11 +780,13 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           .maybeSingle()
           .then(({ data: userTargets }) => {
             if (userTargets) {
+              const fit = fitMacros(userTargets.target_cal ?? DEFAULT_TARGETS.cal, userTargets.target_protein ?? DEFAULT_TARGETS.protein, userTargets.target_fat ?? DEFAULT_TARGETS.fat);
               setTargets({
-                cal:     userTargets.target_cal     ?? DEFAULT_TARGETS.cal,
-                protein: userTargets.target_protein ?? DEFAULT_TARGETS.protein,
+                cal:     fit.cal,
+                protein: fit.protein,
                 gl:      userTargets.target_gl      ?? DEFAULT_TARGETS.gl,
-                fat:     userTargets.target_fat     ?? DEFAULT_TARGETS.fat,
+                fat:     fit.fat,
+                carbs:   fit.carbs,
                 water:   userTargets.target_water   ?? DEFAULT_TARGETS.water,
               });
             }
@@ -915,13 +922,17 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
         .eq('id', user.id)
         .maybeSingle()
         .then(({ data }) => {
-          if (data) setTargets({
-            cal:     data.target_cal     ?? DEFAULT_TARGETS.cal,
-            protein: data.target_protein ?? DEFAULT_TARGETS.protein,
-            gl:      data.target_gl      ?? DEFAULT_TARGETS.gl,
-            fat:     data.target_fat     ?? DEFAULT_TARGETS.fat,
-            water:   data.target_water   ?? DEFAULT_TARGETS.water,
-          });
+          if (data) {
+            const fit = fitMacros(data.target_cal ?? DEFAULT_TARGETS.cal, data.target_protein ?? DEFAULT_TARGETS.protein, data.target_fat ?? DEFAULT_TARGETS.fat);
+            setTargets({
+              cal:     fit.cal,
+              protein: fit.protein,
+              gl:      data.target_gl      ?? DEFAULT_TARGETS.gl,
+              fat:     fit.fat,
+              carbs:   fit.carbs,
+              water:   data.target_water   ?? DEFAULT_TARGETS.water,
+            });
+          }
         });
     };
     window.addEventListener('nutrismart:targets-updated', refetch);
@@ -1331,7 +1342,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
 
           {/* Calorie ring */}
           <div className="mt-4 flex justify-center">
-            <CalorieRing consumed={Math.round(totals.cal)} target={targets.cal} />
+            <CalorieRing consumed={Math.round(totals.cal)} target={effectiveCal} />
           </div>
 
           {/* Macro pills */}
@@ -1339,7 +1350,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
             <MacroPill label="Protein"  value={parseFloat(totals.protein.toFixed(0))} target={targets.protein} unit="g" color="#8DB4FF" />
             <MacroPill label="GL"       value={parseFloat(totals.gl.toFixed(0))}      target={targets.gl}      unit=""  color="#C4A8FF" />
             <MacroPill label="Fat"      value={parseFloat(totals.fat.toFixed(0))}     target={targets.fat}     unit="g" color="#FFB347" />
-            <MacroPill label="Carbs"    value={parseFloat(totals.carbs.toFixed(0))}   target={100}             unit="g" color="#FF8FAB" />
+            <MacroPill label="Carbs"    value={parseFloat(totals.carbs.toFixed(0))}   target={targets.carbs}   unit="g" color="#FF8FAB" />
           </div>
 
           {/* Water quick-add */}

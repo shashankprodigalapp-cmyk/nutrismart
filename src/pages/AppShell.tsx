@@ -9,6 +9,7 @@ import { useAuth, useIsRefreshing } from '../context/AuthContext';
 import { ContextualAlerts }         from '../components/ContextualAlerts';
 import { initSyncManager }          from '../lib/SyncManager';
 import { localDb }                  from '../lib/localDb';
+import { ensurePushSubscription }   from '../lib/pushRegistration';
 
 const TodayTab    = React.lazy(() => import('./tabs/TodayTab'));
 const LogTab      = React.lazy(() => import('./tabs/LogTab'));
@@ -45,6 +46,12 @@ export default function AppShell() {
       });
       sm.init();
     });
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const t = setTimeout(() => { void ensurePushSubscription(user.id); }, 3000);
+    return () => clearTimeout(t);
   }, [user]);
 
   return (

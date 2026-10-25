@@ -17,6 +17,7 @@
  * All date logic uses Asia/Kolkata (IST) via Intl.DateTimeFormat.
  */
 
+import { useTargets } from '../lib/useTargets';
 import React, {
   createContext,
   useCallback,
@@ -107,12 +108,14 @@ const AlertContext = createContext<AlertContextValue | null>(null);
 
 export function AlertProvider({
   children,
-  baseCal = 1400,
+  baseCal: baseCalProp,
 }: {
   children: React.ReactNode;
   baseCal?: number;
 }) {
   const { user }     = useAuth();
+  const { cal: goalCal } = useTargets();
+  const baseCal = baseCalProp ?? goalCal;
   const { status, graceEndsAt } = usePlan();
 
   // ── Festival ──────────────────────────────────────────────────────────────
@@ -193,6 +196,20 @@ export function AlertProvider({
     localStorage.removeItem(EVENT_BUDGET_KEY);
     localDb.user_prefs.delete('event_cal_override').catch(() => {});
     _setEventBudget({ active: false, eventName: '', estCals: 600, daytimeBudget: baseCal, baseCal });
+  }, [baseCal]);
+
+  // Keep the planner in step with the user's goal (it loads a moment after the app opens).
+  useEffect(() => {
+    _setEventBudget(prev => {
+      if (prev.baseCal === baseCal) return prev;
+      const daytimeBudget = prev.active ? Math.max(200, baseCal - prev.estCals) : baseCal;
+      const next = { ...prev, baseCal, daytimeBudget };
+      if (prev.active) {
+        try { localStorage.setItem(EVENT_BUDGET_KEY, JSON.stringify({ ...next, date: todayIST() })); } catch { /* ignore */ }
+        localDb.user_prefs.put({ key: 'event_cal_override', value: daytimeBudget }).catch(() => {});
+      }
+      return next;
+    });
   }, [baseCal]);
 
   // ── Offline / sync ────────────────────────────────────────────────────────
@@ -458,6 +475,7 @@ export function PendingValidationBanner() {
 
 export function EventBudgetCard() {
   const { eventBudget, applyEventBudget, clearEventBudget } = useAlerts();
+  const { cal: goalCal } = useTargets();
   const [open,       setOpen]       = useState(false);
   const [selType,    setSelType]    = useState<EventType>('restaurant');
   const [estCals,    setEstCals]    = useState(600);
@@ -542,7 +560,7 @@ export function EventBudgetCard() {
           <div className="bg-[#242426] rounded-xl p-3 mt-3 text-[11px]">
             <div className="flex justify-between py-1">
               <span className="text-[#636366]">Normal daily target</span>
-              <span className="text-[#F5F5F5] font-semibold">1400 kcal</span>
+              <span className="text-[#F5F5F5] font-semibold">{goalCal} kcal</span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-[#636366]">Evening estimate</span>
@@ -550,7 +568,7 @@ export function EventBudgetCard() {
             </div>
             <div className="flex justify-between py-1 border-t border-white/[0.07] mt-1 pt-2">
               <span className="text-[#636366]">Daytime budget</span>
-              <span className="text-[#C8F75E] font-bold">{Math.max(200, 1400 - estCals)} kcal</span>
+              <span className="text-[#C8F75E] font-bold">{Math.max(200, goalCal - estCals)} kcal</span>
             </div>
           </div>
 

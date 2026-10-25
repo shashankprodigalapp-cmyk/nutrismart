@@ -152,6 +152,44 @@ export async function registerPushSubscription(
 }
 
 /**
+ * ensurePushSubscription — NO permission prompt. If the user has already allowed
+ * notifications, make sure this device is saved on the server. Safe to call on
+ * every app start (it is idempotent). Returns true when the device is registered.
+ */
+export async function ensurePushSubscription(userId: string): Promise<boolean> {
+  try {
+    if (!isPushSupported() || Notification.permission !== 'granted') return false;
+    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string;
+    if (!vapidPublicKey) return false;
+
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly:      true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as unknown as BufferSource,
+      });
+    }
+    const sub = subscription.toJSON();
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .upsert(
+        {
+          user_id:   userId,
+          endpoint:  sub.endpoint!,
+          p256dh:    sub.keys!.p256dh,
+          auth_key:  sub.keys!.auth,
+          device_ua: navigator.userAgent.slice(0, 200),
+        },
+        { onConflict: 'user_id, endpoint', ignoreDuplicates: false },
+      );
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * unregisterPushSubscription — called on sign-out to remove the device
  * from push_subscriptions. The server's 410-cleanup in cron functions
  * handles the case where this is not called (e.g. app uninstall).

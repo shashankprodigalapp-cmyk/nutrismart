@@ -6,6 +6,8 @@ import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { usePWAInstall } from '../../lib/pwaInstall';
 import { InstallHelpModal } from '../../components/InstallHelpModal';
+import { fitMacros, matchPreset, presetGrams, splitPercent, PRESETS, type PresetKey } from '../../lib/macroMath';
+import { registerPushSubscription, ensurePushSubscription } from '../../lib/pushRegistration';
 
 interface Profile {
   full_name:      string;
@@ -66,14 +68,20 @@ function NutritionGoalsModal({
   const [saving,  setSaving]  = useState(false);
   const [error,   setError]   = useState<string | null>(null);
 
+  // Calories are the master number; carbs are what is left; protein is protected first.
+  const calN = parseInt(cal, 10) || 0;
+  const fit  = fitMacros(calN || DEFAULTS.target_cal, parseInt(protein, 10) || 0, parseInt(fat, 10) || 0);
+  const split = splitPercent(fit);
+  const current = matchPreset(fit.cal, fit.protein, fit.fat);
+
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
     setError(null);
     const payload = {
       target_cal:     parseInt(cal,     10) || DEFAULTS.target_cal,
-      target_protein: parseInt(protein, 10) || DEFAULTS.target_protein,
-      target_fat:     parseInt(fat,     10) || DEFAULTS.target_fat,
+      target_protein: (parseInt(protein, 10) ? fit.protein : DEFAULTS.target_protein),
+      target_fat:     (parseInt(fat,     10) ? fit.fat     : DEFAULTS.target_fat),
       target_gl:      parseInt(gl,      10) || DEFAULTS.target_gl,
       target_water:   parseInt(water,   10) || DEFAULTS.target_water,
     };
@@ -105,12 +113,65 @@ function NutritionGoalsModal({
           <button onClick={onClose} className="text-[#636366] text-sm px-2 py-1">Cancel</button>
         </div>
 
+        <div className="mb-3">
+          <p className="text-xs text-[#636366] mb-2">Quick setup: splits your calories for you</p>
+          <div className="grid grid-cols-3 gap-2">
+            {(Object.keys(PRESETS) as PresetKey[]).map(k => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => { const g = presetGrams(k, calN || DEFAULTS.target_cal); setProtein(String(g.protein)); setFat(String(g.fat)); }}
+                className={`rounded-xl px-2 py-2.5 text-[11px] font-semibold leading-tight border ${current === k ? 'bg-[#C8F75E]/15 border-[#C8F75E]/50 text-[#C8F75E]' : 'bg-white/[0.04] border-white/[0.08] text-white'}`}
+              >
+                {PRESETS[k].label}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-[#636366] mt-2">{current === 'custom' ? 'Custom split (your own numbers)' : PRESETS[current].blurb}</p>
+        </div>
+
         <div className="bg-white/[0.04] rounded-2xl px-4 mb-4">
           <GoalField label="Calories"       value={cal}     onChange={setCal}     unit="kcal / day" />
           <GoalField label="Protein"        value={protein} onChange={setProtein} unit="g / day" />
           <GoalField label="Fat"            value={fat}     onChange={setFat}     unit="g / day" />
           <GoalField label="Glycaemic Load" value={gl}      onChange={setGl}      unit="GL / day" />
           <GoalField label="Water"          value={water}   onChange={setWater}   unit="glasses / day" />
+        </div>
+
+        <div className="bg-white/[0.04] rounded-2xl px-4 py-3 mb-4 text-xs">
+          <div className="flex h-2 rounded-full overflow-hidden mb-2" aria-hidden="true">
+            <div style={{ width: `${split.carbs}%`, background: '#FF8FAB' }} />
+            <div style={{ width: `${split.protein}%`, background: '#8DB4FF' }} />
+            <div style={{ width: `${split.fat}%`, background: '#FFB347' }} />
+          </div>
+          <div className="flex justify-between">
+            <span style={{ color: '#FF8FAB' }}>Carbs {split.carbs}%</span>
+            <span style={{ color: '#8DB4FF' }}>Protein {split.protein}%</span>
+            <span style={{ color: '#FFB347' }}>Fat {split.fat}%</span>
+          </div>
+          <div className="flex justify-between mt-3 text-[#EBEBF5]/70">
+            <span>Carbs (automatic)</span>
+            <span className="text-white font-semibold">{fit.carbs} g / day</span>
+          </div>
+          <p className="text-[#636366] mt-1">Carbs are whatever is left of your calories. Treat it as a guide, not a limit.</p>
+          {fit.adjusted && (
+            <div className="mt-3 rounded-xl bg-[#FFB347]/10 border border-[#FFB347]/30 px-3 py-2">
+              <p className="text-[#FFB347]">
+                {protein} g protein and {fat} g fat do not fit in {calN || DEFAULTS.target_cal} kcal. They will be adjusted to {fit.protein} g protein and {fit.fat} g fat, leaving {fit.carbs} g carbs. Protein is kept as high as possible.
+              </p>
+              <button
+                type="button"
+                onClick={() => { setProtein(String(fit.protein)); setFat(String(fit.fat)); }}
+                className="mt-2 text-[#C8F75E] font-semibold"
+              >
+                Apply now
+              </button>
+            </div>
+          )}
+          {calN > 0 && calN < 1200 && (
+            <p className="text-[#FFB347] mt-3">Under 1200 kcal a day is very low. Please talk to a doctor or dietician first.</p>
+          )}
+          <p className="text-[#636366] mt-3">General guidance, not medical advice.</p>
         </div>
 
         {error && <p className="text-xs text-[#FF453A] mb-3 text-center">{error}</p>}
@@ -134,13 +195,45 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
     'Notification' in window ? Notification.permission === 'granted' : false,
   );
   const [requesting, setRequesting] = useState(false);
+  const { user } = useAuth();
+  const [registered, setRegistered] = useState<boolean | null>(null);
+  const [testMsg, setTestMsg] = useState<string>('');
+  const [testing, setTesting] = useState(false);
+
+  useEffect(() => {
+    if (!user || !pushEnabled) return;
+    ensurePushSubscription(user.id).then(setRegistered);
+  }, [user, pushEnabled]);
 
   const requestPermission = async () => {
-    if (!('Notification' in window)) return;
+    if (!user || !('Notification' in window)) return;
     setRequesting(true);
-    const result = await Notification.requestPermission();
-    setPushEnabled(result === 'granted');
+    const res = await registerPushSubscription(user.id);
+    const ok = res.supported && res.granted;
+    setPushEnabled(ok || Notification.permission === 'granted');
+    setRegistered(ok);
+    if (!res.supported) setTestMsg('This browser does not support notifications. On iPhone, add NutriSmart to your Home Screen first.');
+    else if (!res.granted) setTestMsg('Notifications are blocked. Allow them for this site in your browser or phone settings, then try again.');
     setRequesting(false);
+  };
+
+  const sendTest = async () => {
+    setTesting(true); setTestMsg('');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const r = await fetch('/api/send-test-push', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
+      });
+      const j = await r.json().catch(() => ({}));
+      if (j.error === 'vapid_not_configured') setTestMsg('Server is not set up for notifications yet (missing keys). Tell support.');
+      else if (j.error === 'no_subscription') setTestMsg('This device is not registered yet. Tap Enable, then try again.');
+      else if (j.success) setTestMsg(`Sent to ${j.sent} device${j.sent === 1 ? '' : 's'}. It should appear within a few seconds.`);
+      else setTestMsg(`The notification service refused it (code ${(j.statuses ?? []).join(', ') || r.status}). Try Enable again.`);
+    } catch {
+      setTestMsg('Could not reach the server. Check your connection.');
+    }
+    setTesting(false);
   };
 
   return (
@@ -173,6 +266,22 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
             </button>
           )}
         </div>
+
+        {pushEnabled && (
+          <div className="mb-4">
+            <button
+              onClick={sendTest}
+              disabled={testing}
+              className="w-full py-2.5 rounded-xl bg-white/[0.06] text-white text-sm font-semibold disabled:opacity-50"
+            >
+              {testing ? 'Sending…' : 'Send me a test notification'}
+            </button>
+            {registered === false && !testMsg && (
+              <p className="text-xs text-[#FFB347] mt-2 px-1">This device is not registered yet. Tap the button above, or reopen the app.</p>
+            )}
+          </div>
+        )}
+        {testMsg && <p className="text-xs text-[#EBEBF5]/70 mb-3 px-1">{testMsg}</p>}
 
         <p className="text-xs text-[#636366] text-center px-4">
           Notifications include your morning nutrition verdict, streak reminders, and hydration nudges.
