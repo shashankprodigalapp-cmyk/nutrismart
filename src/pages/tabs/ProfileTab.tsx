@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { usePWAInstall } from '../../lib/pwaInstall';
 import { InstallHelpModal } from '../../components/InstallHelpModal';
 import { track } from '../../lib/analytics';
-import ProfileCompletionCard from '../../components/ProfileCompletion';
+import ProfileCompletionCard, { useProfileStatus } from '../../components/ProfileCompletion';
 import { fitMacros, matchPreset, presetGrams, splitPercent, PRESETS, type PresetKey } from '../../lib/macroMath';
 import { registerPushSubscription, ensurePushSubscription } from '../../lib/pushRegistration';
 
@@ -342,6 +342,7 @@ function DataPrivacyModal({ onClose }: { onClose: () => void }) {
 
 export default function ProfileTab() {
   const { user, signOut } = useAuth();
+  const { completed: profileDone } = useProfileStatus();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<'goals' | 'notifications' | 'privacy' | 'install' | null>(null);
@@ -434,7 +435,7 @@ export default function ProfileTab() {
               )}
             </div>
             {!profile?.is_pro && (
-              <span className="text-xs text-[#636366]">5 AI searches + 1 photo search a day. Complete your profile for 10 AI searches.</span>
+              <span className="text-xs text-[#636366]">{profileDone ? '10 AI searches + 1 photo search a day.' : '5 AI searches + 1 photo search a day. Complete your profile for 10 AI searches.'}</span>
             )}
           </div>
         </div>

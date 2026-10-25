@@ -34,11 +34,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ProfileTab from '../../pages/tabs/ProfileTab';
+import { registerPushSubscription } from '../../lib/pushRegistration';
 
 // ── Mocks ─────────────────────────────────────────────────────────────────
 
 const mockSignOut = vi.fn().mockResolvedValue(undefined);
 const mockUser = { id: 'user-abc', email: 'user@example.com', user_metadata: { name: 'Riya Sharma' }, created_at: '2024-01-15T00:00:00Z' };
+
+vi.mock('../../lib/pushRegistration', () => ({
+  registerPushSubscription: vi.fn().mockResolvedValue({ supported: true, granted: true, endpoint: 'x' }),
+  ensurePushSubscription: vi.fn().mockResolvedValue(true),
+}));
 
 vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({ user: mockUser, signOut: mockSignOut }),
@@ -236,7 +242,7 @@ describe('NotificationsModal', () => {
     vi.clearAllMocks();
   });
 
-  it('Enable button calls Notification.requestPermission()', async () => {
+  it('Enable button starts push registration (which asks for permission)', async () => {
     setNotificationPermission('default');
     mockRequestPermission.mockResolvedValue('granted');
     await renderProfileTab();
@@ -245,7 +251,7 @@ describe('NotificationsModal', () => {
 
     await act(async () => { fireEvent.click(screen.getByText('Enable')); });
 
-    expect(mockRequestPermission).toHaveBeenCalled();
+    expect(registerPushSubscription).toHaveBeenCalled();
   });
 
   it('shows "On" badge when Notification.permission is already granted', async () => {

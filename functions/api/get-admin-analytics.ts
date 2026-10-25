@@ -168,7 +168,8 @@ async function getSubscriptionMetrics(env: Env): Promise<SubscriptionReport> {
   const rows = (subs ?? []);
 
   const active  = rows.filter(r => r.status === 'active' && r.plan === 'pro').length;
-  const free    = rows.filter(r => r.plan === 'free').length;
+  const { count: freeUsers } = await supabaseAdmin.from('users').select('*', { count: 'exact', head: true }).eq('plan', 'free');
+  const free    = freeUsers ?? rows.filter(r => r.plan === 'free').length;
   const grace   = rows.filter(r => r.status === 'grace_period').length;
   const churned = rows.filter(r => r.status === 'cancelled' || r.status === 'expired').length;
 

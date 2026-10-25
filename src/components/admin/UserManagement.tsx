@@ -34,6 +34,8 @@ interface AdminUser {
   gifted_by:         string | null;
   admin_note:        string | null;
   ai_searches_today: number;
+  photo_searches_today?: number;
+  ai_limit?: number;
   upi_transaction_id?: string | null;  // UTR submitted, pending verification
 }
 
@@ -334,8 +336,9 @@ function UserRow({ user, adminId, onRefresh }: UserRowProps) {
   const [showRevoke,      setShowRevoke]      = useState(false);
   const [showActivateUPI, setShowActivateUPI] = useState(false);
 
-  const aiPct      = Math.min((user.ai_searches_today / FREE_AI_LIMIT) * 100, 100);
-  const aiOverLimit = user.ai_searches_today >= FREE_AI_LIMIT;
+  const aiLimit    = user.plan === 'pro' ? 200 : (user.ai_limit ?? FREE_AI_LIMIT);
+  const aiPct      = Math.min((user.ai_searches_today / aiLimit) * 100, 100);
+  const aiOverLimit = user.ai_searches_today >= aiLimit;
   const isExpiringSoon = user.valid_until
     ? new Date(user.valid_until).getTime() - Date.now() < 5 * 86_400_000
     : false;
@@ -376,14 +379,14 @@ function UserRow({ user, adminId, onRefresh }: UserRowProps) {
           <div className="flex justify-between items-center mb-1">
             <span className="text-[10px] text-[#636366]">AI searches today</span>
             <span className={`text-[10px] font-bold ${aiOverLimit && user.plan === 'free' ? 'text-red-400' : 'text-[#636366]'}`}>
-              {user.ai_searches_today} / {user.plan === 'pro' ? '200' : FREE_AI_LIMIT}
+              {user.ai_searches_today} / {aiLimit}{typeof user.photo_searches_today === 'number' ? ` · photo ${user.photo_searches_today}` : ''}
             </span>
           </div>
           <div className="h-1.5 bg-[#2C2C2E] rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all"
               style={{
-                width: `${user.plan === 'pro' ? Math.min(user.ai_searches_today / 200 * 100, 100) : aiPct}%`,
+                width: `${aiPct}%`,
                 background: aiOverLimit && user.plan === 'free' ? '#FF6B6B' : '#C8F75E',
               }}
             />
@@ -517,7 +520,7 @@ export function UserManagement() {
     all:  users.length,
     free: users.filter(u => u.plan === 'free').length,
     pro:  users.filter(u => u.plan === 'pro').length,
-    overLimit: users.filter(u => u.plan === 'free' && u.ai_searches_today >= FREE_AI_LIMIT).length,
+    overLimit: users.filter(u => u.plan === 'free' && u.ai_searches_today >= (u.ai_limit ?? FREE_AI_LIMIT)).length,
   }), [users]);
 
   if (!isAdmin) {

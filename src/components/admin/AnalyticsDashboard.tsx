@@ -456,8 +456,8 @@ export function AnalyticsDashboard() {
             )}
           </div>
 
-          {/* ── Onboarding funnel ── */}
-          <div>
+          {/* ── Onboarding funnel (hidden until those events are tracked) ── */}
+          {data.onboarding_funnel.splash_views > 0 && (<div>
             <SectionHeader
               title="Onboarding Funnel"
               sub={`Overall conversion: ${data.onboarding_funnel.conversion_rates.overall}%`}
@@ -480,19 +480,19 @@ export function AnalyticsDashboard() {
                 />
               ))}
             </div>
-          </div>
+          </div>)}
 
           {/* ── AI usage ── */}
           <div>
             <SectionHeader
               title="AI Usage"
-              sub={`${data.ai_usage.total_searches.toLocaleString()} total searches · ${data.ai_usage.ai_search_rate}% of DAU`}
+              sub={`${data.ai_usage.total_searches.toLocaleString()} AI lookups in this period`}
             />
             <div className="bg-[#1C1C1E] border border-white/[0.07] rounded-xl p-4">
               {[
-                { label: 'Name search (Gemini Flash)',    value: data.ai_usage.name_searches,          color: '#C8F75E' },
+                { label: 'Name search (Gemini Flash Lite)',    value: data.ai_usage.name_searches,          color: '#C8F75E' },
                 { label: 'Describe (Claude Haiku)',       value: data.ai_usage.description_searches,   color: '#C4A8FF' },
-                { label: 'Photo (Gemini Vision · Pro)',   value: data.ai_usage.photo_searches,          color: '#8DB4FF' },
+                { label: 'Photo (Gemini 3.8 Flash)',   value: data.ai_usage.photo_searches,          color: '#8DB4FF' },
               ].map(({ label, value, color }) => {
                 const pct = data.ai_usage.total_searches > 0
                   ? (value / data.ai_usage.total_searches) * 100 : 0;
