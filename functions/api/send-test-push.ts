@@ -25,6 +25,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   let sent = 0;
   const statuses: number[] = [];
+  const errors: string[] = [];
   for (const s of subs) {
     try {
       const { ok, status } = await sendWebPush(env, s, {
@@ -40,7 +41,9 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       }
     } catch (e) {
       statuses.push(-1);
+      errors.push(String((e as Error)?.message ?? e).slice(0, 120));
     }
   }
-  return jsonResponse(env, 200, { success: sent > 0, sent, devices: subs.length, statuses });
+  return jsonResponse(env, 200, { success: sent > 0, sent, devices: subs.length, statuses, errors,
+    keyInfo: { pub: (env.VAPID_PUBLIC_KEY || '').length, priv: (env.VAPID_PRIVATE_KEY || '').length } });
 };

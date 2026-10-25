@@ -229,7 +229,7 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
       if (j.error === 'vapid_not_configured') setTestMsg('Server is not set up for notifications yet (missing keys). Tell support.');
       else if (j.error === 'no_subscription') setTestMsg('This device is not registered yet. Tap Enable, then try again.');
       else if (j.success) setTestMsg(`Sent to ${j.sent} device${j.sent === 1 ? '' : 's'}. It should appear within a few seconds.`);
-      else setTestMsg(`The notification service refused it (code ${(j.statuses ?? []).join(', ') || r.status}). Try Enable again.`);
+      else setTestMsg(`The notification service refused it (code ${(j.statuses ?? []).join(', ') || r.status}). Try Enable again.${j.errors?.length ? ' Reason: ' + j.errors[0] : ''}${j.keyInfo ? ` (key lengths ${j.keyInfo.pub}/${j.keyInfo.priv})` : ''}`);
     } catch {
       setTestMsg('Could not reach the server. Check your connection.');
     }
