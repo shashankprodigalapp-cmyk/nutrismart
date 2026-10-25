@@ -419,9 +419,7 @@ export function MealFeedbackToast() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[10px] font-bold text-[#C8F75E] uppercase tracking-[0.8px] mb-1">🧠 Meal insight</p>
-          <p className="text-[12px] text-[#A1A1A1] leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: feedbackMessage }}
-          />
+          <p className="text-[12px] text-[#A1A1A1] leading-relaxed">{feedbackMessage}</p>
         </div>
       </div>
     </div>

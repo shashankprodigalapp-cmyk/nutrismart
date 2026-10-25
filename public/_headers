@@ -1,0 +1,7 @@
+/*
+  Strict-Transport-Security: max-age=31536000
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'sha256-w+UVlRATo79EmjUWdZ3cBFLb8BfIwrLZOrvJcQXDbC0='; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: https://fpucudybsztpzavehsnb.supabase.co; connect-src 'self' https://fpucudybsztpzavehsnb.supabase.co wss://fpucudybsztpzavehsnb.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'

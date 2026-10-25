@@ -460,6 +460,7 @@ export default function ProfileTab() {
           {[
             { label: 'Privacy Policy',   href: '/legal/privacy.html' },
             { label: 'Terms of Service', href: '/legal/terms.html' },
+            { label: 'Credits and data sources', href: '/legal/credits.html' },
           ].map(item => (
             <a
               key={item.label}
