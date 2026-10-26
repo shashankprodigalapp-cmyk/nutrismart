@@ -9,7 +9,7 @@ import { InstallHelpModal } from '../../components/InstallHelpModal';
 import { track } from '../../lib/analytics';
 import ProfileCompletionCard, { useProfileStatus } from '../../components/ProfileCompletion';
 import { fitMacros, matchPreset, presetGrams, splitPercent, PRESETS, type PresetKey } from '../../lib/macroMath';
-import { registerPushSubscription, ensurePushSubscription } from '../../lib/pushRegistration';
+import { registerPushSubscription, ensurePushSubscription, unregisterPushSubscription, isPushTurnedOff, setPushTurnedOff } from '../../lib/pushRegistration';
 
 interface Profile {
   full_name:      string;
@@ -195,7 +195,7 @@ function NutritionGoalsModal({
 
 function NotificationsModal({ onClose }: { onClose: () => void }) {
   const [pushEnabled, setPushEnabled] = useState(
-    'Notification' in window ? Notification.permission === 'granted' : false,
+    ('Notification' in window ? Notification.permission === 'granted' : false) && !isPushTurnedOff(),
   );
   const [requesting, setRequesting] = useState(false);
   const { user } = useAuth();
@@ -211,6 +211,8 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
   const requestPermission = async () => {
     if (!user || !('Notification' in window)) return;
     setRequesting(true);
+    setTestMsg('');
+    setPushTurnedOff(false);
     const res = await registerPushSubscription(user.id);
     const ok = res.supported && res.granted;
     setPushEnabled(ok || Notification.permission === 'granted');
@@ -218,6 +220,17 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
     if (ok) track('notifications_enabled');
     if (!res.supported) setTestMsg('This browser does not support notifications. On iPhone, add NutriSmart to your Home Screen first.');
     else if (!res.granted) setTestMsg('Notifications are blocked. Allow them for this site in your browser or phone settings, then try again.');
+    setRequesting(false);
+  };
+
+  const turnOff = async () => {
+    if (!user) return;
+    setRequesting(true);
+    await unregisterPushSubscription(user.id);
+    setPushTurnedOff(true);
+    setPushEnabled(false);
+    setRegistered(null);
+    setTestMsg('Notifications are off on this device. Turn the switch on any time.');
     setRequesting(false);
   };
 
@@ -232,7 +245,7 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
       const j = await r.json().catch(() => ({}));
       if (j.error === 'vapid_not_configured') setTestMsg('Server is not set up for notifications yet (missing keys). Tell support.');
       else if (j.error === 'no_subscription') setTestMsg('This device is not registered yet. Tap Enable, then try again.');
-      else if (j.success) setTestMsg(`Sent to ${j.sent} device${j.sent === 1 ? '' : 's'}. It should appear within a few seconds.`);
+      else if (j.success) setTestMsg(`Sent to ${j.sent} of ${j.devices} device${j.devices === 1 ? '' : 's'}${Array.isArray(j.info) ? ': ' + j.info.map((d: { label: string; ok: boolean; status: number }) => `${d.label} ${d.ok ? 'accepted' : 'refused (' + d.status + ')'}`).join(', ') : ''}. It should appear within a few seconds. If your phone is not listed, open NutriSmart on it once.`);
       else setTestMsg(`The notification service refused it (code ${(j.statuses ?? []).join(', ') || r.status}). Try Enable again.${j.errors?.length ? ' Reason: ' + j.errors[0] : ''}${j.keyInfo ? ` (key lengths ${j.keyInfo.pub}/${j.keyInfo.priv})` : ''}`);
     } catch {
       setTestMsg('Could not reach the server. Check your connection.');
@@ -258,17 +271,17 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
             <p className="text-sm text-white">Push Notifications</p>
             <p className="text-xs text-[#636366] mt-0.5">Daily reminders &amp; insights</p>
           </div>
-          {pushEnabled ? (
-            <span className="text-xs bg-[#C8F75E]/20 text-[#C8F75E] font-semibold px-2.5 py-1 rounded-full">On</span>
-          ) : (
-            <button
-              onClick={requestPermission}
-              disabled={requesting}
-              className="text-xs bg-[#C8F75E] text-black font-semibold px-3 py-1.5 rounded-full disabled:opacity-50"
-            >
-              {requesting ? '…' : 'Enable'}
-            </button>
-          )}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={pushEnabled}
+            aria-label="Push notifications on this device"
+            onClick={pushEnabled ? turnOff : requestPermission}
+            disabled={requesting}
+            className={`relative w-12 h-7 rounded-full transition-colors disabled:opacity-50 ${pushEnabled ? 'bg-[#C8F75E]' : 'bg-white/20'}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white transition-transform ${pushEnabled ? 'translate-x-5' : ''}`} />
+          </button>
         </div>
 
         {pushEnabled && (

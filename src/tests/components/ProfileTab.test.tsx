@@ -44,6 +44,9 @@ const mockUser = { id: 'user-abc', email: 'user@example.com', user_metadata: { n
 vi.mock('../../lib/pushRegistration', () => ({
   registerPushSubscription: vi.fn().mockResolvedValue({ supported: true, granted: true, endpoint: 'x' }),
   ensurePushSubscription: vi.fn().mockResolvedValue(true),
+  unregisterPushSubscription: vi.fn().mockResolvedValue(undefined),
+  isPushTurnedOff: vi.fn().mockReturnValue(false),
+  setPushTurnedOff: vi.fn(),
 }));
 
 vi.mock('../../context/AuthContext', () => ({
@@ -247,18 +250,18 @@ describe('NotificationsModal', () => {
     mockRequestPermission.mockResolvedValue('granted');
     await renderProfileTab();
     fireEvent.click(screen.getByText('Notifications'));
-    await waitFor(() => expect(screen.getByText('Enable')).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('switch')).toBeTruthy());
 
-    await act(async () => { fireEvent.click(screen.getByText('Enable')); });
+    await act(async () => { fireEvent.click(screen.getByRole('switch')); });
 
     expect(registerPushSubscription).toHaveBeenCalled();
   });
 
-  it('shows "On" badge when Notification.permission is already granted', async () => {
+  it('shows the switch on when Notification.permission is already granted', async () => {
     setNotificationPermission('granted');
     await renderProfileTab();
     fireEvent.click(screen.getByText('Notifications'));
-    await waitFor(() => expect(screen.getByText('On')).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('switch').getAttribute('aria-checked')).toBe('true'));
   });
 });
 

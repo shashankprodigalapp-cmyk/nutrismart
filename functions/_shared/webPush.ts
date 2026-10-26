@@ -14,7 +14,7 @@ export async function sendWebPush(
   payload: Record<string, unknown>,
 ): Promise<{ ok: boolean; status: number }> {
   const vapid: VapidKeys = {
-    subject: 'mailto:support@nutrismart.in',
+    subject: 'mailto:support@nutrismart.co.in',
     publicKey: env.VAPID_PUBLIC_KEY,
     privateKey: env.VAPID_PRIVATE_KEY,
   };

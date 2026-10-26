@@ -18,7 +18,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const admin = getSupabaseAdmin(env);
   const { data: subs } = await admin
     .from('push_subscriptions')
-    .select('endpoint, p256dh, auth_key')
+    .select('endpoint, p256dh, auth_key, device_ua')
     .eq('user_id', auth.userId);
 
   if (!subs?.length) return jsonResponse(env, 200, { success: false, error: 'no_subscription', devices: 0 });
@@ -26,6 +26,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   let sent = 0;
   const statuses: number[] = [];
   const errors: string[] = [];
+  const info: { label: string; ok: boolean; status: number }[] = [];
+  const labelOf = (ua: string | null) => {
+    const u = ua ?? '';
+    const dev = /iPhone/.test(u) ? 'iPhone' : /iPad/.test(u) ? 'iPad' : /Android/.test(u) ? 'Android phone' : /Macintosh/.test(u) ? 'Mac' : /Windows/.test(u) ? 'Windows PC' : 'Other device';
+    const br = /Edg\//.test(u) ? 'Edge' : /Firefox\//.test(u) ? 'Firefox' : /Chrome\//.test(u) ? 'Chrome' : /Safari\//.test(u) ? 'Safari' : '';
+    return br ? `${dev} (${br})` : dev;
+  };
   for (const s of subs) {
     try {
       const { ok, status } = await sendWebPush(env, s, {
@@ -35,15 +42,17 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         url:   '/app/today',
       });
       statuses.push(status);
+      info.push({ label: labelOf((s as { device_ua?: string | null }).device_ua ?? null), ok, status });
       if (ok) sent++;
       else if (status === 404 || status === 410) {
         await admin.from('push_subscriptions').delete().eq('endpoint', s.endpoint);
       }
     } catch (e) {
       statuses.push(-1);
+      info.push({ label: labelOf((s as { device_ua?: string | null }).device_ua ?? null), ok: false, status: -1 });
       errors.push(String((e as Error)?.message ?? e).slice(0, 120));
     }
   }
-  return jsonResponse(env, 200, { success: sent > 0, sent, devices: subs.length, statuses, errors,
+  return jsonResponse(env, 200, { success: sent > 0, sent, devices: subs.length, statuses, errors, info,
     keyInfo: { pub: (env.VAPID_PUBLIC_KEY || '').length, priv: (env.VAPID_PRIVATE_KEY || '').length } });
 };

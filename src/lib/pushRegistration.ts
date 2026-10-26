@@ -52,6 +52,14 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
 
+/** The person turned notifications off on this device (the switch in Profile). Remembered on the device only. */
+export function isPushTurnedOff(): boolean {
+  try { return localStorage.getItem('ns-push-off') === '1'; } catch { return false; }
+}
+export function setPushTurnedOff(off: boolean): void {
+  try { if (off) localStorage.setItem('ns-push-off', '1'); else localStorage.removeItem('ns-push-off'); } catch { /* ignore */ }
+}
+
 /** If this device was subscribed with an older VAPID key, drop that subscription so a fresh one can be made. */
 async function dropStaleSubscription(reg: ServiceWorkerRegistration, keyStr: string, userId: string): Promise<void> {
   try {
@@ -173,7 +181,7 @@ export async function registerPushSubscription(
  */
 export async function ensurePushSubscription(userId: string): Promise<boolean> {
   try {
-    if (!isPushSupported() || Notification.permission !== 'granted') return false;
+    if (!isPushSupported() || Notification.permission !== 'granted' || isPushTurnedOff()) return false;
     const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string;
     if (!vapidPublicKey) return false;
 
