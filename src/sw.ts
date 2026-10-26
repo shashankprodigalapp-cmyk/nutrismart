@@ -98,9 +98,12 @@ self.addEventListener('push', (event: PushEvent) => {
       tag,
       icon:      '/icon-192.png',
       badge:     '/icon-192.png',
-      // renotify: false,  // same-tag notification replaces, not stacks
+      // Make a sound and vibrate on phones, even when a notification with the same tag is already showing.
+      vibrate:   [200, 100, 200],
+      renotify:  true,
+      silent:    false,
       data:      { url },
-    }),
+    } as NotificationOptions & { vibrate?: number[]; renotify?: boolean }),
   );
 });
 
