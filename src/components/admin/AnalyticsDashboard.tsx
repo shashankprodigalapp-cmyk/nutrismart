@@ -408,7 +408,7 @@ export function AnalyticsDashboard() {
               <div className="flex justify-between items-center mt-2">
                 <span className="text-[11px] text-[#636366]">Grace recovery rate</span>
                 <span className="text-[13px] font-semibold text-[#6BCB77]">
-                  {data.subscriptions.grace_recovery_rate}%
+                  {data.subscriptions.payment_failure_rate > 0 ? `${data.subscriptions.grace_recovery_rate}%` : 'no failed payments'}
                 </span>
               </div>
             </div>

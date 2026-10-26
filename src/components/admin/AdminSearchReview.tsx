@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Card, Empty } from './adminUi';
 
+interface Food { id: string; name: string; portion: string; calories: number; protein: number; carbs: number; fat: number; source: string }
 interface Row { term: string; source: string; hits: number; status: string; last_seen: string }
 
 async function call(init?: RequestInit) {
@@ -21,6 +22,7 @@ async function call(init?: RequestInit) {
 export function AdminSearchReview() {
   const [pending, setPending] = useState<Row[]>([]);
   const [blocked, setBlocked] = useState<Row[]>([]);
+  const [foods, setFoods] = useState<Food[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +33,7 @@ export function AdminSearchReview() {
       if (res.status === 403) setError('This account is not an admin.');
       else if (j?.error === 'review_unavailable') setError('The database part is not installed yet. Run migration 019 in Supabase, then refresh.');
       else if (!res.ok) setError('Could not load the list. Try again in a minute.');
-      else { setPending(j.pending ?? []); setBlocked(j.blocked ?? []); }
+      else { setPending(j.pending ?? []); setBlocked(j.blocked ?? []); setFoods(j.foods ?? []); }
     } catch { setError('Could not reach the server. Check your connection.'); }
     setLoading(false);
   }, []);
@@ -39,6 +41,12 @@ export function AdminSearchReview() {
 
   const act = async (term: string, action: 'block' | 'dismiss' | 'unblock') => {
     await call({ method: 'POST', body: JSON.stringify({ term, action }) });
+    void load();
+  };
+
+  const actFood = async (food_id: string, action: 'food_verify' | 'food_delete') => {
+    const { res, j } = await call({ method: 'POST', body: JSON.stringify({ food_id, action }) });
+    if (!res.ok) setError(j?.message ?? 'Could not change this food.');
     void load();
   };
 
@@ -64,6 +72,20 @@ export function AdminSearchReview() {
             <div className="flex gap-2 shrink-0">
               <button onClick={() => void act(r.term, 'block')} className={`${btn} bg-[#FF5D5D] text-[#111113]`}>Block</button>
               <button onClick={() => void act(r.term, 'dismiss')} className={`${btn} bg-[#1C1C1E] text-[#8E8E93] border border-white/10`}>Dismiss</button>
+            </div>
+          </div>
+        ))}
+      </Card>
+      <Card title="New foods found by AI" hint="Check the numbers. Approve to show the food to everyone in the Log list. Remove if it looks wrong.">
+        {foods.length === 0 ? <Empty>No new AI foods waiting.</Empty> : foods.map(f => (
+          <div key={f.id} className="flex items-center justify-between gap-2 py-2 border-b border-white/[0.05] last:border-0">
+            <div className="min-w-0">
+              <p className="text-sm text-white truncate">{f.name} <span className="text-[11px] text-[#8E8E93]">· {f.portion}</span></p>
+              <p className="text-[11px] text-[#8E8E93]">{Math.round(f.calories)} kcal · P {f.protein} · C {f.carbs} · F {f.fat}</p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button onClick={() => void actFood(f.id, 'food_verify')} className={`${btn} bg-[#C8F75E] text-[#111113]`}>Approve</button>
+              <button onClick={() => void actFood(f.id, 'food_delete')} className={`${btn} bg-[#1C1C1E] text-[#FF5D5D] border border-white/10`}>Remove</button>
             </div>
           </div>
         ))}

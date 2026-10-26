@@ -358,7 +358,7 @@ export function FestivalBanner() {
       </div>
       <button
         onClick={dismissFestival}
-        className="text-[#636366] text-[16px] leading-none flex-shrink-0 ml-2"
+        className="text-[#636366] text-[18px] leading-none flex-shrink-0 ml-2 min-w-[40px] min-h-[40px] flex items-center justify-center"
         aria-label="Dismiss"
       >×</button>
     </div>

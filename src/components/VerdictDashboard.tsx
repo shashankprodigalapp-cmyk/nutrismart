@@ -127,7 +127,7 @@ export function VerdictDashboard() {
       <div className="flex items-start justify-between gap-2 mb-2">
         <p className="text-[10px] font-bold text-[#C8F75E] uppercase tracking-[1px]">{greeting}</p>
         <button onClick={dismiss} aria-label="Dismiss"
-          className="text-[#636366] text-[16px] leading-none flex-shrink-0">×</button>
+          className="text-[#636366] text-[18px] leading-none flex-shrink-0 min-w-[40px] min-h-[40px] -mt-3 -mr-3 flex items-center justify-center">×</button>
       </div>
 
       <h2 className="font-['Playfair_Display'] text-[18px] font-black text-[#F5F5F5] leading-tight mb-2">

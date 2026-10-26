@@ -3,9 +3,11 @@
  * Shows today's nutrition at a glance: calories, macros, water, energy check-in prompt.
  */
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { localDb } from '../../lib/localDb';
 import { useTargets } from '../../lib/useTargets';
+import { useAlerts } from '../../components/ContextualAlerts';
 import { ProfileNudge } from '../../components/ProfileCompletion';
 
 interface TodaySummary {
@@ -17,11 +19,15 @@ interface TodaySummary {
   meals:     number;
 }
 
-const WATER_GOAL   = 2500;
+const GLASS_ML = 250;
 
 export default function TodayTab() {
   const { user } = useAuth();
-  const { cal: CALORIE_GOAL, protein: PROTEIN_GOAL } = useTargets();
+  const { cal: baseGoal, protein: PROTEIN_GOAL, water: waterGlasses } = useTargets();
+  const { eventBudget } = useAlerts();
+  // Same rule as the Log tab: an active event budget replaces the daily calorie goal.
+  const CALORIE_GOAL = eventBudget.active ? eventBudget.daytimeBudget : baseGoal;
+  const WATER_GOAL = waterGlasses * GLASS_ML;
   const [summary, setSummary] = useState<TodaySummary>({
     calories: 0, protein: 0, carbs: 0, fat: 0, water_ml: 0, meals: 0,
   });
@@ -29,7 +35,8 @@ export default function TodayTab() {
 
   useEffect(() => {
     const h = new Date().getHours();
-    if (h >= 12 && h < 17) setGreeting('Good afternoon');
+    if (h < 5)             setGreeting('Hello');
+    else if (h >= 12 && h < 17) setGreeting('Good afternoon');
     else if (h >= 17)      setGreeting('Good evening');
   }, []);
 
@@ -78,7 +85,7 @@ export default function TodayTab() {
       <div className="bg-[#1C1C1E] rounded-2xl p-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium text-[#EBEBF5]/60">Calories today</span>
-          <span className="text-xs text-[#636366]">Goal {CALORIE_GOAL} kcal</span>
+          <span className="text-xs text-[#636366]">{eventBudget.active ? 'Event budget' : 'Goal'} {CALORIE_GOAL} kcal</span>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative w-20 h-20 flex-shrink-0">
@@ -144,7 +151,7 @@ export default function TodayTab() {
       {summary.calories === 0 && (
         <div className="bg-[#1C1C1E] rounded-2xl p-4 border border-[#C8F75E]/20">
           <p className="text-sm text-[#C8F75E] font-medium">Start your day right 🌟</p>
-          <p className="text-xs text-[#636366] mt-1">Tap <strong className="text-white">Log</strong> to log your first meal today.</p>
+          <p className="text-xs text-[#636366] mt-1">Tap <Link to="/app/log" className="font-semibold text-white underline">Log</Link> to log your first meal today.</p>
         </div>
       )}
     </div>

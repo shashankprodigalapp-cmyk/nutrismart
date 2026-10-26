@@ -79,6 +79,7 @@ const T = {
 
 type Meal = 'breakfast' | 'lunch' | 'snack' | 'dinner';
 type MetricMode = 'serving' | 'grams';
+const MAX_GRAMS = 3000;
 
 interface DailyTargets {
   cal:     number;
@@ -190,7 +191,7 @@ function MacroPill({
   const pct = Math.min(value / Math.max(target, 1), 1);
   const rem = Math.max(0, target - value);
   return (
-    <div className="flex-shrink-0 bg-[#1C1C1E] border border-white/[0.07] rounded-2xl p-3 min-w-[82px]">
+    <div className="min-w-0 bg-[#1C1C1E] border border-white/[0.07] rounded-2xl p-3">
       <div className={`text-[18px] font-bold leading-none`} style={{ color }}>
         {value % 1 === 0 ? value : value.toFixed(1)}
       </div>
@@ -212,16 +213,16 @@ function WaterQuickAdd({
 }: { glasses: number; target: number; onAdd: () => void; onRemove: () => void }) {
   const pct = Math.min(glasses / target, 1);
   return (
-    <div className="mx-4 mt-3 bg-[#1C1C1E] border border-[#7DD3FC]/20 rounded-xl px-4 py-3 flex items-center justify-between">
-      <div>
+    <div className="mx-4 md:mx-0 mt-3 bg-[#1C1C1E] border border-[#7DD3FC]/20 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+      <div className="min-w-0">
         <span className="text-[11px] font-bold text-[#7DD3FC]">💧 Water</span>
-        <div className="flex gap-[3px] mt-1">
+        <div className="flex flex-wrap gap-[3px] mt-1">
           {Array.from({ length: target }).map((_, i) => (
             <span key={i} className={`text-[10px] ${i < glasses ? 'opacity-100' : 'opacity-20'}`}>💧</span>
           ))}
         </div>
       </div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-shrink-0">
         <button
           onPointerDown={(e) => { e.preventDefault(); onRemove(); }}
           className="w-8 h-8 rounded-full bg-[#2C2C2E] text-[#7DD3FC] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
@@ -383,18 +384,24 @@ function AddFoodSheet({
   food,
   profile,
   initialMeal,
+  initialQty,
+  initialHome,
+  editing,
   onConfirm,
   onClose,
 }: {
   food:         Food;
   profile:      KitchenProfile | null;
   initialMeal:  Meal;
+  initialQty?:  number;
+  initialHome?: boolean;
+  editing?:     boolean;
   onConfirm:    (entry: Omit<LogEntry, 'id' | 'user_id' | 'synced_at' | 'created_at'>) => void;
   onClose:      () => void;
 }) {
-  const [qty,        setQty]        = useState(1);
+  const [qty,        setQty]        = useState(initialQty ?? 1);
   const [grams,      setGrams]      = useState(food.weight_g ?? 100);
-  const [isHome,     setIsHome]     = useState(true);
+  const [isHome,     setIsHome]     = useState(initialHome ?? true);
   const [meal,       setMeal]       = useState<Meal>(initialMeal);
   const [metric,     setMetric]     = useState<MetricMode>('serving');
   const [anomaly,    setAnomaly]    = useState(false);
@@ -437,6 +444,22 @@ function AddFoodSheet({
     setAnomaly(preview?.anomaly ?? false);
   }, [preview]);
 
+  // Escape closes the sheet.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  // Switching Servings <-> Grams keeps the same amount of food.
+  const switchMetric = (m: MetricMode) => {
+    if (m === metric) return;
+    const baseG = food.weight_g ?? 100;
+    if (m === 'grams') setGrams(Math.min(MAX_GRAMS, Math.max(1, Math.round(qty * baseG))));
+    else setQty(Math.min(10, Math.max(0.25, Math.round((grams / baseG) * 4) / 4)));
+    setMetric(m);
+  };
+
   const handleConfirm = () => {
     if (!preview || !profile) return;
 
@@ -464,6 +487,7 @@ function AddFoodSheet({
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/60 md:items-center md:p-6" onClick={onClose}>
       <div
+        role="dialog" aria-modal="true" aria-label={`Add ${food.name}`}
         className="w-full max-w-xl bg-[#1C1C1E] rounded-t-3xl md:rounded-3xl px-5 pt-3 pb-10 md:pb-6 max-h-[90dvh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
@@ -481,7 +505,7 @@ function AddFoodSheet({
           {(['serving', 'grams'] as MetricMode[]).map((m) => (
             <button
               key={m}
-              onClick={() => setMetric(m)}
+              onClick={() => switchMetric(m)}
               className={`flex-1 py-2 rounded-lg text-[12px] font-semibold transition-all ${
                 metric === m
                   ? 'bg-[#C8F75E] text-[#111113]'
@@ -515,9 +539,9 @@ function AddFoodSheet({
             <input
               type="number"
               value={grams}
-              onChange={(e) => setGrams(Math.max(1, Number(e.target.value)))}
+              onChange={(e) => setGrams(Math.min(MAX_GRAMS, Math.max(1, Math.round(Number(e.target.value) || 1))))}
               className="flex-1 bg-transparent text-[#F5F5F5] text-xl font-bold outline-none text-right"
-              min={1} max={2000}
+              min={1} max={MAX_GRAMS}
             />
             <span className="text-[#636366] font-semibold">g</span>
           </div>
@@ -594,7 +618,7 @@ function AddFoodSheet({
           disabled={!preview}
           className="w-full bg-[#C8F75E] text-[#111113] font-bold text-[15px] rounded-xl py-4 disabled:opacity-40 active:scale-[0.98] transition-transform"
         >
-          + Add to {MEAL_LABELS[meal]}
+          {editing ? '✓ Save changes' : `+ Add to ${MEAL_LABELS[meal]}`}
         </button>
 
         <button
@@ -611,8 +635,8 @@ function AddFoodSheet({
 // ── TODAY'S LOG ───────────────────────────────────────────────────────────────
 
 function TodayLog({
-  entries, onDelete,
-}: { entries: LogEntry[]; onDelete: (id: string) => void }) {
+  entries, onDelete, onEdit,
+}: { entries: LogEntry[]; onDelete: (id: string) => void; onEdit: (e: LogEntry) => void }) {
   const grouped = useMemo(() => {
     const map = new Map<Meal, LogEntry[]>();
     const order: Meal[] = ['breakfast', 'lunch', 'snack', 'dinner'];
@@ -659,6 +683,12 @@ function TodayLog({
                   key={entry.id}
                   className="bg-[#1C1C1E] border border-white/[0.07] rounded-xl px-3 py-2.5 flex items-center gap-3"
                 >
+                  <button
+                    type="button"
+                    onClick={() => onEdit(entry)}
+                    aria-label={`Edit ${entry.food_name}`}
+                    className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                  >
                   <span className="text-[18px] w-7 text-center flex-shrink-0">
                     {getFoodEmoji(entry.food_name)}
                   </span>
@@ -679,6 +709,7 @@ function TodayLog({
                       </span>
                     </div>
                   </div>
+                  </button>
                   <div className="text-right flex-shrink-0">
                     <div className="text-[14px] font-bold text-[#F5F5F5]">{Math.round(entry.cal)}</div>
                     <button
@@ -740,6 +771,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
   const [removedUsuals, setRemovedUsuals] = useState<Set<string>>(new Set());
   const [masterFoods,   setMasterFoods]   = useState<Food[]>([]);
   const [sheetFood,     setSheetFood]     = useState<Food | null>(null);
+  const [editEntry,     setEditEntry]     = useState<LogEntry | null>(null);
   const [glasses,       setGlasses]       = useState(0);
   const [targets,       setTargets]       = useState<DailyTargets>(DEFAULT_TARGETS);
   const { eventBudget } = useAlerts();
@@ -984,7 +1016,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
     };
 
     await localDb.daily_logs.add(entry);
-    if (sheetFood) await recordFoodUsage(sheetFood, entryData.meal, entryData.cal);
+    if (sheetFood && !editEntry) await recordFoodUsage(sheetFood, entryData.meal, entryData.cal);
 
     // Enqueue sync
     try {
@@ -998,7 +1030,13 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
       viaUsualRef.current = false;
       track('food_logged', { method, meal: entryData.meal, adjusted: entryData.qty !== 1 || (!!sheetFood && entryData.portion !== sheetFood.portion) });
     }
-    setEntries(prev => [...prev, entry]);
+    // Editing a logged meal: the new version replaces the old one.
+    if (editEntry) {
+      await localDb.daily_logs.delete(editEntry.id);
+      try { await getSyncManager().enqueue('delete_log', { id: editEntry.id }); } catch { /* offline ok */ }
+    }
+    setEntries(prev => [...prev.filter(e => !editEntry || e.id !== editEntry.id), entry]);
+    setEditEntry(null);
     setSheetFood(null);
     setQuery('');
     setResults([]);
@@ -1012,7 +1050,18 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
     getUsualFoods(currentMeal, removedUsuals, 8).then(setUsuals);
 
     onLogConfirmed?.(entry);
-  }, [user, sheetFood, onLogConfirmed]);
+  }, [user, sheetFood, editEntry, onLogConfirmed]);
+
+  // ── Edit a logged meal: reopen the add sheet with its values ──────────────
+  const handleEditEntry = useCallback((e: LogEntry) => {
+    const food =
+      masterFoods.find(f => f.id === e.food_id) ??
+      masterFoods.find(f => f.name.toLowerCase() === e.food_name.toLowerCase());
+    if (!food) return; // food no longer in the list (e.g. an AI food still waiting for admin approval)
+    viaUsualRef.current = false;
+    setEditEntry(e);
+    setSheetFood(food);
+  }, [masterFoods]);
 
   // ── Delete food ───────────────────────────────────────────────────────────
   const handleDelete = useCallback(async (id: string) => {
@@ -1362,7 +1411,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           </div>
 
           {/* Macro pills */}
-          <div className="flex gap-2 px-4 mt-4 overflow-x-auto pb-1 scrollbar-hide md:px-0">
+          <div className="grid grid-cols-4 gap-2 px-4 mt-4 md:px-0">
             <MacroPill label="Protein"  value={parseFloat(totals.protein.toFixed(0))} target={targets.protein} unit="g" color="#8DB4FF" />
             <MacroPill label="GL"       value={parseFloat(totals.gl.toFixed(0))}      target={targets.gl}      unit=""  color="#C4A8FF" />
             <MacroPill label="Fat"      value={parseFloat(totals.fat.toFixed(0))}     target={targets.fat}     unit="g" color="#FFB347" />
@@ -1378,7 +1427,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           />
 
           {/* Today's log — left column on desktop */}
-          <TodayLog entries={entries} onDelete={handleDelete} />
+          <TodayLog entries={entries} onDelete={handleDelete} onEdit={handleEditEntry} />
         </div>
 
         {/* ══ RIGHT COLUMN — search + usuals + results ══ */}
@@ -1425,7 +1474,10 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
         <div className="flex items-center gap-2 bg-[#1C1C1E] border border-white/[0.12] rounded-xl px-4 py-3">
           <span className="text-[#636366] text-[13px]">🔍</span>
           <input
-            type="search"
+            type="text"
+            inputMode="search"
+            enterKeyHint="search"
+            aria-label="Search food"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="search food…"
@@ -1439,14 +1491,14 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
               photoInputRef.current?.click();
             }}
             disabled={photoLoading}
-            className="text-[20px] opacity-60 hover:opacity-100 active:scale-90 transition-all disabled:opacity-30"
+            className="text-[20px] min-w-[40px] min-h-[40px] flex items-center justify-center opacity-60 hover:opacity-100 active:scale-90 transition-all disabled:opacity-30"
             aria-label="Photograph your meal"
             title="Photograph your meal (1 free a day)"
           >
             {photoLoading ? '⏳' : '📷'}
           </button>
           {query && (
-            <button onClick={() => setQuery('')} className="text-[#636366] text-[16px]">×</button>
+            <button onClick={() => setQuery('')} aria-label="Clear search" className="text-[#636366] text-[18px] min-w-[40px] min-h-[40px] flex items-center justify-center">×</button>
           )}
         </div>
 
@@ -1490,7 +1542,8 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           </div>
           <button
             onClick={() => setPhotoError(null)}
-            className="text-[#636366] text-[14px] flex-shrink-0"
+            aria-label="Dismiss"
+            className="text-[#636366] text-[16px] flex-shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center"
           >×</button>
         </div>
       )}
@@ -1507,7 +1560,8 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
             </div>
             <button
               onClick={() => setPhotoResults(null)}
-              className="text-[#636366] text-[16px] p-1"
+              aria-label="Close photo results"
+              className="text-[#636366] text-[16px] min-w-[40px] min-h-[40px] flex items-center justify-center"
             >×</button>
           </div>
           <div className="divide-y divide-white/[0.05]">
@@ -1601,9 +1655,12 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
         <AddFoodSheet
           food={sheetFood}
           profile={profile}
-          initialMeal={mealForHour(hour)}
+          initialMeal={editEntry ? editEntry.meal : mealForHour(hour)}
+          initialQty={editEntry?.qty}
+          initialHome={editEntry?.is_home}
+          editing={!!editEntry}
           onConfirm={handleConfirmEntry}
-          onClose={() => { viaUsualRef.current = false; setSheetFood(null); }}
+          onClose={() => { viaUsualRef.current = false; setEditEntry(null); setSheetFood(null); }}
         />
       )}
     </div>

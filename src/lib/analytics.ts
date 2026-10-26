@@ -9,7 +9,7 @@ import { supabase } from './supabase';
 const lastSent = new Map<string, number>();
 
 /** Change this when you ship a notable build, so the Behaviour screen can show who is on which build. */
-export const BUILD_TAG = '2026-10-ux13';
+export const BUILD_TAG = '2026-10-ux27';
 
 export function track(name: string, props: Record<string, string | number | boolean> = {}, minGapMs = 0): void {
   try {
