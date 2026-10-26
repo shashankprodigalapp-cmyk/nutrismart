@@ -69,6 +69,17 @@ export default function AppShell() {
     trackSessionStart();
   }, [user?.id]);
 
+  // Keep a record that this account confirmed it is 18+ and agreed to the terms (once per account per device).
+  useEffect(() => {
+    if (!user) return;
+    try {
+      if (localStorage.getItem('ns-adult-ok') === '1' && localStorage.getItem('ns-adult-logged') !== user.id) {
+        track('adult_confirmed');
+        localStorage.setItem('ns-adult-logged', user.id);
+      }
+    } catch { /* ignore */ }
+  }, [user?.id]);
+
   return (
     <div className="min-h-dvh bg-[#111113] flex">
       <FeedbackPrompts />

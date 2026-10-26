@@ -273,10 +273,20 @@ describe('DataPrivacyModal', () => {
     expect(link.href).toContain('/legal/privacy.html');
   });
 
-  it('Request Deletion link is a mailto link', async () => {
+  it('offers Download my data and Delete my account', async () => {
     await renderProfileTab();
     fireEvent.click(screen.getByText('Data & Privacy'));
-    const link = screen.getByText('Request Deletion').closest('a') as HTMLAnchorElement;
-    expect(link.href).toContain('mailto:');
+    expect(screen.getByText('Download my data')).toBeTruthy();
+    expect(screen.getByText('Delete my account')).toBeTruthy();
+  });
+
+  it('Delete needs the word DELETE typed first', async () => {
+    await renderProfileTab();
+    fireEvent.click(screen.getByText('Data & Privacy'));
+    fireEvent.click(screen.getByText('Delete my account'));
+    const go = screen.getByText('Delete everything') as HTMLButtonElement;
+    expect(go.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Type DELETE to confirm'), { target: { value: 'DELETE' } });
+    expect((screen.getByText('Delete everything') as HTMLButtonElement).disabled).toBe(false);
   });
 });

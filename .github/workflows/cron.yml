@@ -3,7 +3,7 @@ name: Scheduled push jobs
 # Cloudflare Pages has no built-in cron, so GitHub triggers the two push
 # endpoints on a schedule (replaces the old netlify.toml schedules).
 #
-#   morning verdict : daily 02:00 UTC  = 07:30 IST
+#   morning verdict : daily 01:47 UTC  = 07:17 IST (an off-peak minute: GitHub delays jobs on the hour)
 #   energy check-in : hourly
 #
 # These send REAL push notifications. They run ONLY on the schedule below
@@ -14,7 +14,7 @@ name: Scheduled push jobs
 #   configured in Cloudflare Pages.
 on:
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '47 1 * * *'
     - cron: '5 * * * *'
   workflow_dispatch:
     inputs:
@@ -29,7 +29,7 @@ env:
 
 jobs:
   morning-verdict:
-    if: github.event_name == 'workflow_dispatch' && inputs.job == 'morning-verdict' || github.event.schedule == '0 2 * * *'
+    if: github.event_name == 'workflow_dispatch' && inputs.job == 'morning-verdict' || github.event.schedule == '47 1 * * *'
     runs-on: ubuntu-latest
     steps:
       - name: POST /api/cron-morning-verdict

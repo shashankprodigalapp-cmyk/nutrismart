@@ -311,11 +311,60 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
 // ── DATA & PRIVACY MODAL ──────────────────────────────────────────────────────
 
 function DataPrivacyModal({ onClose }: { onClose: () => void }) {
+  const [busy, setBusy] = useState<'export' | 'delete' | null>(null);
+  const [msg, setMsg] = useState('');
+  const [confirming, setConfirming] = useState(false);
+  const [typed, setTyped] = useState('');
+
+  const token = async () => (await supabase.auth.getSession()).data.session?.access_token ?? '';
+
+  const downloadData = async () => {
+    setBusy('export'); setMsg('');
+    try {
+      const res = await fetch('/api/export-my-data', { method: 'POST', headers: { Authorization: `Bearer ${await token()}` } });
+      if (!res.ok) throw new Error('failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'nutrismart-my-data.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      setMsg('Your data file was downloaded.');
+    } catch {
+      setMsg('Could not prepare your data. Check your connection and try again.');
+    }
+    setBusy(null);
+  };
+
+  const deleteAccount = async () => {
+    setBusy('delete'); setMsg('');
+    try {
+      const res = await fetch('/api/delete-my-account', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${await token()}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: 'DELETE' }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMsg(j?.error === 'admin_account' ? 'This is an admin account and cannot be deleted here.' : 'Could not delete the account. Try again, or email support@nutrismart.co.in.');
+        setBusy(null);
+        return;
+      }
+      try { localStorage.clear(); sessionStorage.clear(); } catch { /* ignore */ }
+      try { indexedDB.deleteDatabase('nutrismart-v1'); } catch { /* ignore */ }
+      try { await supabase.auth.signOut({ scope: 'local' }); } catch { /* ignore */ }
+      window.location.href = '/';
+    } catch {
+      setMsg('Could not reach the server. Check your connection and try again.');
+      setBusy(null);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60" />
       <div
-        className="relative w-full max-w-md bg-[#1C1C1E] border border-white/[0.08] rounded-t-3xl md:rounded-3xl px-5 pt-5 pb-8"
+        className="relative w-full max-w-md max-h-[90dvh] overflow-y-auto bg-[#1C1C1E] border border-white/[0.08] rounded-t-3xl md:rounded-3xl px-5 pt-5 pb-8"
         onClick={e => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
@@ -325,27 +374,74 @@ function DataPrivacyModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="space-y-3 text-sm text-[#EBEBF5]/70 leading-relaxed">
-          <p>Your data is stored securely and never sold to third parties.</p>
-          <p>All nutrition logs are encrypted at rest and tied to your account. You may request deletion at any time.</p>
-          <p>AI analysis runs server-side — your meal details are not stored by the AI provider beyond the current request.</p>
+          <p>Your data is stored with our database provider and is never sold.</p>
+          <p>It is encrypted in transit and encrypted at rest by our providers. You can download or delete it at any time, right here.</p>
+          <p>AI food search and photo search send the food name or photo to Google Gemini or Anthropic Claude to work out the nutrition. Do not type personal details. The Privacy Policy has the full list.</p>
         </div>
 
-        <div className="mt-5 flex gap-3">
+        <div className="mt-5 grid grid-cols-2 gap-3">
           <a
             href="/legal/privacy.html"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 py-2.5 rounded-xl bg-white/[0.07] text-white text-xs font-semibold text-center"
+            className="py-2.5 rounded-xl bg-white/[0.07] text-white text-xs font-semibold text-center"
           >
             Privacy Policy ↗
           </a>
-          <a
-            href="mailto:privacy@nutrismart.app"
-            className="flex-1 py-2.5 rounded-xl bg-white/[0.07] text-white text-xs font-semibold text-center"
+          <button
+            type="button"
+            onClick={downloadData}
+            disabled={busy !== null}
+            className="py-2.5 rounded-xl bg-white/[0.07] text-white text-xs font-semibold text-center disabled:opacity-50"
           >
-            Request Deletion
-          </a>
+            {busy === 'export' ? 'Preparing…' : 'Download my data'}
+          </button>
         </div>
+
+        {!confirming ? (
+          <button
+            type="button"
+            onClick={() => { setConfirming(true); setMsg(''); }}
+            className="mt-3 w-full py-2.5 rounded-xl border border-[#FF5D5D]/40 text-[#FF5D5D] text-xs font-semibold"
+          >
+            Delete my account
+          </button>
+        ) : (
+          <div className="mt-3 rounded-xl border border-[#FF5D5D]/40 p-3">
+            <p className="text-xs text-[#EBEBF5]/80 leading-relaxed">
+              This permanently deletes your account, meals, goals and settings. It cannot be undone. Download your data first if you want a copy.
+            </p>
+            <label className="block text-[11px] text-[#8E8E93] mt-3 mb-1" htmlFor="confirm-delete">Type DELETE to confirm</label>
+            <input
+              id="confirm-delete"
+              value={typed}
+              onChange={e => setTyped(e.target.value)}
+              autoCapitalize="characters"
+              autoComplete="off"
+              className="w-full bg-[#111113] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-[#FF5D5D]/60"
+            />
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => { setConfirming(false); setTyped(''); }}
+                disabled={busy !== null}
+                className="flex-1 py-2.5 rounded-xl bg-white/[0.07] text-white text-xs font-semibold disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={deleteAccount}
+                disabled={typed.trim() !== 'DELETE' || busy !== null}
+                className="flex-1 py-2.5 rounded-xl bg-[#FF5D5D] text-[#111113] text-xs font-bold disabled:opacity-40"
+              >
+                {busy === 'delete' ? 'Deleting…' : 'Delete everything'}
+              </button>
+            </div>
+          </div>
+        )}
+        {msg && <p className="mt-3 text-xs text-[#EBEBF5]/70 px-1" role="status">{msg}</p>}
+        <p className="mt-4 text-[11px] text-[#636366] text-center">Questions: support@nutrismart.co.in</p>
       </div>
     </div>
   );

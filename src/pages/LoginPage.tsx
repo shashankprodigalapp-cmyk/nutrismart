@@ -29,6 +29,14 @@ export default function LoginPage() {
   const [error,    setError]    = useState<string | null>(null);
   const [notice,   setNotice]   = useState<string | null>(null);
   const [needsVerify, setNeedsVerify] = useState(false);
+  const [adultOk, setAdultOk] = useState(() => { try { return localStorage.getItem('ns-adult-ok') === '1'; } catch { return false; } });
+
+  /** Sign-up and Google need the 18+ and terms tick. Returns true (and shows a message) when it is missing. */
+  const needTick = (): boolean => {
+    if (adultOk) return false;
+    setError('Please tick the box to confirm you are 18 or older and agree to the Terms and Privacy Policy.');
+    return true;
+  };
 
   const handleForgot = async () => {
     setError(null); setNotice(null);
@@ -56,6 +64,8 @@ export default function LoginPage() {
   };
 
   const handleGoogle = async () => {
+    setError(null);
+    if (needTick()) return;
     setLoading(true);
     await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -68,6 +78,7 @@ export default function LoginPage() {
     setError(null);
     setNotice(null);
     setNeedsVerify(false);
+    if (mode === 'signup' && needTick()) return;
     setLoading(true);
     try {
       if (mode === 'signup') {
@@ -121,6 +132,13 @@ export default function LoginPage() {
       <p className="text-[13px] text-[#636366] mb-10 text-center max-w-[260px]">
         The only tracker that knows how your kitchen cooks
       </p>
+
+      {/* 18+ and terms */}
+      <label className="w-full max-w-sm flex items-start gap-3 mb-4 text-[12px] text-[#EBEBF5]/70 leading-snug cursor-pointer">
+        <input type="checkbox" checked={adultOk} onChange={e => { setAdultOk(e.target.checked); try { if (e.target.checked) localStorage.setItem('ns-adult-ok', '1'); else localStorage.removeItem('ns-adult-ok'); } catch { /* ignore */ } }}
+          className="mt-0.5 w-4 h-4 shrink-0 accent-[#C8F75E]" />
+        <span>I am 18 or older, and I agree to the <a href="/legal/terms.html" target="_blank" rel="noopener noreferrer" className="underline text-white">Terms of Service</a> and <a href="/legal/privacy.html" target="_blank" rel="noopener noreferrer" className="underline text-white">Privacy Policy</a>.</span>
+      </label>
 
       {/* Google */}
       <button onClick={handleGoogle} disabled={loading}
@@ -182,8 +200,7 @@ export default function LoginPage() {
       </form>
 
       <p className="text-[11px] text-[#636366] mt-8 text-center max-w-[300px]">
-        By continuing you agree to our Terms of Service and Privacy Policy.
-        DPDP Act 2023 compliant. Your data stays on your device.
+        Your meals and settings are saved to your account so they sync across your devices. You can download or delete them any time in Profile, Data and Privacy.
       </p>
     </div>
   );
