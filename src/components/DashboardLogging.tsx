@@ -50,6 +50,10 @@ import { todayIST } from '../lib/kitchenIntelligence';
 import { fitMacros } from '../lib/macroMath';
 import { useAlerts } from './ContextualAlerts';
 import { track } from '../lib/analytics';
+import { useFlag } from '../lib/useFlag';
+import { parseUtterance } from '../lib/voiceParse';
+import { VoiceLogButton } from './voice/VoiceLogButton';
+import { VoiceReview, type VoiceRow } from './voice/VoiceReview';
 
 // ── DESIGN TOKENS ─────────────────────────────────────────────────────────────
 // Matches the CRED-style dark palette from the original app
@@ -784,6 +788,14 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
   const [photoError,    setPhotoError]    = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const viaUsualRef   = useRef(false);   // true when the add-sheet was opened from My Usuals / frequents (usage stats only)
+  // Voice logging (2.0, behind the v2_voice switch)
+  const voiceOn = useFlag('v2_voice');
+  const [voiceHeard, setVoiceHeard] = useState<string | null>(null);
+  const [voiceRows,  setVoiceRows]  = useState<VoiceRow[]>([]);
+  const [voiceQty,   setVoiceQty]   = useState<number | null>(null);
+  const [voiceStatus, setVoiceStatus] = useState<{ listening: boolean; message: string | null }>({ listening: false, message: null });
+  const viaVoiceRef  = useRef(false);
+  const voicePickRef = useRef<string | null>(null);   // which heard item is open in the add-sheet
 
   const today   = todayIST();
   const fuseRef = useRef<Fuse<Food> | null>(null);
@@ -1026,8 +1038,9 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
 
     {
       const src = sheetFood?.source ?? '';
-      const method = viaUsualRef.current ? 'usual' : src === 'ai_photo' ? 'photo' : /ai/i.test(src) ? 'ai_search' : 'search';
+      const method = viaVoiceRef.current ? 'voice' : viaUsualRef.current ? 'usual' : src === 'ai_photo' ? 'photo' : /ai/i.test(src) ? 'ai_search' : 'search';
       viaUsualRef.current = false;
+      viaVoiceRef.current = false;
       track('food_logged', { method, meal: entryData.meal, adjusted: entryData.qty !== 1 || (!!sheetFood && entryData.portion !== sheetFood.portion) });
     }
     // Editing a logged meal: the new version replaces the old one.
@@ -1040,6 +1053,8 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
     setSheetFood(null);
     setQuery('');
     setResults([]);
+    if (voicePickRef.current) { const done = voicePickRef.current; setVoiceRows(rows => rows.filter(r => r.raw !== done)); voicePickRef.current = null; }
+    setVoiceQty(null);
 
     // Refresh My Usuals after logging (use_count may have crossed USUAL_THRESHOLD)
     const currentHour = new Date().getHours();
@@ -1133,6 +1148,18 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
     setQuery('');
     setResults([]);
     return true;
+  }, []);
+
+  // ── Voice: text -> items -> match against the food list. Nothing is logged until the person confirms each item. ──
+  const handleTranscript = useCallback((text: string) => {
+    const items = parseUtterance(text);
+    const rows: VoiceRow[] = items.map(it => {
+      const hit = fuseRef.current?.search(it.name)[0];
+      const ok = hit && (hit.score ?? 1) <= 0.35;
+      return { ...it, matchName: ok ? hit!.item.name : null, matchId: ok ? hit!.item.id : null, food: ok ? hit!.item : undefined };
+    });
+    setVoiceHeard(text); setVoiceRows(rows);
+    track('voice_used', { items: rows.length, matched: rows.filter(r => r.matchId).length });
   }, []);
 
   const handleAISearch = useCallback(async () => {
@@ -1497,6 +1524,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           >
             {photoLoading ? '⏳' : '📷'}
           </button>
+          {voiceOn && <VoiceLogButton onTranscript={handleTranscript} onStatus={setVoiceStatus} disabled={photoLoading} />}
           {query && (
             <button onClick={() => setQuery('')} aria-label="Clear search" className="text-[#636366] text-[18px] min-w-[40px] min-h-[40px] flex items-center justify-center">×</button>
           )}
@@ -1523,6 +1551,20 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           {!aiOk && <span className="text-[10px] text-[#636366]">(Pro)</span>}
         </button>
       </div>
+
+      {voiceOn && voiceStatus.listening && <p role="status" className="mx-4 mt-2 text-xs text-[#FF6B6B] md:mx-0">Listening… say what you ate, like “2 roti and dal”.</p>}
+      {voiceOn && !voiceStatus.listening && voiceStatus.message && <p role="alert" className="mx-4 mt-2 text-xs text-[#FFB347] md:mx-0">{voiceStatus.message}</p>}
+      {voiceOn && voiceHeard !== null && (
+        <VoiceReview
+          heard={voiceHeard}
+          rows={voiceRows}
+          onClose={() => { setVoiceHeard(null); setVoiceRows([]); }}
+          onSkip={(i) => setVoiceRows(rows => rows.filter((_, j) => j !== i))}
+          onQty={(i, q) => setVoiceRows(rows => rows.map((r, j) => j === i ? { ...r, qty: q } : r))}
+          onSearch={(name) => setQuery(name)}
+          onPick={(r) => { if (!r.food) return; viaVoiceRef.current = true; voicePickRef.current = r.raw; setVoiceQty(r.qty); setSheetFood(r.food as Food); }}
+        />
+      )}
 
       {/* Photo loading indicator */}
       {photoLoading && (
@@ -1656,11 +1698,11 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           food={sheetFood}
           profile={profile}
           initialMeal={editEntry ? editEntry.meal : mealForHour(hour)}
-          initialQty={editEntry?.qty}
+          initialQty={editEntry?.qty ?? voiceQty ?? undefined}
           initialHome={editEntry?.is_home}
           editing={!!editEntry}
           onConfirm={handleConfirmEntry}
-          onClose={() => { viaUsualRef.current = false; setEditEntry(null); setSheetFood(null); }}
+          onClose={() => { viaUsualRef.current = false; viaVoiceRef.current = false; voicePickRef.current = null; setVoiceQty(null); setEditEntry(null); setSheetFood(null); }}
         />
       )}
     </div>

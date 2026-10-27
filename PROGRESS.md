@@ -17,8 +17,8 @@ Rule: every 2.0 screen is behind a feature flag (`feature_flags` table), off by 
 | 8 | Monthly AI review | DONE (migration 025, same endpoint with period month, Weekly/Monthly switch in the review panel, 12 SQL checks, flag v2_monthly_review) |
 | 9 | Needs Attention engine | DONE (migration 026 attention_actions, ranked panel on coach dashboard, snooze/dismiss with resurface on escalation, 6 unit + 5 SQL checks, flag v2_attention) |
 | 10 | Nudge system | DONE (migration 027, rules module, coach nudge box in Needs Attention, opt-in evening reminder, quiet hours and caps, /app/nudges settings, hourly cron job; 11 unit + 9 SQL checks; flag v2_nudges) |
-| 11 | Voice logging | NEXT |
-| 12 | Photo logging improvements | todo |
+| 11 | Voice logging | DONE (browser speech -> rule parser -> match -> confirm each item in the normal add sheet; EN/HI; flag v2_voice via migration 028; 9 tests; needs a real-phone test) |
+| 12 | Photo logging improvements | NEXT |
 | 13 | Energy + Mood intelligence | todo |
 | 14 | Pattern engine | todo |
 | 15 | Personal experiments | todo |
