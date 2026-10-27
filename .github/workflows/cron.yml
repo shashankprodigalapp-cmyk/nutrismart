@@ -5,6 +5,7 @@ name: Scheduled push jobs
 #
 #   morning verdict : daily 01:47 UTC  = 07:17 IST (an off-peak minute: GitHub delays jobs on the hour)
 #   energy check-in : hourly
+#   nudges (2.0)    : hourly at :35. Does nothing while the v2_nudges switch is off.
 #
 # These send REAL push notifications. They run ONLY on the schedule below
 # (or a manual "Run workflow"), never on push/PR.
@@ -16,12 +17,13 @@ on:
   schedule:
     - cron: '47 1 * * *'
     - cron: '5 * * * *'
+    - cron: '35 * * * *'
   workflow_dispatch:
     inputs:
       job:
         description: 'Which job to run now'
         type: choice
-        options: [morning-verdict, energy-checkin]
+        options: [morning-verdict, energy-checkin, nudges]
         default: morning-verdict
 
 env:
@@ -49,3 +51,14 @@ jobs:
         run: |
           test -n "$CRON_SECRET" || { echo "CRON_SECRET secret is not set"; exit 1; }
           curl -sS --fail-with-body -X POST -H "x-cron-secret: $CRON_SECRET" "$BASE_URL/api/energy-checkin-cron"
+
+  nudges:
+    if: github.event_name == 'workflow_dispatch' && inputs.job == 'nudges' || github.event.schedule == '35 * * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST /api/cron-nudges
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          test -n "$CRON_SECRET" || { echo "CRON_SECRET secret is not set"; exit 1; }
+          curl -sS --fail-with-body -X POST -H "x-cron-secret: $CRON_SECRET" "$BASE_URL/api/cron-nudges"

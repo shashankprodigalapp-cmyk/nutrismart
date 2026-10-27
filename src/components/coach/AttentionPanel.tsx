@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { coachApi } from '../../lib/coachApi';
 import { track } from '../../lib/analytics';
+import { NudgeBox } from '../nudge/NudgeBox';
 import { buildAttention, type AttentionAction, type ScoredClient } from '../../lib/attention';
 
 export function AttentionPanel({ clients, onChanged }: { clients: ScoredClient[]; onChanged?: () => void }) {
@@ -55,6 +56,7 @@ export function AttentionPanel({ clients, onChanged }: { clients: ScoredClient[]
                   </li>
                 ))}
               </ul>
+              <div className="mt-2"><NudgeBox clientId={it.client_id} /></div>
             </li>
           ))}
         </ul>

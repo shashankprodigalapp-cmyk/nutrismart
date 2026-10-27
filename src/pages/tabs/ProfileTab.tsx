@@ -1,6 +1,7 @@
 /**
  * ProfileTab.tsx — User profile, subscription status, settings
  */
+import { useFlag } from '../../lib/useFlag';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -314,15 +315,23 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
 /** 2.0: coach links. Hidden completely until the v2_coach switch is turned on. */
 function CoachLinks() {
   const { coachEnabled, roles } = useRoles();
-  if (!coachEnabled) return null;
+  const nudgesOn = useFlag('v2_nudges');
+  if (!coachEnabled && !nudgesOn) return null;
   return (
     <div className="bg-[#1C1C1E] rounded-2xl divide-y divide-white/[0.06]">
+      {nudgesOn && (
+        <a href="/app/nudges" className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.04]">
+          <span className="text-lg">🔔</span><span className="text-sm text-white flex-1">Reminders and messages</span><span className="text-[#636366] text-xs">›</span>
+        </a>
+      )}
+      {coachEnabled && (<>
       <a href="/app/my-coach" className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.04]">
         <span className="text-lg">🤝</span><span className="text-sm text-white flex-1">My coach</span><span className="text-[#636366] text-xs">›</span>
       </a>
       <a href="/coach" className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.04]">
         <span className="text-lg">🧑‍⚕️</span><span className="text-sm text-white flex-1">{roles.coach ? 'Coach area' : 'Become a coach'}</span><span className="text-[#636366] text-xs">›</span>
       </a>
+      </>)}
     </div>
   );
 }
