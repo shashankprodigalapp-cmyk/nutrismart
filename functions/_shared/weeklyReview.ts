@@ -180,3 +180,15 @@ export function validateAi(raw: unknown, facts: Fact[], fallback: Sections): { s
 
 /** Use the AI version only when most of it survived the checks. */
 export const aiAcceptable = (kept: number, dropped: number) => kept >= 3 && kept >= dropped;
+
+/** Month wording for the same facts and sections. Numbers are untouched; only the period words change. */
+export function monthify(t: string): string {
+  return t.replace(/\bweeks\b/g, 'months').replace(/\bweek\b/g, 'month').replace(/\bweekly\b/g, 'monthly');
+}
+export function monthifyFacts(facts: Fact[]): Fact[] { return facts.map(f => ({ ...f, text: monthify(f.text) })); }
+export function monthifySections(s: Sections): Sections {
+  const it = (i: Item): Item => ({ ...i, text: monthify(i.text) });
+  const l = (a: Item[]) => a.map(it);
+  return { headline: it(s.headline), wins: l(s.wins), challenges: l(s.challenges), nutrition: l(s.nutrition), adherence: l(s.adherence), energy: l(s.energy),
+    flexible_meals: l(s.flexible_meals), patterns: l(s.patterns), next_week_focus: l(s.next_week_focus), coach_conversation: it(s.coach_conversation) };
+}

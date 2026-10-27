@@ -14,8 +14,8 @@ Rule: every 2.0 screen is behind a feature flag (`feature_flags` table), off by 
 | 5 | Adherence engine | DONE (migration 022: stored daily metrics + adherence, triggers keep them fresh, 60-day backfill, 21 SQL checks in supabase/tests_v2_adherence.sql, Adherence tab, 5 unit tests). meal_plan, flexible_meal and goal adherence arrive with Phase 6 and weekly work. |
 | 6 | Flexible meal intelligence | DONE (FlexibleMealPlanner in src/lib/flexibleMeal.ts, 11 tests; migration 023 flexible_meals + events + timeline + flexible_adherence, 10 SQL checks; Today card behind flag v2_flexible_meals). Needs a connection to plan (not offline yet). Coach-set cap has no UI yet; the planner already supports it. |
 | 7 | Weekly AI review | DONE |
-| 8 | Monthly AI review | NEXT |
-| 9 | Needs Attention engine | todo |
+| 8 | Monthly AI review | DONE (migration 025, same endpoint with period month, Weekly/Monthly switch in the review panel, 12 SQL checks, flag v2_monthly_review) |
+| 9 | Needs Attention engine | NEXT |
 | 10 | Nudge system | todo |
 | 11 | Voice logging | todo |
 | 12 | Photo logging improvements | todo |

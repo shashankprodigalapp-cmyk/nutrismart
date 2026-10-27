@@ -13,6 +13,7 @@ const LABEL = { draft: 'Draft, not yet shared', approved: 'Approved and shared',
 
 // mode 'coach': approve / edit / reject / refresh. mode 'self': read-only view of the person's own review.
 export default function WeeklyReviewPanel({ clientId, mode }: { clientId?: string; mode: 'coach' | 'self' }) {
+  const [period, setPeriod] = useState<'week' | 'month'>('week');
   const [week, setWeek] = useState<'last' | 'current'>('last');
   const [state, setState] = useState<'loading' | 'ready' | 'pending' | 'off' | 'error'>('loading');
   const [msg, setMsg] = useState('');
@@ -23,20 +24,20 @@ export default function WeeklyReviewPanel({ clientId, mode }: { clientId?: strin
 
   const load = useCallback(async (refresh = false) => {
     setState('loading'); setMsg('');
-    const r = await coachApi<Resp>('/api/weekly-review', { client_id: clientId, week, refresh });
+    const r = await coachApi<Resp>('/api/weekly-review', { client_id: clientId, period, week, refresh });
     if (r.status === 403 && r.data.error === 'weekly_review_off') { setState('off'); return; }
     if (!r.ok) { setMsg(r.data.message ?? 'Could not load the review.'); setState('error'); return; }
     if (r.data.pending_coach) { setMsg(r.data.message ?? ''); setState('pending'); return; }
     setRev(r.data.review ?? null); setState('ready');
-    track(mode === 'self' ? 'weekly_review_viewed' : 'ai_review_generated', { source: r.data.review?.source ?? 'rules' }, 60_000);
-  }, [clientId, week, mode]);
+    track(mode === 'self' ? `${period}ly_review_viewed` : 'ai_review_generated', { period, source: r.data.review?.source ?? 'rules' }, 60_000);
+  }, [clientId, week, mode, period]);
 
   useEffect(() => { load(); }, [load]);
 
   async function decide(action: 'approve' | 'reject' | 'edit') {
     if (!rev) return;
     setBusy(true); setMsg('');
-    const r = await coachApi('/api/weekly-review-decision', { id: rev.id, action, sections: action === 'edit' ? draft : undefined });
+    const r = await coachApi('/api/weekly-review-decision', { id: rev.id, period, action, sections: action === 'edit' ? draft : undefined });
     setBusy(false);
     if (!r.ok) { setMsg(r.data.message ?? 'Could not save. Try again.'); return; }
     track(`ai_review_${action === 'approve' ? 'approved' : action === 'edit' ? 'edited' : 'rejected'}`);
@@ -48,13 +49,19 @@ export default function WeeklyReviewPanel({ clientId, mode }: { clientId?: strin
     setDraft(d => d ? { ...d, [key]: d[key].map((it, j) => j === i ? { ...it, text } : it) } : d);
   }
 
-  if (state === 'off') return <p className="bg-[#1C1C1E] rounded-2xl p-5 text-sm text-[#8E8E93]">Weekly reviews are not switched on yet.</p>;
+  if (state === 'off') return <p className="bg-[#1C1C1E] rounded-2xl p-5 text-sm text-[#8E8E93]">{period === 'month' ? 'Monthly' : 'Weekly'} reviews are not switched on yet.</p>;
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
+        {(['week', 'month'] as const).map(p => (
+          <button key={p} onClick={() => setPeriod(p)} aria-pressed={period === p}
+            className={`px-3 min-h-[40px] rounded-full text-sm ${period === p ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{p === 'week' ? 'Weekly' : 'Monthly'}</button>
+        ))}
+      </div>
+      <div className="flex items-center gap-2">
         {(['last', 'current'] as const).map(w => (
           <button key={w} onClick={() => setWeek(w)} aria-pressed={week === w}
-            className={`px-3 min-h-[40px] rounded-full text-sm ${week === w ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{w === 'last' ? 'Last week' : 'This week so far'}</button>
+            className={`px-3 min-h-[40px] rounded-full text-sm ${week === w ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{w === 'last' ? `Last ${period}` : `This ${period} so far`}</button>
         ))}
       </div>
       {state === 'loading' && <p className="text-sm text-[#8E8E93]">Preparing the review…</p>}
@@ -66,7 +73,7 @@ export default function WeeklyReviewPanel({ clientId, mode }: { clientId?: strin
       {state === 'ready' && rev && (
         <>
           <p className="text-xs text-[#8E8E93]">
-            Week of {rev.week_start} · {rev.days_logged} of {rev.days_elapsed} days logged · {rev.source === 'ai' ? 'Written with AI from your numbers' : 'Written from your numbers'}
+            {period === 'month' ? 'Month starting' : 'Week of'} {rev.week_start} · {rev.days_logged} of {rev.days_elapsed} days logged · {rev.source === 'ai' ? 'Written with AI from your numbers' : 'Written from your numbers'}
             {mode === 'coach' && <> · <span className="text-[#C8F75E]">{LABEL[rev.status]}</span></>}
           </p>
           {rev.days_logged < 3 && <p className="bg-[#1C1C1E] rounded-2xl p-3 text-xs text-[#8E8E93]">Fewer than 3 days logged, so this is only a light summary. Patterns need more days.</p>}

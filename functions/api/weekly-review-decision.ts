@@ -28,12 +28,13 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (request.method !== 'POST') return jsonResponse(env, 405, { error: 'method_not_allowed' });
   const who = await requireRole(request, env, 'coach');
   if ('error' in who) return who.error;
-  let body: { id?: string; action?: string; sections?: unknown };
+  let body: { id?: string; action?: string; sections?: unknown; period?: string };
   try { body = await request.json(); } catch { return jsonResponse(env, 400, { error: 'invalid_json' }); }
   const id = String(body.id ?? '');
   if (!/^[0-9a-f-]{36}$/i.test(id)) return jsonResponse(env, 400, { error: 'bad_id' });
   const admin = getSupabaseAdmin(env);
-  const { data: rev } = await admin.from('ai_weekly_reviews').select('id, user_id').eq('id', id).maybeSingle();
+  const TABLE = body.period === 'month' ? 'ai_monthly_reviews' : 'ai_weekly_reviews';
+  const { data: rev } = await admin.from(TABLE).select('id, user_id').eq('id', id).maybeSingle();
   const { data: rel } = rev ? await admin.from('coach_client_relationships').select('id').eq('coach_id', who.userId).eq('client_id', rev.user_id).eq('status', 'active').maybeSingle() : { data: null };
   if (!rev || !rel) return jsonResponse(env, 404, { error: 'not_found' });
 
@@ -46,8 +47,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     if (!s) return jsonResponse(env, 400, { error: 'bad_sections', message: 'The review needs a headline.' });
     patch = { status: 'edited', visible_to_client: true, edited_sections: s };
   } else return jsonResponse(env, 400, { error: 'bad_action' });
-  const { error } = await admin.from('ai_weekly_reviews').update({ ...patch, decided_by: who.userId, decided_at: now }).eq('id', id);
+  const { error } = await admin.from(TABLE).update({ ...patch, decided_by: who.userId, decided_at: now }).eq('id', id);
   if (error) return jsonResponse(env, 500, { error: 'save_failed' });
-  await audit(env, who.userId, 'coach', `weekly_review_${body.action}`, rev.user_id, { review: id });
+  await audit(env, who.userId, 'coach', `${body.period === 'month' ? 'monthly' : 'weekly'}_review_${body.action}`, rev.user_id, { review: id });
   return jsonResponse(env, 200, { ok: true });
 };

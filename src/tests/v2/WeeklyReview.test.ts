@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildFacts, ruleSections, validItem, validateAi, aiAcceptable, confidenceFor, buildAiContext, hashFacts, normalizeRow, type WeeklyRow } from '../../../functions/_shared/weeklyReview';
+import { buildFacts, ruleSections, validItem, validateAi, aiAcceptable, confidenceFor, buildAiContext, hashFacts, normalizeRow, monthify, monthifyFacts, monthifySections, type WeeklyRow } from '../../../functions/_shared/weeklyReview';
 
 const row = (p: Partial<WeeklyRow> = {}): WeeklyRow => ({
   week_start: '2026-10-19', days_elapsed: 7, days_logged: 5, avg_calories: 1850, avg_protein: 84, calorie_adherence: 92, protein_adherence: 72,
@@ -76,4 +76,20 @@ describe('context, hash, confidence, row', () => {
     expect(confidenceFor(2)).toBe('insufficient'); expect(confidenceFor(3)).toBe('early'); expect(confidenceFor(7)).toBe('emerging'); expect(confidenceFor(15)).toBe('repeated');
   });
   it('normalizeRow turns database strings into numbers', () => { expect(normalizeRow({ week_start: '2026-10-19', days_logged: '4', avg_protein: '80.5', energy_avg: null })!.avg_protein).toBe(80.5); });
+});
+
+describe('monthly wording', () => {
+  it('changes period words only, never numbers', () => {
+    expect(monthify('Protein adherence was 72%, up 12 points from last week')).toBe('Protein adherence was 72%, up 12 points from last month');
+    expect(monthify('Patterns need several weeks of data')).toBe('Patterns need several months of data');
+    expect(monthify('Food was logged on 20 of 30 days')).toBe('Food was logged on 20 of 30 days');
+  });
+  it('facts and rule sections keep ids and values, and contain no week words', () => {
+    const f = buildFacts(row({ days_elapsed: 30, days_logged: 20 }), prev, t);
+    const m = monthifyFacts(f);
+    expect(m.map(x => x.id)).toEqual(f.map(x => x.id));
+    expect(m.map(x => x.value)).toEqual(f.map(x => x.value));
+    const s = monthifySections(ruleSections(f, row({ days_logged: 20 })));
+    expect(JSON.stringify(s)).not.toMatch(/\bweeks?\b/);
+  });
 });

@@ -9,3 +9,6 @@ Guards: needs 3+ logged days for AI; max 3 AI reviews per person per day; 15 s t
 Coached clients: a review is a draft until the coach approves or edits it (`visible_to_client`). People without a coach see it at once.
 Confidence: <3 days insufficient, 3–6 early, 7–14 emerging, 15+ repeated. Insights keep their evidence in `ai_insights`.
 Tests: `supabase/tests_v2_weekly.sql`, `src/tests/v2/WeeklyReview.test.ts`.
+
+## Monthly review (Phase 8)
+Same pipeline as weekly, with a calendar month (IST) as the period: `compute_monthly_metrics` -> facts (period words changed by `monthify`, numbers untouched) -> optional AI wording -> same validation -> coach approval for coached clients. Stored in `ai_monthly_reviews`; insights use `ai_insights.monthly_review_id`. Compared with the previous month. Flag: `v2_monthly_review` (default off); uses `v2_ai_reviews` for AI wording. Endpoints: `/api/weekly-review` and `/api/weekly-review-decision` take `period: "month"`. Tests: `supabase/tests_v2_monthly.sql`, `WeeklyReview.test.ts`.
