@@ -11,8 +11,8 @@ Rule: every 2.0 screen is behind a feature flag (`feature_flags` table), off by 
 | 2 | RBAC + coach/client relationships | DONE (server roles, invites, accept, pause/leave, admin approve, RLS tests). Coach/client UIs minimal. |
 | 3 | Coach dashboard | DONE (migration 021 `coach_dashboard()`, CoachDashboard UI, deterministic status rules + 11 tests). Message/Review/Dismiss buttons wait for Phases 4, 9, 10. |
 | 4 | Client timeline | DONE for coaches (client detail: Overview + Timeline, paginated by 50, IST day groups, scope filter, 6 tests). Client's own timeline view + Nutrition/Weight/Mood tabs come with later phases. |
-| 5 | Adherence engine | NEXT |
-| 6 | Flexible meal intelligence | todo |
+| 5 | Adherence engine | DONE (migration 022: stored daily metrics + adherence, triggers keep them fresh, 60-day backfill, 21 SQL checks in supabase/tests_v2_adherence.sql, Adherence tab, 5 unit tests). meal_plan, flexible_meal and goal adherence arrive with Phase 6 and weekly work. |
+| 6 | Flexible meal intelligence | NEXT |
 | 7 | Weekly AI review | todo |
 | 8 | Monthly AI review | todo |
 | 9 | Needs Attention engine | todo |

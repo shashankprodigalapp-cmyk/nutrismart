@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { classify, pct, type ClientMetrics, type ClientStatus, type Reason } from '../../lib/coachMetrics';
 import { groupByDay, dayLabel, type TimelineEvent } from '../../lib/timeline';
+import { summarize, band, fillDays, type AdherenceRow } from '../../lib/adherenceView';
 
 interface Row extends ClientMetrics { relationship_id: string; client_id: string; client_name: string; goal_type: string | null }
 const PAGE = 50;
@@ -86,11 +87,72 @@ function Timeline({ clientId }: { clientId: string }) {
   );
 }
 
+
+const BAND_COLOR = { good: '#30D158', fair: '#FFB347', low: '#FF6B6B', none: '#3A3A3C' } as const;
+
+function Adherence({ clientId, shared }: { clientId: string; shared: boolean }) {
+  const [days, setDays] = useState<7 | 14 | 30>(7);
+  const [rows, setRows] = useState<AdherenceRow[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+
+  const load = useCallback(async () => {
+    setRows(null); setError(null);
+    const from = new Date(new Date(today + 'T00:00:00Z').getTime() - (days - 1) * 86_400_000).toISOString().slice(0, 10);
+    const { data, error: e } = await supabase.from('daily_adherence')
+      .select('day, calorie_adherence, protein_adherence, fat_adherence, macro_adherence, logging_adherence, checkin_adherence')
+      .eq('user_id', clientId).gte('day', from).lte('day', today).order('day');
+    if (e) { setError('Could not load adherence. Try again.'); return; }
+    setRows(((data ?? []) as AdherenceRow[]).map(r => ({
+      ...r, calorie_adherence: r.calorie_adherence == null ? null : Number(r.calorie_adherence), protein_adherence: r.protein_adherence == null ? null : Number(r.protein_adherence),
+      fat_adherence: r.fat_adherence == null ? null : Number(r.fat_adherence), macro_adherence: r.macro_adherence == null ? null : Number(r.macro_adherence),
+      logging_adherence: Number(r.logging_adherence), checkin_adherence: Number(r.checkin_adherence),
+    })));
+  }, [clientId, days, today]);
+  useEffect(() => { if (shared) void load(); }, [load, shared]);
+
+  if (!shared) return <p className="bg-[#1C1C1E] rounded-2xl p-5 text-sm text-[#8E8E93]">This client has not shared their food log, so adherence is not available.</p>;
+  if (error) return <div role="alert" className="text-sm text-[#FF6B6B]">{error} <button onClick={() => void load()} className="underline">Retry</button></div>;
+  if (!rows) return <p className="text-sm text-[#8E8E93]">Loading…</p>;
+
+  const sum = summarize(rows, days);
+  const series = fillDays(rows, today, days);
+  const tile = (label: string, v: number | null, suffix = '%') => (
+    <div className="bg-[#242426] rounded-xl p-3"><p className="text-lg font-bold" style={{ color: BAND_COLOR[band(v)] }}>{v == null ? '–' : `${Math.round(v)}${suffix}`}</p><p className="text-[11px] text-[#8E8E93]">{label}</p></div>
+  );
+  const bars = (title: string, pick: (r: AdherenceRow) => number | null) => (
+    <div className="bg-[#1C1C1E] rounded-2xl p-4">
+      <p className="text-xs font-semibold text-[#8E8E93] mb-2">{title}</p>
+      <div className="flex items-end gap-[3px] h-20" role="img" aria-label={`${title}, one bar per day, oldest first`}>
+        {series.map(r => { const v = pick(r); return (
+          <div key={r.day} className="flex-1 flex flex-col justify-end h-full" title={`${r.day}: ${v == null ? 'no data' : Math.round(v) + '%'}`}>
+            <div className="rounded-sm" style={{ height: `${v == null ? 4 : Math.max(4, v)}%`, background: BAND_COLOR[band(v)] }} />
+          </div>); })}
+      </div>
+    </div>
+  );
+  return (
+    <div className="space-y-3">
+      <select value={days} onChange={e => setDays(Number(e.target.value) as 7 | 14 | 30)} aria-label="Time window" className="bg-[#242426] rounded-lg px-2 py-2 text-sm text-white">
+        <option value={7}>Last 7 days</option><option value={14}>Last 14 days</option><option value={30}>Last 30 days</option>
+      </select>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+        {tile('Calories', sum.calorie)}{tile('Protein', sum.protein)}{tile('Macros', sum.macro)}
+        <div className="bg-[#242426] rounded-xl p-3"><p className="text-lg font-bold">{sum.loggedDays}/{sum.days}</p><p className="text-[11px] text-[#8E8E93]">Days logged</p></div>
+        <div className="bg-[#242426] rounded-xl p-3"><p className="text-lg font-bold">{sum.checkinDays}/{sum.days}</p><p className="text-[11px] text-[#8E8E93]">Energy check-ins</p></div>
+      </div>
+      {bars('Calorie adherence by day', r => r.calorie_adherence)}
+      {bars('Protein adherence by day', r => r.protein_adherence)}
+      <p className="text-[11px] text-[#636366]">Calories score 100 when within 10% of target and fall to 0 at 50% off. Protein is intake against target, capped at 100. Days with no logging show as grey, not as a failure.</p>
+    </div>
+  );
+}
+
 export default function ClientDetailPage() {
   const { clientId = '' } = useParams();
   const [row, setRow] = useState<Row | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
-  const [tab, setTab] = useState<'overview' | 'timeline'>('overview');
+  const [tab, setTab] = useState<'overview' | 'adherence' | 'timeline'>('overview');
 
   useEffect(() => {
     let live = true;
@@ -113,12 +175,12 @@ export default function ClientDetailPage() {
         <>
           <h1 className="text-xl font-bold">{row.client_name}</h1>
           <div role="tablist" className="flex gap-1.5">
-            {(['overview', 'timeline'] as const).map(t => (
+            {(['overview', 'adherence', 'timeline'] as const).map(t => (
               <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
-                className={`px-4 min-h-[40px] rounded-full text-sm ${tab === t ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{t === 'overview' ? 'Overview' : 'Timeline'}</button>
+                className={`px-4 min-h-[40px] rounded-full text-sm ${tab === t ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{t === 'overview' ? 'Overview' : t === 'adherence' ? 'Adherence' : 'Timeline'}</button>
             ))}
           </div>
-          {tab === 'overview' ? <Overview row={row} /> : <Timeline clientId={row.client_id} />}
+          {tab === 'overview' ? <Overview row={row} /> : tab === 'adherence' ? <Adherence clientId={row.client_id} shared={!!row.share_scope.food} /> : <Timeline clientId={row.client_id} />}
         </>
       )}
     </div>
