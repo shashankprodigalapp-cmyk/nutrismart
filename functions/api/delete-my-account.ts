@@ -20,6 +20,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const { data: adminRow } = await admin.from('admin_users').select('user_id').eq('user_id', auth.userId).maybeSingle();
   if (adminRow) return jsonResponse(env, 403, { error: 'admin_account' });
 
+  // Remove this person's id from rows that must stay (audit log, review decisions). A failure here must not block deletion.
+  try { await admin.rpc('erase_user_traces', { p_user: auth.userId }); } catch { /* keep going */ }
   const { error } = await admin.auth.admin.deleteUser(auth.userId);
   if (error) {
     console.error('[delete-my-account] failed', error.message);

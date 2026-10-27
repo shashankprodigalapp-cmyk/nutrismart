@@ -1,6 +1,6 @@
 import type { Env } from '../_shared/auth';
 import { getSupabaseAdmin, preflightResponse, jsonResponse } from '../_shared/auth';
-import { audit, requireRole } from '../_shared/roles';
+import { throttle, audit, requireRole } from '../_shared/roles';
 
 // POST /api/attention-action {client_id, signal, action: 'snooze'|'dismiss'|'clear', severity, days?}
 // Only for a coach with an active link to that client. Stores what the coach did, never the signal itself.
@@ -11,6 +11,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (request.method !== 'POST') return jsonResponse(env, 405, { error: 'method_not_allowed' });
   const who = await requireRole(request, env, 'coach');
   if ('error' in who) return who.error;
+  const slow = await throttle(env, who.userId, 'attention_action', 60, 60);
+  if (slow) return slow;
   let b: { client_id?: string; signal?: string; action?: string; severity?: string; days?: number };
   try { b = await request.json(); } catch { return jsonResponse(env, 400, { error: 'invalid_json' }); }
   const client = String(b.client_id ?? ''); const signal = String(b.signal ?? '');

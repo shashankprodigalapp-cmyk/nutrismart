@@ -1,6 +1,6 @@
 import type { Env } from '../_shared/auth';
 import { getSupabaseAdmin, preflightResponse, jsonResponse } from '../_shared/auth';
-import { audit, flagOn, requireRole } from '../_shared/roles';
+import { throttle, audit, flagOn, requireRole } from '../_shared/roles';
 import { inviteProblem, normalizeScope, sha256Hex } from '../_shared/coachLogic';
 import { seatAvailable } from '../_shared/plans';
 
@@ -12,6 +12,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (!(await flagOn(env, 'v2_coach'))) return jsonResponse(env, 403, { error: 'coach_disabled' });
   const who = await requireRole(request, env, 'client');
   if ('error' in who) return who.error;
+  const slow = await throttle(env, who.userId, 'coach_accept', 3600, 20);
+  if (slow) return slow;
   let body: { token?: string; share_scope?: unknown; preview?: boolean };
   try { body = await request.json(); } catch { return jsonResponse(env, 400, { error: 'invalid_json' }); }
   const token = String(body.token ?? '').slice(0, 100);

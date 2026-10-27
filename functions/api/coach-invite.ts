@@ -1,6 +1,6 @@
 import type { Env } from '../_shared/auth';
 import { getSupabaseAdmin, preflightResponse, jsonResponse } from '../_shared/auth';
-import { audit, flagOn, requireRole } from '../_shared/roles';
+import { throttle, audit, flagOn, requireRole } from '../_shared/roles';
 import { INVITE_DAYS, cleanText, newInviteToken, sha256Hex } from '../_shared/coachLogic';
 
 // POST /api/coach-invite {label?}  (active coaches only) -> {link}. The raw token is shown once; only its hash is stored.
@@ -10,6 +10,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (!(await flagOn(env, 'v2_coach'))) return jsonResponse(env, 403, { error: 'coach_disabled' });
   const who = await requireRole(request, env, 'coach');
   if ('error' in who) return who.error;
+  const slow = await throttle(env, who.userId, 'coach_invite', 3600, 20);
+  if (slow) return slow;
   let body: Record<string, unknown> = {};
   try { body = await request.json(); } catch { /* label is optional */ }
   const admin = getSupabaseAdmin(env);

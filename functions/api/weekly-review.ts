@@ -1,7 +1,7 @@
 import type { Env } from '../_shared/auth';
 import { getSupabaseAdmin, verifyJWT, preflightResponse, jsonResponse } from '../_shared/auth';
 import { aiFetch } from '../_shared/aiLog';
-import { audit, flagOn } from '../_shared/roles';
+import { throttle, audit, flagOn } from '../_shared/roles';
 import {
   MIN_LOGGED_DAYS_FOR_AI, aiAcceptable, monthify, monthifyFacts, monthifySections, buildAiContext, buildFacts, buildPrompt, confidenceFor, hashFacts, normalizeRow, ruleSections, validateAi,
   type Sections,
@@ -21,6 +21,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (request.method !== 'POST') return jsonResponse(env, 405, { error: 'method_not_allowed' });
   const auth = await verifyJWT(request, env);
   if (!auth) return jsonResponse(env, 401, { error: 'unauthorized' });
+  const slow = await throttle(env, auth.userId, 'review_view', 3600, 60);
+  if (slow) return slow;
   let body: { client_id?: string; week?: string; period?: string; refresh?: boolean } = {};
   try { body = await request.json(); } catch { /* defaults */ }
   const month = body.period === 'month';

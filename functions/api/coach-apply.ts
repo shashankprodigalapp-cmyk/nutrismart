@@ -1,6 +1,6 @@
 import type { Env } from '../_shared/auth';
 import { getSupabaseAdmin, preflightResponse, jsonResponse } from '../_shared/auth';
-import { audit, flagOn, requireRole } from '../_shared/roles';
+import { throttle, audit, flagOn, requireRole } from '../_shared/roles';
 import { cleanText } from '../_shared/coachLogic';
 
 // POST /api/coach-apply {display_name, credentials?, bio?}  -> creates a coach profile (pending unless auto-approve is on)
@@ -9,6 +9,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (request.method !== 'POST') return jsonResponse(env, 405, { error: 'method_not_allowed' });
   const who = await requireRole(request, env, 'client');
   if ('error' in who) return who.error;
+  const slow = await throttle(env, who.userId, 'coach_apply', 3600, 3);
+  if (slow) return slow;
   if (!(await flagOn(env, 'v2_coach')) || !(await flagOn(env, 'v2_coach_signup'))) {
     return jsonResponse(env, 403, { error: 'coach_signup_closed', message: 'Coach sign-up is not open yet.' });
   }

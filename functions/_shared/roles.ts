@@ -35,3 +35,17 @@ export async function requireRole(
   }
   return { userId: auth.userId };
 }
+
+/** Per-person limit in a short window. Returns a 429 response when over, otherwise null. Fails open if the counter is unavailable. */
+export async function throttle(env: Env, userId: string, bucket: string, windowSecs: number, max: number): Promise<Response | null> {
+  try {
+    const { data, error } = await getSupabaseAdmin(env).rpc('v2_hit', { p_user: userId, p_bucket: bucket, p_window_secs: windowSecs, p_max: max });
+    if (error || !data) return null;
+    if (data.allowed === false) {
+      const res = jsonResponse(env, 429, { error: 'slow_down', message: 'That is too many tries in a short time. Please wait a little and try again.', retry_after: data.retry_after });
+      res.headers.set('Retry-After', String(data.retry_after ?? 60));
+      return res;
+    }
+  } catch { /* never block a request because the counter failed */ }
+  return null;
+}

@@ -1,6 +1,6 @@
 import type { Env } from '../_shared/auth';
 import { getSupabaseAdmin, preflightResponse, jsonResponse } from '../_shared/auth';
-import { audit, requireRole } from '../_shared/roles';
+import { throttle, audit, requireRole } from '../_shared/roles';
 import { allowedTransition, normalizeScope, type RelAction } from '../_shared/coachLogic';
 
 // POST /api/coach-relationship {id, action: 'pause'|'resume'|'end'|'scope', share_scope?}
@@ -10,6 +10,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (request.method !== 'POST') return jsonResponse(env, 405, { error: 'method_not_allowed' });
   const who = await requireRole(request, env, 'client');
   if ('error' in who) return who.error;
+  const slow = await throttle(env, who.userId, 'coach_rel', 3600, 30);
+  if (slow) return slow;
   let body: { id?: string; action?: string; share_scope?: unknown };
   try { body = await request.json(); } catch { return jsonResponse(env, 400, { error: 'invalid_json' }); }
   const id = String(body.id ?? '');

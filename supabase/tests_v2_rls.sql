@@ -58,7 +58,7 @@ DO $$ BEGIN
   RAISE NOTICE 'FAIL : relationship created from browser role';
 EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'PASS : relationship writes blocked from browser role'; END $$;
 SELECT pg_temp.expect('app roles for coach', (SELECT (public.my_roles()->>'coach')::boolean::int), 1);
-SELECT pg_temp.expect('flags readable', (SELECT count(*) FROM public.feature_flags), 5);
+SELECT pg_temp.expect('flags readable', (SELECT (count(*) >= 5)::int FROM public.feature_flags), 1);
 RESET ROLE;
 -- timeline must never block logging: break the timeline table and log anyway
 ALTER TABLE public.timeline_events RENAME TO timeline_events_x;

@@ -1,6 +1,6 @@
 import type { Env } from '../_shared/auth';
 import { getSupabaseAdmin, preflightResponse, jsonResponse } from '../_shared/auth';
-import { audit, flagOn, requireRole } from '../_shared/roles';
+import { throttle, audit, flagOn, requireRole } from '../_shared/roles';
 import { cleanNudgeText, istParts } from '../_shared/nudgeRules';
 import { deliverNudge } from '../_shared/nudgeSend';
 
@@ -10,6 +10,8 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (request.method !== 'POST') return jsonResponse(env, 405, { error: 'method_not_allowed' });
   const who = await requireRole(request, env, 'coach');
   if ('error' in who) return who.error;
+  const slow = await throttle(env, who.userId, 'nudge_send', 3600, 30);
+  if (slow) return slow;
   if (!(await flagOn(env, 'v2_nudges'))) return jsonResponse(env, 403, { error: 'nudges_off', message: 'Nudges are not switched on yet.' });
   let b: { client_id?: string; text?: unknown };
   try { b = await request.json(); } catch { return jsonResponse(env, 400, { error: 'invalid_json' }); }
