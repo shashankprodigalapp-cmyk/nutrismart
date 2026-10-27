@@ -7,9 +7,9 @@ import { INVITE_DAYS, cleanText, newInviteToken, sha256Hex } from '../_shared/co
 export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (request.method === 'OPTIONS') return preflightResponse(env);
   if (request.method !== 'POST') return jsonResponse(env, 405, { error: 'method_not_allowed' });
-  if (!(await flagOn(env, 'v2_coach'))) return jsonResponse(env, 403, { error: 'coach_disabled' });
   const who = await requireRole(request, env, 'coach');
   if ('error' in who) return who.error;
+  if (!(await flagOn(env, 'v2_coach'))) return jsonResponse(env, 403, { error: 'coach_disabled' });
   const slow = await throttle(env, who.userId, 'coach_invite', 3600, 20);
   if (slow) return slow;
   let body: Record<string, unknown> = {};
