@@ -52,6 +52,7 @@ import { useAlerts } from './ContextualAlerts';
 import { track } from '../lib/analytics';
 import { useFlag } from '../lib/useFlag';
 import { parseUtterance } from '../lib/voiceParse';
+import { rangeText, confidenceNote, chooseSource } from '../lib/photoEstimate';
 import { VoiceLogButton } from './voice/VoiceLogButton';
 import { VoiceReview, type VoiceRow } from './voice/VoiceReview';
 
@@ -790,11 +791,13 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
   const viaUsualRef   = useRef(false);   // true when the add-sheet was opened from My Usuals / frequents (usage stats only)
   // Voice logging (2.0, behind the v2_voice switch)
   const voiceOn = useFlag('v2_voice');
+  const photoV2 = useFlag('v2_photo');
   const [voiceHeard, setVoiceHeard] = useState<string | null>(null);
   const [voiceRows,  setVoiceRows]  = useState<VoiceRow[]>([]);
   const [voiceQty,   setVoiceQty]   = useState<number | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<{ listening: boolean; message: string | null }>({ listening: false, message: null });
   const viaVoiceRef  = useRef(false);
+  const viaPhotoRef  = useRef(false);   // photo dish matched to the food list (still counts as a photo log)
   const voicePickRef = useRef<string | null>(null);   // which heard item is open in the add-sheet
 
   const today   = todayIST();
@@ -1038,9 +1041,10 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
 
     {
       const src = sheetFood?.source ?? '';
-      const method = viaVoiceRef.current ? 'voice' : viaUsualRef.current ? 'usual' : src === 'ai_photo' ? 'photo' : /ai/i.test(src) ? 'ai_search' : 'search';
+      const method = viaVoiceRef.current ? 'voice' : viaPhotoRef.current ? 'photo' : viaUsualRef.current ? 'usual' : src === 'ai_photo' ? 'photo' : /ai/i.test(src) ? 'ai_search' : 'search';
       viaUsualRef.current = false;
       viaVoiceRef.current = false;
+      viaPhotoRef.current = false;
       track('food_logged', { method, meal: entryData.meal, adjusted: entryData.qty !== 1 || (!!sheetFood && entryData.portion !== sheetFood.portion) });
     }
     // Editing a logged meal: the new version replaces the old one.
@@ -1292,8 +1296,16 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
   }, [aiOk, user, showUpgrade]);
 
   // Confirm a photo-identified dish — converts to a Food and opens AddFoodSheet
-  const handlePhotoDishConfirm = useCallback((dish: PhotoDish) => {
+  const handlePhotoDishConfirm = useCallback((dish: PhotoDish, listFood?: Food) => {
+    if (listFood) {            // matched to our own food list: use the verified entry, normal add sheet to adjust the portion
+      track('photo_dish_picked', { confidence: dish.confidence, source: 'food_list' });
+      setPhotoResults(null);
+      viaPhotoRef.current = true;
+      setSheetFood(listFood);
+      return;
+    }
     if (!dish.nutrition) return;
+    track('photo_dish_picked', { confidence: dish.confidence, source: 'ai_estimate' });
     const n = dish.nutrition;
     const food: Food = {
       id:       crypto.randomUUID(),  // ephemeral ID for this session
@@ -1607,38 +1619,53 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
             >×</button>
           </div>
           <div className="divide-y divide-white/[0.05]">
-            {photoResults.map((dish, i) => (
-              <button
-                key={i}
-                onClick={() => dish.nutrition && handlePhotoDishConfirm(dish)}
-                disabled={!dish.nutrition}
-                className="w-full px-4 py-3 flex items-center gap-3 text-left active:bg-[#242426] disabled:opacity-40 transition-colors"
-              >
-                <span className="text-[22px]">{getFoodEmoji(dish.name)}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-medium text-[#F5F5F5] truncate">{dish.name}</p>
-                  <p className="text-[10px] text-[#636366] mt-0.5">{dish.estimated_portion}</p>
-                  {dish.ask_clarification && (
-                    <p className="text-[10px] text-[#FFD93D] mt-0.5">
-                      ❓ {dish.ask_clarification}
-                    </p>
-                  )}
-                </div>
-                {dish.nutrition ? (
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-[14px] font-bold text-[#E8D5B0]">
-                      {Math.round(dish.nutrition.calories)}
-                    </p>
-                    <p className="text-[9px] text-[#636366]">kcal</p>
-                    <p className="text-[8px] mt-1 px-1.5 py-0.5 rounded-full bg-[#2C2C2E] text-[#636366]">
-                      {dish.confidence}
-                    </p>
+            {photoResults.map((dish, i) => {
+              const hit = photoV2 ? fuseRef.current?.search(dish.name)[0] : undefined;
+              const choice = photoV2 ? chooseSource({ dbScore: hit?.score ?? null, dbCalories: hit?.item.calories ?? null, aiCalories: dish.nutrition?.calories ?? null }) : null;
+              const useList = !!(choice && choice.source === 'food_list' && hit);
+              const conf = dish.confidence ?? 'medium';
+              const note = photoV2 ? confidenceNote(conf, !!dish.ask_clarification) : null;
+              const shownCal = useList ? hit!.item.calories : dish.nutrition?.calories;
+              return (
+              <div key={i} className="px-4 py-3">
+                <button
+                  onClick={() => (useList ? handlePhotoDishConfirm(dish, hit!.item) : dish.nutrition && handlePhotoDishConfirm(dish))}
+                  disabled={!dish.nutrition && !useList}
+                  className="w-full flex items-center gap-3 text-left active:bg-[#242426] disabled:opacity-40 transition-colors"
+                >
+                  <span className="text-[22px]">{getFoodEmoji(dish.name)}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium text-[#F5F5F5] truncate">{useList ? hit!.item.name : dish.name}</p>
+                    <p className="text-[10px] text-[#636366] mt-0.5">{useList ? `${hit!.item.portion} (from our food list)` : dish.estimated_portion}</p>
+                    {photoV2 && shownCal != null && <p className="text-[10px] text-[#8E8E93] mt-0.5">{useList ? `${Math.round(shownCal)} kcal per portion` : `AI estimate: ${rangeText(shownCal, conf)}`}</p>}
+                    {dish.ask_clarification && (
+                      <p className="text-[10px] text-[#FFD93D] mt-0.5">
+                        ❓ {dish.ask_clarification}
+                      </p>
+                    )}
+                    {note && <p className="text-[10px] text-[#FFB347] mt-0.5">{note}</p>}
+                    {choice?.disagree && <p className="text-[10px] text-[#FFB347] mt-0.5">The AI guessed {choice.disagree === 'higher' ? 'more' : 'less'} than our food list. Check the portion.</p>}
                   </div>
-                ) : (
-                  <span className="text-[10px] text-[#636366]">no data</span>
+                  {dish.nutrition || useList ? (
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-[14px] font-bold text-[#E8D5B0]">
+                        {photoV2 ? '~' : ''}{Math.round(shownCal ?? 0)}
+                      </p>
+                      <p className="text-[9px] text-[#636366]">kcal</p>
+                      <p className="text-[8px] mt-1 px-1.5 py-0.5 rounded-full bg-[#2C2C2E] text-[#636366]">
+                        {useList ? 'food list' : dish.confidence}
+                      </p>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] text-[#636366]">no data</span>
+                  )}
+                </button>
+                {useList && dish.nutrition && (
+                  <button onClick={() => handlePhotoDishConfirm(dish)} className="mt-2 ml-9 px-3 min-h-[32px] rounded-full bg-[#242426] text-[11px] text-[#C7C7CC]">Use the AI estimate instead</button>
                 )}
-              </button>
-            ))}
+              </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1702,7 +1729,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           initialHome={editEntry?.is_home}
           editing={!!editEntry}
           onConfirm={handleConfirmEntry}
-          onClose={() => { viaUsualRef.current = false; viaVoiceRef.current = false; voicePickRef.current = null; setVoiceQty(null); setEditEntry(null); setSheetFood(null); }}
+          onClose={() => { viaUsualRef.current = false; viaVoiceRef.current = false; viaPhotoRef.current = false; voicePickRef.current = null; setVoiceQty(null); setEditEntry(null); setSheetFood(null); }}
         />
       )}
     </div>
