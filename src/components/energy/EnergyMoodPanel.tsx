@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { todayIST } from '../../lib/kitchenIntelligence';
 import { useFlag } from '../../lib/useFlag';
+import { PatternsSection } from './PatternsSection';
 import { buildFindings, tryTomorrow, lowMoodNote, trend, type DayRow, type MealFeeling } from '../../lib/moodInsights';
 
 const DAY_MS = 86_400_000;
@@ -136,6 +137,8 @@ export function EnergyMoodPanel({ clientId, proteinTarget, mode }: { clientId?: 
       </section>
 
       {note && <p role="note" className="bg-[#1C1C1E] rounded-2xl p-4 text-sm text-[#C7C7CC]">{note}</p>}
+
+      <PatternsSection clientId={clientId} />
 
       {insightsOn && (
         <section className="space-y-3">

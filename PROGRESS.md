@@ -20,8 +20,8 @@ Rule: every 2.0 screen is behind a feature flag (`feature_flags` table), off by 
 | 11 | Voice logging | DONE (browser speech -> rule parser -> match -> confirm each item in the normal add sheet; EN/HI; flag v2_voice via migration 028; 9 tests; needs a real-phone test) |
 | 12 | Photo logging improvements | DONE (food-list matching, calorie ranges by confidence, uncertainty and disagreement notes, flag v2_photo via migration 029; 8 tests) |
 | 13 | Energy + Mood intelligence | DONE (migration 030 daily_checkins + meal_feelings, morning check-in, after-meal feelings, trend and day graphs, insights with minimum-observation rules and safety note, coach tab; 12 unit + 12 SQL checks; flags v2_checkins, v2_mood_insights). Not yet: feed mood into adherence and weekly review. |
-| 14 | Pattern engine | NEXT |
-| 15 | Personal experiments | todo |
+| 14 | Pattern engine | DONE (migration 031 meal_outcomes, rules in src/lib/patterns.ts with minimum-observation tiers, "Meal patterns" on the energy page and coach tab; 8 unit + 10 SQL checks; flag v2_patterns) |
+| 15 | Personal experiments | NEXT |
 | 16 | Admin platform | todo (admin-coaches API done) |
 | 17 | Subscriptions | todo |
 | 18 | Analytics | todo |
