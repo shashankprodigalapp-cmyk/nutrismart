@@ -24,8 +24,8 @@ Rule: every 2.0 screen is behind a feature flag (`feature_flags` table), off by 
 | 15 | Personal experiments | DONE (migration 032 experiments + daily ticks, 4 templates, deterministic before/during comparison with minimum-data rules, client page and coach read-only view; 11 unit + 11 SQL checks; flag v2_experiments) |
 | 16 | Admin platform | DONE (migration 033 admin_platform_metrics, endpoints admin-platform/flags/audit, Platform 2.0 tab with health checks, AI usage, coaches, feature switches, audit log; 5 unit + 6 SQL checks) |
 | 17 | Subscriptions | DONE (migration 034 plans catalog, effective plan + entitlements functions, coach client cap behind v2_plans, admin Plans editor; payments and AI limits unchanged; 12 unit + 15 SQL checks) |
-| 18 | Analytics | NEXT |
-| 19 | Security hardening | todo |
+| 18 | Analytics | DONE (migration 035 admin_v2_analytics, endpoint, Feature use tab: adoption, coach funnel, review outcomes, sign-up cohorts; 7 unit + 11 SQL checks) |
+| 19 | Security hardening | NEXT |
 | 20 | Production testing and deployment | todo |
 
 ## Phase 1+2 log

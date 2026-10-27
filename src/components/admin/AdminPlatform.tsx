@@ -5,6 +5,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Card, Empty, Kpi, fmtNum, STATUS_STYLE } from './adminUi';
+import { funnel, reviewOutcome, cohortRate } from '../../lib/v2Analytics';
 import { healthChecks, overall, type Metrics } from '../../lib/adminHealth';
 
 async function api<T = Record<string, any>>(path: string, init?: RequestInit): Promise<{ ok: boolean; status: number; j: T & { message?: string; error?: string } }> {
@@ -16,8 +17,8 @@ async function api<T = Record<string, any>>(path: string, init?: RequestInit): P
 }
 const errText = (r: { status: number; j: { message?: string } }) => r.status === 403 ? 'This account is not an admin.' : r.j.message ?? 'Could not load. Try again in a minute.';
 
-type Section = 'overview' | 'ai' | 'coaches' | 'plans' | 'flags' | 'audit';
-const SECTIONS: Array<[Section, string]> = [['overview', 'Overview'], ['ai', 'AI usage'], ['coaches', 'Coaches'], ['plans', 'Plans'], ['flags', 'Feature switches'], ['audit', 'Audit log']];
+type Section = 'overview' | 'usage' | 'ai' | 'coaches' | 'plans' | 'flags' | 'audit';
+const SECTIONS: Array<[Section, string]> = [['overview', 'Overview'], ['usage', 'Feature use'], ['ai', 'AI usage'], ['coaches', 'Coaches'], ['plans', 'Plans'], ['flags', 'Feature switches'], ['audit', 'Audit log']];
 
 function Overview() {
   const [m, setM] = useState<(Metrics & Record<string, any>) | null>(null);
@@ -51,6 +52,42 @@ function Overview() {
         <p className="text-sm text-[#C7C7CC]">Reviews: {fmtNum(m.reviews_7d.weekly)} weekly, {fmtNum(m.reviews_7d.monthly)} monthly, {fmtNum(m.reviews_7d.ai_written)} written with AI, {fmtNum(m.reviews_7d.waiting_for_coach)} waiting for a coach.</p>
         <p className="text-sm text-[#C7C7CC] mt-1">Nudges: {fmtNum(m.notifications_7d.sent)} sent, {fmtNum(m.notifications_7d.skipped)} skipped, {fmtNum(m.notifications_7d.failed)} failed, {fmtNum(m.notifications_7d.queued_now)} queued now. {fmtNum(m.notifications_7d.devices)} devices registered.</p>
         {Object.keys(m.notifications_7d.skip_reasons ?? {}).length > 0 && <p className="text-xs text-[#8E8E93] mt-1">Why skipped: {Object.entries(m.notifications_7d.skip_reasons as Record<string, number>).map(([k, v]) => `${k.replace(/_/g, ' ')} ${v}`).join(', ')}</p>}
+      </Card>
+    </div>
+  );
+}
+
+function FeatureUse() {
+  const [days, setDays] = useState(30);
+  const [a, setA] = useState<Record<string, any> | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => { setA(null); api(`/api/admin-v2-analytics?days=${days}`).then(r => (r.ok ? setA(r.j.analytics) : setErr(errText(r)))); }, [days]);
+  if (err) return <p role="alert" className="text-sm text-[#FF6B6B]">{err}</p>;
+  if (!a) return <Empty>Loading…</Empty>;
+  const ad = a.adoption, co = a.coach;
+  const rows: Array<[string, number]> = [['Logged food', ad.food_logging], ['By voice', ad.voice_logging], ['By photo', ad.photo_logging], ['Daily check-ins', ad.daily_checkins], ['Meal notes', ad.meal_feelings], ['Flexible meals', ad.flexible_meals], ['Experiments', ad.experiments], ['Weekly review', ad.weekly_reviews], ['Monthly review', ad.monthly_reviews]];
+  const cf = funnel([['Coaches who applied', co.applied], ['Approved', co.approved], ['Invited someone', co.invited_someone], ['Has an active client', co.has_active_client], ['A client logged this week', co.client_logged_7d]]);
+  const w = reviewOutcome(a.reviews.weekly_by_status), m = reviewOutcome(a.reviews.monthly_by_status);
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-1.5">{[7, 30, 90].map(n => <button key={n} onClick={() => setDays(n)} aria-pressed={days === n} className={`px-3 min-h-[36px] rounded-full text-xs ${days === n ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{n} days</button>)}</div>
+      <Card title="People using each feature" hint={`Different people in the last ${a.days} days, out of ${fmtNum(ad.active_people)} who logged food. Reminders switched on right now: ${fmtNum(ad.reminders_enabled)}.`}>
+        <ul className="space-y-1.5 text-sm">{rows.map(([l, v]) => <li key={l} className="flex justify-between gap-3"><span>{l}</span><b>{fmtNum(v)}</b></li>)}</ul>
+      </Card>
+      <Card title="Coach funnel" hint="All time. Each step is shown against the step before it.">
+        <ul className="space-y-1.5 text-sm">{cf.map(f => <li key={f.label} className="flex justify-between gap-3"><span>{f.label}</span><span><b>{fmtNum(f.count)}</b>{f.ofPrevious != null && <span className="text-[#8E8E93] text-xs"> · {f.ofPrevious}% of previous</span>}</span></li>)}</ul>
+        <p className="text-xs text-[#8E8E93] mt-2">Invites in this period: {fmtNum(co.invites_sent)} sent, {fmtNum(co.invites_accepted)} accepted. Coach messages sent: {fmtNum(co.coach_nudges_sent)}.</p>
+      </Card>
+      <Card title="Reviews" hint="Share of decided reviews. Drafts are not counted.">
+        <p className="text-sm text-[#C7C7CC]">Weekly: {w.decided === 0 ? 'none decided yet' : `${w.approvedPct}% approved, ${w.editedPct}% edited, ${w.rejectedPct}% rejected (${w.decided})`}</p>
+        <p className="text-sm text-[#C7C7CC] mt-1">Monthly: {m.decided === 0 ? 'none decided yet' : `${m.approvedPct}% approved, ${m.editedPct}% edited, ${m.rejectedPct}% rejected (${m.decided})`}</p>
+        <p className="text-xs text-[#8E8E93] mt-2">Written by: {Object.entries(a.reviews.weekly_by_source as Record<string, number>).map(([k, v]) => `${k === 'ai' ? 'AI' : 'rules'} ${v}`).join(', ') || 'nothing yet'}. Experiments: {Object.entries(a.experiments as Record<string, number>).map(([k, v]) => `${k} ${v}`).join(', ') || 'none yet'}.</p>
+      </Card>
+      <Card title="New people by sign-up week" hint="Under 5 people shows counts, not percentages. Came back = logged food a week or more after signing up.">
+        {a.cohorts.length === 0 ? <Empty>No sign-ups in the last 6 weeks.</Empty> : (
+          <table className="w-full text-sm"><thead className="text-[11px] text-[#8E8E93] text-left"><tr><th className="py-1">Week of</th><th>Joined</th><th>Logged in week 1</th><th>Came back</th></tr></thead>
+            <tbody>{a.cohorts.map((c: any) => <tr key={c.week_start} className="border-t border-white/5"><td className="py-1.5">{c.week_start}</td><td>{c.size}</td><td>{cohortRate(c.logged_first_week, c.size)}</td><td>{cohortRate(c.came_back, c.size)}</td></tr>)}</tbody></table>
+        )}
       </Card>
     </div>
   );
@@ -222,6 +259,7 @@ export function AdminPlatform() {
         <button key={k} role="tab" aria-selected={s === k} onClick={() => setS(k)} className={`px-3 min-h-[40px] rounded-full text-sm ${s === k ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{l}</button>
       ))}</div>
       {s === 'overview' && <Overview />}
+      {s === 'usage' && <FeatureUse />}
       {s === 'ai' && <AiUsage />}
       {s === 'coaches' && <Coaches />}
       {s === 'plans' && <Plans />}
