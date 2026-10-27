@@ -52,7 +52,7 @@ export function MealFeelingCard() {
     track('meal_feeling_saved', { meal });
     setDone(d => ({ ...d, [meal]: f }));
   }
-  const set = (meal: Meal, patch: Partial<F>) => setDraft(d => ({ ...d, [meal]: { energy_change: null, fullness: null, mood_change: null, ...d[meal], ...patch } }));
+  const set = (meal: Meal, patch: Partial<F>) => setDraft(d => ({ ...d, [meal]: { ...(d[meal] ?? { energy_change: null, fullness: null, mood_change: null }), ...patch } }));
 
   if (state !== 'ready') return null;
   const pending = meals.filter(m => !done[m]);

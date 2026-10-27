@@ -21,12 +21,12 @@ type Section = 'overview' | 'usage' | 'ai' | 'coaches' | 'plans' | 'flags' | 'au
 const SECTIONS: Array<[Section, string]> = [['overview', 'Overview'], ['usage', 'Feature use'], ['ai', 'AI usage'], ['coaches', 'Coaches'], ['plans', 'Plans'], ['flags', 'Feature switches'], ['audit', 'Audit log']];
 
 function Overview() {
-  const [m, setM] = useState<(Metrics & Record<string, any>) | null>(null);
+  const [m, setM] = useState<Record<string, any> | null>(null);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => { api('/api/admin-platform').then(r => (r.ok ? setM(r.j.metrics) : setErr(errText(r)))); }, []);
   if (err) return <p role="alert" className="text-sm text-[#FF6B6B]">{err}</p>;
   if (!m) return <Empty>Loading…</Empty>;
-  const checks = healthChecks(m); const top = overall(checks);
+  const checks = healthChecks(m as Metrics); const top = overall(checks);
   return (
     <div className="space-y-4">
       <Card title="System health" hint="Each line says what it looked at.">
