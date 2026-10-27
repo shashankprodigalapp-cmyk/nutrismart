@@ -86,7 +86,7 @@ export default function AppShell() {
       {/* ── Desktop sidebar (md+) ── */}
       <aside className="hidden md:flex flex-col w-56 lg:w-64 border-r border-white/[0.07] bg-[#111113] sticky top-0 h-screen shrink-0">
         <div className="px-5 py-6">
-          <span className="text-[#C8F75E] font-bold text-lg tracking-tight">NutriSmart</span>
+          <span className="text-[#C8F75E] font-bold text-lg tracking-tight">Nutri Smart</span>
         </div>
         <nav className="flex-1 px-3 space-y-1">
           {TABS.map(tab => (

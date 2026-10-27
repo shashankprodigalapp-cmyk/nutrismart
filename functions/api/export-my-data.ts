@@ -54,7 +54,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const admin = getSupabaseAdmin(env);
   const out: Record<string, unknown> = {
     exported_at: new Date().toISOString(),
-    note: 'Everything NutriSmart stores about your account.',
+    note: 'Everything Nutri Smart stores about your account.',
   };
   for (const t of TABLES) {
     try {

@@ -1,7 +1,7 @@
 /**
  * FeedbackPrompts.tsx: two one-tap questions, each shown at most a few times.
  *  1. Welcome back after 14+ quiet days: "What kept you away?"
- *  2. Day 30+: "How would you feel if you could no longer use NutriSmart?"
+ *  2. Day 30+: "How would you feel if you could no longer use Nutri Smart?"
  * Answers are stored as plain events (counts only, no free text).
  */
 import React, { useEffect, useState } from 'react';
@@ -79,7 +79,7 @@ export default function FeedbackPrompts() {
       ) : (
         <>
           <p className="text-sm font-bold text-white">
-            {kind === 'exit' ? 'Welcome back! What kept you away?' : 'How would you feel if you could no longer use NutriSmart?'}
+            {kind === 'exit' ? 'Welcome back! What kept you away?' : 'How would you feel if you could no longer use Nutri Smart?'}
           </p>
           <div className="mt-3 flex flex-col gap-2">
             {options.map(o => (

@@ -48,7 +48,7 @@ export function VoiceReview({ heard, rows, onPick, onSearch, onQty, onSkip, onCl
           ))}
         </ul>
       )}
-      <p className="text-[10px] text-[#636366]">Speech is turned into text by your browser's speech service. NutriSmart does not keep your voice.</p>
+      <p className="text-[10px] text-[#636366]">Speech is turned into text by your browser's speech service. Nutri Smart does not keep your voice.</p>
     </section>
   );
 }

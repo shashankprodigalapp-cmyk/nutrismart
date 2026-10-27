@@ -84,10 +84,10 @@ self.addEventListener('push', (event: PushEvent) => {
   try {
     payload = event.data.json();
   } catch {
-    payload = { title: 'NutriSmart', body: event.data.text() };
+    payload = { title: 'Nutri Smart', body: event.data.text() };
   }
 
-  const title = payload.title ?? 'NutriSmart';
+  const title = payload.title ?? 'Nutri Smart';
   const body  = payload.body  ?? '';
   const tag   = payload.tag   ?? 'nutrismart-default';
   const url   = payload.url   ?? '/app/log';

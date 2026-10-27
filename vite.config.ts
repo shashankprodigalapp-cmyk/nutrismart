@@ -18,8 +18,8 @@ export default defineConfig({
       },
       includeAssets: ['favicon.png', 'favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'],
       manifest: {
-        name: 'NutriSmart — Indian Nutrition Tracker',
-        short_name: 'NutriSmart',
+        name: 'Nutri Smart: A Sensible Pilot',
+        short_name: 'Nutri Smart',
         description: "India's first nutrition app with Kitchen Intelligence",
         theme_color: '#111113',
         background_color: '#111113',

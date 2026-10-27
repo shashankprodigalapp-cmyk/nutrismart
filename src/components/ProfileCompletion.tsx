@@ -135,7 +135,7 @@ export default function ProfileCompletionCard() {
 
           <label className="flex items-start gap-2 text-[11px] text-[#8E8E93] leading-snug">
             <input type="checkbox" checked={consent} onChange={e => { setConsent(e.target.checked); setMsg(null); }} className="mt-0.5" />
-            <span>I agree that NutriSmart may use these answers, only as anonymous totals, to improve the app. They are never sold or shared, and I can change or delete them here at any time. NutriSmart is for adults, 18 and over.</span>
+            <span>I agree that Nutri Smart may use these answers, only as anonymous totals, to improve the app. They are never sold or shared, and I can change or delete them here at any time. Nutri Smart is for adults, 18 and over.</span>
           </label>
 
           <div className="flex items-center gap-3">

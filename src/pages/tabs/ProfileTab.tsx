@@ -220,7 +220,7 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
     setPushEnabled(ok || Notification.permission === 'granted');
     setRegistered(ok);
     if (ok) track('notifications_enabled');
-    if (!res.supported) setTestMsg('This browser does not support notifications. On iPhone, add NutriSmart to your Home Screen first.');
+    if (!res.supported) setTestMsg('This browser does not support notifications. On iPhone, add Nutri Smart to your Home Screen first.');
     else if (!res.granted) setTestMsg('Notifications are blocked. Allow them for this site in your browser or phone settings, then try again.');
     setRequesting(false);
   };
@@ -620,7 +620,7 @@ export default function ProfileTab() {
           Sign Out
         </button>
 
-        <p className="text-center text-xs text-[#636366] pb-2">NutriSmart v1.0 · Made with ❤️ in India</p>
+        <p className="text-center text-xs text-[#636366] pb-2">Nutri Smart v2.0 · Made with ❤️ in India</p>
       </div>
 
       {/* Modals */}

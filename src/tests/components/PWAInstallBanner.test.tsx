@@ -70,7 +70,7 @@ describe('PWAInstallBanner', () => {
   it('shows to a logged-in user when beforeinstallprompt fires', async () => {
     render(<PWAInstallBanner />);
     await act(async () => { fireInstallPromptEvent(); });
-    expect(screen.getByRole('dialog', { name: 'Install NutriSmart' })).toBeTruthy();
+    expect(screen.getByRole('dialog', { name: 'Install Nutri Smart' })).toBeTruthy();
     expect(screen.getByText('Add to Home Screen')).toBeTruthy();
   });
 

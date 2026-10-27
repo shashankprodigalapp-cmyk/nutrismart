@@ -42,7 +42,7 @@ export default function PWAInstallBanner() {
   if (!canPrompt && !isIOS) return null;
 
   return (
-    <div className="fixed bottom-20 left-0 right-0 z-40 px-4 pointer-events-none" role="dialog" aria-label="Install NutriSmart">
+    <div className="fixed bottom-20 left-0 right-0 z-40 px-4 pointer-events-none" role="dialog" aria-label="Install Nutri Smart">
       <div className="pointer-events-auto max-w-md mx-auto bg-[#1C1C1E] border border-white/[0.10] rounded-2xl px-4 py-3.5 flex items-center gap-3 shadow-2xl">
         <img src="/apple-touch-icon.png" alt="" className="w-11 h-11 rounded-xl shrink-0" />
         <div className="flex-1 min-w-0">

@@ -142,7 +142,7 @@ export function EnergyMoodPanel({ clientId, proteinTarget, mode }: { clientId?: 
 
       {insightsOn && (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold">What NutriSmart noticed</h2>
+          <h2 className="text-sm font-semibold">What Nutri Smart noticed</h2>
           {result.findings.length === 0 ? (
             <p className="bg-[#1C1C1E] rounded-2xl p-4 text-sm text-[#8E8E93]">
               {result.checkinDays < 3 ? 'Not enough data yet. After a few days of check-ins, patterns can start to appear.' : 'No clear pattern yet. Patterns need at least 3 days on each side of a comparison.'}

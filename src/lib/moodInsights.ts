@@ -94,7 +94,7 @@ export function tryTomorrow(findings: Finding[]): string[] {
 export function lowMoodNote(days: DayRow[]): string | null {
   const recent = days.filter(d => d.mood != null).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7).map(d => d.mood as number);
   if (recent.length < 5 || avg(recent) > 2) return null;
-  return 'Your mood ratings have been low for a while. NutriSmart is not a medical service and cannot diagnose or treat anything. Talking to a doctor, a counsellor or someone you trust can help. If you ever feel unsafe, contact a local emergency number or helpline straight away.';
+  return 'Your mood ratings have been low for a while. Nutri Smart is not a medical service and cannot diagnose or treat anything. Talking to a doctor, a counsellor or someone you trust can help. If you ever feel unsafe, contact a local emergency number or helpline straight away.';
 }
 
 /** Weekly or monthly trend points for a simple chart: one point per day that has data. */
