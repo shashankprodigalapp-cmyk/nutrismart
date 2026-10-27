@@ -9,11 +9,13 @@ import { AdminFreeTier }       from '../components/admin/AdminFreeTier';
 import { AdminBehaviour }      from '../components/admin/AdminBehaviour';
 import { AdminWhoTheyAre }     from '../components/admin/AdminWhoTheyAre';
 import { AdminSearchReview }   from '../components/admin/AdminSearchReview';
+import { AdminPlatform }       from '../components/admin/AdminPlatform';
 import { useAdminInsights }    from '../components/admin/useAdminInsights';
 
 export default function AdminPage() {
   const { data: watch } = useAdminInsights(7);
   const tabs = [
+    { to: '/admin/platform',      label: '🧩 Platform 2.0' },
     { to: '/admin/insights',      label: '📈 Insights' },
     { to: '/admin/behaviour',     label: '🧭 Behaviour' },
     { to: '/admin/who',           label: '👥 Who they are' },
@@ -39,6 +41,7 @@ export default function AdminPage() {
         ))}
       </div>
       <Routes>
+        <Route path="platform"      element={<AdminPlatform />} />
         <Route path="insights"      element={<AdminInsights />} />
         <Route path="behaviour"     element={<AdminBehaviour />} />
         <Route path="who"           element={<AdminWhoTheyAre />} />
