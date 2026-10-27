@@ -1,0 +1,64 @@
+name: 2.0 checks
+
+# Runs on every push to v2 or main and on pull requests. Nothing here touches the real database or sends notifications.
+on:
+  push:
+    branches: [v2, main]
+  pull_request:
+
+jobs:
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npm test
+
+  build:
+    name: Type check and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - run: npm run build
+
+  database:
+    name: Database migrations and SQL tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env: { POSTGRES_PASSWORD: postgres }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/db-test.sh
+
+  deployed-smoke:
+    name: Preview site smoke test
+    if: github.ref == 'refs/heads/v2'
+    needs: [unit]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Wait for Cloudflare to build the preview, then check it
+        env:
+          BASE_URL: ${{ vars.V2_PREVIEW_URL }}
+        run: |
+          if [ -z "$BASE_URL" ]; then echo "V2_PREVIEW_URL is not set (repository variable). Skipping."; exit 0; fi
+          sleep 120
+          node scripts/smoke-v2.mjs "$BASE_URL"

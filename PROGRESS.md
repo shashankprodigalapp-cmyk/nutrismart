@@ -26,7 +26,7 @@ Rule: every 2.0 screen is behind a feature flag (`feature_flags` table), off by 
 | 17 | Subscriptions | DONE (migration 034 plans catalog, effective plan + entitlements functions, coach client cap behind v2_plans, admin Plans editor; payments and AI limits unchanged; 12 unit + 15 SQL checks) |
 | 18 | Analytics | DONE (migration 035 admin_v2_analytics, endpoint, Feature use tab: adoption, coach funnel, review outcomes, sign-up cohorts; 7 unit + 11 SQL checks) |
 | 19 | Security hardening | DONE (migration 036: fixed self-granted Pro, admin id spoofing, 6 server-only helpers, kitchen analysis leak; rate limits on 2.0 endpoints; export covers 35 tables; delete erases lingering ids; 30 SQL + 43 unit checks) |
-| 20 | Production testing and deployment | NEXT |
+| 20 | Production testing and deployment | DONE (CI workflow '2.0 checks': unit, build, database, preview smoke; scripts/db-test.sh 180 SQL checks; scripts/smoke-v2.mjs; RELEASE_2_0, RUNBOOK, MANUAL_TESTS docs) |
 
 ## Phase 1+2 log
 - Files: supabase/migrations/020_v2_foundation.sql, supabase/tests_v2_rls.sql, functions/_shared/{coachLogic,roles}.ts,
