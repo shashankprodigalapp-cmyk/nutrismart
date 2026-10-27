@@ -24,6 +24,9 @@ const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage'));
 const ResetPasswordPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const AppShell       = React.lazy(() => import('./pages/AppShell'));
 const AdminPage      = React.lazy(() => import('./pages/AdminPage'));
+const CoachPage      = React.lazy(() => import('./pages/CoachPage'));
+const JoinPage       = React.lazy(() => import('./pages/JoinPage'));
+const MyCoachPage    = React.lazy(() => import('./pages/MyCoachPage'));
 
 const Spinner = (
   <div className="min-h-dvh bg-[#111113] flex items-center justify-center">
@@ -79,6 +82,11 @@ export default function App() {
                   <AppShell />
                 </ProtectedRoute>
               } />
+
+              {/* 2.0: coach area and client-side coach link (switched on by feature flag v2_coach) */}
+              <Route path="/coach/*" element={<ProtectedRoute><CoachPage /></ProtectedRoute>} />
+              <Route path="/join/:token" element={<ProtectedRoute requiresKitchenProfile={false}><JoinPage /></ProtectedRoute>} />
+              <Route path="/app/my-coach" element={<ProtectedRoute><MyCoachPage /></ProtectedRoute>} />
 
               {/* Admin */}
               <Route path="/admin/*" element={

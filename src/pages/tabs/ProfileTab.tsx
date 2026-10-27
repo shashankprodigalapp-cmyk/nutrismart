@@ -7,6 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { usePWAInstall } from '../../lib/pwaInstall';
 import { InstallHelpModal } from '../../components/InstallHelpModal';
 import { track } from '../../lib/analytics';
+import { useRoles } from '../../lib/useRoles';
 import ProfileCompletionCard, { useProfileStatus } from '../../components/ProfileCompletion';
 import { fitMacros, matchPreset, presetGrams, splitPercent, PRESETS, type PresetKey } from '../../lib/macroMath';
 import { registerPushSubscription, ensurePushSubscription, unregisterPushSubscription, isPushTurnedOff, setPushTurnedOff } from '../../lib/pushRegistration';
@@ -310,6 +311,22 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
 
 // ── DATA & PRIVACY MODAL ──────────────────────────────────────────────────────
 
+/** 2.0: coach links. Hidden completely until the v2_coach switch is turned on. */
+function CoachLinks() {
+  const { coachEnabled, roles } = useRoles();
+  if (!coachEnabled) return null;
+  return (
+    <div className="bg-[#1C1C1E] rounded-2xl divide-y divide-white/[0.06]">
+      <a href="/app/my-coach" className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.04]">
+        <span className="text-lg">🤝</span><span className="text-sm text-white flex-1">My coach</span><span className="text-[#636366] text-xs">›</span>
+      </a>
+      <a href="/coach" className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.04]">
+        <span className="text-lg">🧑‍⚕️</span><span className="text-sm text-white flex-1">{roles.coach ? 'Coach area' : 'Become a coach'}</span><span className="text-[#636366] text-xs">›</span>
+      </a>
+    </div>
+  );
+}
+
 function DataPrivacyModal({ onClose }: { onClose: () => void }) {
   const [busy, setBusy] = useState<'export' | 'delete' | null>(null);
   const [msg, setMsg] = useState('');
@@ -563,6 +580,8 @@ export default function ProfileTab() {
             </button>
           ))}
         </div>
+
+        <CoachLinks />
 
         {/* Legal */}
         <div className="bg-[#1C1C1E] rounded-2xl divide-y divide-white/[0.06]">
