@@ -10,6 +10,7 @@ import { useTargets } from '../../lib/useTargets';
 import { useAlerts } from '../../components/ContextualAlerts';
 import { ProfileNudge } from '../../components/ProfileCompletion';
 import { FlexibleMealCard } from '../../components/FlexibleMealCard';
+import { DailyCheckInCard } from '../../components/energy/DailyCheckInCard';
 import { useFlag } from '../../lib/useFlag';
 
 interface TodaySummary {
@@ -29,6 +30,7 @@ export default function TodayTab() {
   const { eventBudget } = useAlerts();
   const flexOn = useFlag('v2_flexible_meals');
   const reviewOn = useFlag('v2_weekly_review');
+  const checkinsOn = useFlag('v2_checkins');
   // Same rule as the Log tab: an active event budget replaces the daily calorie goal.
   const CALORIE_GOAL = eventBudget.active ? eventBudget.daytimeBudget : baseGoal;
   const WATER_GOAL = waterGlasses * GLASS_ML;
@@ -85,6 +87,13 @@ export default function TodayTab() {
 
       <ProfileNudge />
 
+      {checkinsOn && <DailyCheckInCard />}
+      {checkinsOn && (
+        <Link to="/app/energy-mood" className="block bg-[#1C1C1E] rounded-2xl p-4 min-h-[44px]">
+          <span className="text-sm font-semibold">Energy and mood</span>
+          <span className="block text-xs text-[#8E8E93]">Your trends, after-meal notes and patterns</span>
+        </Link>
+      )}
       {flexOn && <FlexibleMealCard />}
       {reviewOn && (
         <Link to="/app/weekly-review" className="block bg-[#1C1C1E] rounded-2xl p-4 min-h-[44px]">

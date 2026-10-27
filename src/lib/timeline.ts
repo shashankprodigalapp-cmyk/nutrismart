@@ -29,6 +29,14 @@ export function describe(e: TimelineEvent): Line {
     case 'food_updated': return { ...base, icon: '✏️', title: `Meal edited: ${String(p.food_name ?? 'food')}`, detail: r0(p.cal) != null ? `${r0(p.cal)} kcal` : '' };
     case 'food_deleted': return { ...base, icon: '🗑️', title: `Meal removed: ${String(p.food_name ?? 'food')}`, detail: '' };
     case 'energy_logged': return { ...base, icon: '⚡', title: `Energy: ${LEVEL[String(p.level)] ?? String(p.level ?? '')}`, detail: p.meal_before ? `after ${String(p.meal_before)}` : '' };
+    case 'checkin_logged': {
+      const bits = [p.energy != null ? `energy ${p.energy}/5` : '', p.mood != null ? `mood ${p.mood}/5` : '', p.hunger != null ? `hunger ${p.hunger}/5` : '', p.sleep ? `sleep ${p.sleep}` : '', p.stress ? `stress ${p.stress}` : ''].filter(Boolean);
+      return { ...base, icon: '🌅', title: 'Morning check-in', detail: bits.join(', ') };
+    }
+    case 'meal_feeling': {
+      const bits = [p.energy_change ? `energy ${p.energy_change}` : '', p.fullness ? String(p.fullness) : '', p.mood_change ? `mood ${p.mood_change}` : ''].filter(Boolean);
+      return { ...base, icon: '🙂', title: `After ${String(p.meal ?? 'meal')}`, detail: bits.join(', ') };
+    }
     case 'water_logged': return { ...base, icon: '💧', title: `Water: ${num(p.glasses) ?? 0} glasses today`, detail: '' };
     case 'flexible_meal_created': return { ...base, icon: '📅', title: `Flexible meal planned${p.label ? ': ' + String(p.label) : ''}`, detail: r0(p.reserved_kcal) != null ? `${r0(p.reserved_kcal)} kcal set aside${p.planned_time ? ' for ' + String(p.planned_time) : ''}` : '' };
     case 'flexible_meal_consumed': return { ...base, icon: '✅', title: `Flexible meal eaten${p.label ? ': ' + String(p.label) : ''}`, detail: r0(p.consumed_kcal) != null ? `${r0(p.consumed_kcal)} kcal of ${r0(p.reserved_kcal) ?? '?'} planned` : '' };

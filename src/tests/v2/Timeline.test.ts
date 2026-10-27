@@ -43,3 +43,15 @@ suite('grouping', () => {
     expect(dayLabel('2026-10-27', now)).toBe('Today'); expect(dayLabel('2026-10-26', now)).toBe('Yesterday');
   });
 });
+
+suite('check-in lines', () => {
+  const ev = (event_type: string, payload: Record<string, unknown>) => ({ id: '1', event_type, scope: 'mood', occurred_at: '2026-10-27T02:30:00Z', payload });
+  it('describes a morning check-in', () => {
+    const l = describe(ev('checkin_logged', { energy: 4, mood: 3, sleep: 'good', stress: null, hunger: null }));
+    expect(l.title).toBe('Morning check-in'); expect(l.detail).toBe('energy 4/5, mood 3/5, sleep good');
+  });
+  it('describes an after-meal note', () => {
+    const l = describe(ev('meal_feeling', { meal: 'lunch', energy_change: 'lower', fullness: 'full' }));
+    expect(l.title).toBe('After lunch'); expect(l.detail).toBe('energy lower, full');
+  });
+});
