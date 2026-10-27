@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { AttentionPanel } from './AttentionPanel';
+import { useFlag } from '../../lib/useFlag';
 import { classify, pct, daysSince, STATUS_ORDER, type ClientMetrics, type ClientStatus, type Reason } from '../../lib/coachMetrics';
 
 interface Row extends ClientMetrics {
@@ -32,6 +34,7 @@ export function CoachDashboard() {
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<'status' | 'name' | 'activity'>('status');
   const [days, setDays] = useState<7 | 14 | 30>(7);
+  const attentionOn = useFlag('v2_attention');
 
   const load = useCallback(async () => {
     setError(null); setRows(null);
@@ -74,6 +77,8 @@ export function CoachDashboard() {
         {tile('Drifting', counts.drifting, '#FFB347')}
         {tile('On track', counts.on_track, '#30D158')}
       </div>
+
+      {attentionOn && <AttentionPanel clients={rows} />}
 
       <div className="bg-[#1C1C1E] rounded-2xl p-3 space-y-3">
         <div className="flex flex-wrap gap-2 items-center">

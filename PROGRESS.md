@@ -15,8 +15,8 @@ Rule: every 2.0 screen is behind a feature flag (`feature_flags` table), off by 
 | 6 | Flexible meal intelligence | DONE (FlexibleMealPlanner in src/lib/flexibleMeal.ts, 11 tests; migration 023 flexible_meals + events + timeline + flexible_adherence, 10 SQL checks; Today card behind flag v2_flexible_meals). Needs a connection to plan (not offline yet). Coach-set cap has no UI yet; the planner already supports it. |
 | 7 | Weekly AI review | DONE |
 | 8 | Monthly AI review | DONE (migration 025, same endpoint with period month, Weekly/Monthly switch in the review panel, 12 SQL checks, flag v2_monthly_review) |
-| 9 | Needs Attention engine | NEXT |
-| 10 | Nudge system | todo |
+| 9 | Needs Attention engine | DONE (migration 026 attention_actions, ranked panel on coach dashboard, snooze/dismiss with resurface on escalation, 6 unit + 5 SQL checks, flag v2_attention) |
+| 10 | Nudge system | NEXT |
 | 11 | Voice logging | todo |
 | 12 | Photo logging improvements | todo |
 | 13 | Energy + Mood intelligence | todo |
