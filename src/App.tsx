@@ -27,6 +27,7 @@ const AdminPage      = React.lazy(() => import('./pages/AdminPage'));
 const CoachPage      = React.lazy(() => import('./pages/CoachPage'));
 const ClientDetailPage = React.lazy(() => import('./pages/coach/ClientDetailPage'));
 const JoinPage       = React.lazy(() => import('./pages/JoinPage'));
+const ExperimentsPage = React.lazy(() => import('./pages/ExperimentsPage'));
 const EnergyMoodPage = React.lazy(() => import('./pages/EnergyMoodPage'));
 const NudgeSettingsPage = React.lazy(() => import('./pages/NudgeSettingsPage'));
 const WeeklyReviewPage = React.lazy(() => import('./pages/WeeklyReviewPage'));
@@ -91,6 +92,7 @@ export default function App() {
               <Route path="/coach/client/:clientId" element={<ProtectedRoute><ClientDetailPage /></ProtectedRoute>} />
               <Route path="/coach/*" element={<ProtectedRoute><CoachPage /></ProtectedRoute>} />
               <Route path="/join/:token" element={<ProtectedRoute requiresKitchenProfile={false}><JoinPage /></ProtectedRoute>} />
+              <Route path="/app/experiments" element={<ProtectedRoute><ExperimentsPage /></ProtectedRoute>} />
               <Route path="/app/energy-mood" element={<ProtectedRoute><EnergyMoodPage /></ProtectedRoute>} />
               <Route path="/app/nudges" element={<ProtectedRoute><NudgeSettingsPage /></ProtectedRoute>} />
               <Route path="/app/weekly-review" element={<ProtectedRoute><WeeklyReviewPage /></ProtectedRoute>} />

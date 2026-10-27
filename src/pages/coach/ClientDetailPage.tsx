@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { classify, pct, type ClientMetrics, type ClientStatus, type Reason } from '../../lib/coachMetrics';
 import { groupByDay, dayLabel, type TimelineEvent } from '../../lib/timeline';
+import { ExperimentsPanel } from '../../components/experiments/ExperimentsPanel';
 import { EnergyMoodPanel } from '../../components/energy/EnergyMoodPanel';
 import WeeklyReviewPanel from '../../components/review/WeeklyReviewPanel';
 import { summarize, band, fillDays, type AdherenceRow } from '../../lib/adherenceView';
@@ -182,7 +183,7 @@ export default function ClientDetailPage() {
                 className={`px-4 min-h-[40px] rounded-full text-sm ${tab === t ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{t === 'overview' ? 'Overview' : t === 'adherence' ? 'Adherence' : t === 'weekly' ? 'Weekly review' : t === 'energy' ? 'Energy and mood' : 'Timeline'}</button>
             ))}
           </div>
-          {tab === 'overview' ? <Overview row={row} /> : tab === 'energy' ? <EnergyMoodPanel mode="coach" clientId={row.client_id} proteinTarget={row.target_protein} /> : tab === 'weekly' ? <WeeklyReviewPanel clientId={row.client_id} mode="coach" /> : tab === 'adherence' ? <Adherence clientId={row.client_id} shared={!!row.share_scope.food} /> : <Timeline clientId={row.client_id} />}
+          {tab === 'overview' ? <Overview row={row} /> : tab === 'energy' ? <div className="space-y-6"><EnergyMoodPanel mode="coach" clientId={row.client_id} proteinTarget={row.target_protein} /><ExperimentsPanel mode="coach" clientId={row.client_id} /></div> : tab === 'weekly' ? <WeeklyReviewPanel clientId={row.client_id} mode="coach" /> : tab === 'adherence' ? <Adherence clientId={row.client_id} shared={!!row.share_scope.food} /> : <Timeline clientId={row.client_id} />}
         </>
       )}
     </div>
