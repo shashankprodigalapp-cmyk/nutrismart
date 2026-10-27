@@ -10,8 +10,8 @@ Rule: every 2.0 screen is behind a feature flag (`feature_flags` table), off by 
 | 1 | Architecture + database foundation | DONE (migration 020, audit docs, timeline triggers) |
 | 2 | RBAC + coach/client relationships | DONE (server roles, invites, accept, pause/leave, admin approve, RLS tests). Coach/client UIs minimal. |
 | 3 | Coach dashboard | DONE (migration 021 `coach_dashboard()`, CoachDashboard UI, deterministic status rules + 11 tests). Message/Review/Dismiss buttons wait for Phases 4, 9, 10. |
-| 4 | Client timeline | NEXT |
-| 5 | Adherence engine | todo |
+| 4 | Client timeline | DONE for coaches (client detail: Overview + Timeline, paginated by 50, IST day groups, scope filter, 6 tests). Client's own timeline view + Nutrition/Weight/Mood tabs come with later phases. |
+| 5 | Adherence engine | NEXT |
 | 6 | Flexible meal intelligence | todo |
 | 7 | Weekly AI review | todo |
 | 8 | Monthly AI review | todo |

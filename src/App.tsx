@@ -25,6 +25,7 @@ const ResetPasswordPage = React.lazy(() => import('./pages/ResetPasswordPage'));
 const AppShell       = React.lazy(() => import('./pages/AppShell'));
 const AdminPage      = React.lazy(() => import('./pages/AdminPage'));
 const CoachPage      = React.lazy(() => import('./pages/CoachPage'));
+const ClientDetailPage = React.lazy(() => import('./pages/coach/ClientDetailPage'));
 const JoinPage       = React.lazy(() => import('./pages/JoinPage'));
 const MyCoachPage    = React.lazy(() => import('./pages/MyCoachPage'));
 
@@ -84,6 +85,7 @@ export default function App() {
               } />
 
               {/* 2.0: coach area and client-side coach link (switched on by feature flag v2_coach) */}
+              <Route path="/coach/client/:clientId" element={<ProtectedRoute><ClientDetailPage /></ProtectedRoute>} />
               <Route path="/coach/*" element={<ProtectedRoute><CoachPage /></ProtectedRoute>} />
               <Route path="/join/:token" element={<ProtectedRoute requiresKitchenProfile={false}><JoinPage /></ProtectedRoute>} />
               <Route path="/app/my-coach" element={<ProtectedRoute><MyCoachPage /></ProtectedRoute>} />

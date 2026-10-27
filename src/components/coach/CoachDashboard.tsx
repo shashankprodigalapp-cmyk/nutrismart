@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { classify, pct, daysSince, STATUS_ORDER, type ClientMetrics, type ClientStatus, type Reason } from '../../lib/coachMetrics';
 
@@ -113,7 +114,7 @@ export function CoachDashboard() {
                 const energyArrow = r.energy_avg != null && r.energy_prev_avg != null ? (r.energy_avg < r.energy_prev_avg - 0.05 ? '↓' : r.energy_avg > r.energy_prev_avg + 0.05 ? '↑' : '→') : '';
                 return (
                   <tr key={r.relationship_id}>
-                    <td className="p-3 font-medium">{r.client_name}</td>
+                    <td className="p-3 font-medium"><Link to={`/coach/client/${r.client_id}`} className="underline decoration-white/20 hover:decoration-white">{r.client_name}</Link></td>
                     <td className="p-3 text-[#C7C7CC]">{r.goal_type ? GOALS[r.goal_type] : '–'}</td>
                     <td className="p-3"><Cell shared={!!r.share_scope.food} v={pct(r.avg_cal, r.target_cal) != null ? `${pct(r.avg_cal, r.target_cal)}%` : null} /></td>
                     <td className="p-3"><Cell shared={!!r.share_scope.food} v={pct(r.avg_protein, r.target_protein) != null ? `${pct(r.avg_protein, r.target_protein)}%` : null} /></td>
