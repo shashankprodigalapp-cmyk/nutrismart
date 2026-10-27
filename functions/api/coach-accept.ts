@@ -2,6 +2,7 @@ import type { Env } from '../_shared/auth';
 import { getSupabaseAdmin, preflightResponse, jsonResponse } from '../_shared/auth';
 import { audit, flagOn, requireRole } from '../_shared/roles';
 import { inviteProblem, normalizeScope, sha256Hex } from '../_shared/coachLogic';
+import { seatAvailable } from '../_shared/plans';
 
 // POST /api/coach-accept {token, share_scope?, preview?}
 // preview:true only tells the client who is inviting. Otherwise the client joins and decides what the coach may see.
@@ -29,6 +30,13 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   if (!coach || coach.status !== 'active') return jsonResponse(env, 400, { error: 'coach_inactive', message: 'This coach is not active right now.' });
   if (body.preview) return jsonResponse(env, 200, { ok: true, coach: { display_name: coach.display_name, credentials: coach.credentials } });
 
+  // Plan cap on active clients. Only enforced when the v2_plans switch is on; no cap means always allowed.
+  if (await flagOn(env, 'v2_plans')) {
+    const { data: seats } = await admin.rpc('coach_seats', { p_coach: rel!.coach_id });
+    if (seats && !seatAvailable({ cap: seats.cap, used: Number(seats.used) })) {
+      return jsonResponse(env, 409, { error: 'coach_full', message: 'This coach is not taking new clients right now.' });
+    }
+  }
   const { error } = await admin.from('coach_client_relationships').update({
     client_id: who.userId, status: 'active', accepted_at: new Date().toISOString(),
     share_scope: normalizeScope(body.share_scope), invite_token_hash: null,

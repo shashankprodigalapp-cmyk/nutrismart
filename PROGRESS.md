@@ -23,8 +23,8 @@ Rule: every 2.0 screen is behind a feature flag (`feature_flags` table), off by 
 | 14 | Pattern engine | DONE (migration 031 meal_outcomes, rules in src/lib/patterns.ts with minimum-observation tiers, "Meal patterns" on the energy page and coach tab; 8 unit + 10 SQL checks; flag v2_patterns) |
 | 15 | Personal experiments | DONE (migration 032 experiments + daily ticks, 4 templates, deterministic before/during comparison with minimum-data rules, client page and coach read-only view; 11 unit + 11 SQL checks; flag v2_experiments) |
 | 16 | Admin platform | DONE (migration 033 admin_platform_metrics, endpoints admin-platform/flags/audit, Platform 2.0 tab with health checks, AI usage, coaches, feature switches, audit log; 5 unit + 6 SQL checks) |
-| 17 | Subscriptions | NEXT |
-| 18 | Analytics | todo |
+| 17 | Subscriptions | DONE (migration 034 plans catalog, effective plan + entitlements functions, coach client cap behind v2_plans, admin Plans editor; payments and AI limits unchanged; 12 unit + 15 SQL checks) |
+| 18 | Analytics | NEXT |
 | 19 | Security hardening | todo |
 | 20 | Production testing and deployment | todo |
 

@@ -16,8 +16,8 @@ async function api<T = Record<string, any>>(path: string, init?: RequestInit): P
 }
 const errText = (r: { status: number; j: { message?: string } }) => r.status === 403 ? 'This account is not an admin.' : r.j.message ?? 'Could not load. Try again in a minute.';
 
-type Section = 'overview' | 'ai' | 'coaches' | 'flags' | 'audit';
-const SECTIONS: Array<[Section, string]> = [['overview', 'Overview'], ['ai', 'AI usage'], ['coaches', 'Coaches'], ['flags', 'Feature switches'], ['audit', 'Audit log']];
+type Section = 'overview' | 'ai' | 'coaches' | 'plans' | 'flags' | 'audit';
+const SECTIONS: Array<[Section, string]> = [['overview', 'Overview'], ['ai', 'AI usage'], ['coaches', 'Coaches'], ['plans', 'Plans'], ['flags', 'Feature switches'], ['audit', 'Audit log']];
 
 function Overview() {
   const [m, setM] = useState<(Metrics & Record<string, any>) | null>(null);
@@ -111,6 +111,59 @@ function Coaches() {
   );
 }
 
+interface PlanRow { key: string; audience: 'client' | 'coach'; name: string; description: string | null; price_inr_month: number; price_inr_year: number | null; entitlements: { ai_daily_limit?: number; max_clients?: number | null; features?: string[] }; is_active: boolean; sort_order: number; coaches_on_plan: number }
+
+function PlanEditor({ plan, onSaved }: { plan: PlanRow; onSaved: () => void }) {
+  const [name, setName] = useState(plan.name);
+  const [month, setMonth] = useState(String(plan.price_inr_month));
+  const [year, setYear] = useState(plan.price_inr_year == null ? '' : String(plan.price_inr_year));
+  const [limit, setLimit] = useState(String((plan.audience === 'client' ? plan.entitlements.ai_daily_limit : plan.entitlements.max_clients) ?? ''));
+  const [active, setActive] = useState(plan.is_active);
+  const [msg, setMsg] = useState<string | null>(null);
+  const builtIn = ['free', 'pro', 'coach_standard'].includes(plan.key);
+  async function save() {
+    const ent: Record<string, unknown> = { ...plan.entitlements };
+    if (plan.audience === 'client') ent.ai_daily_limit = Number(limit);
+    else ent.max_clients = limit.trim() === '' ? null : Number(limit);
+    const r = await api('/api/admin-plans', { method: 'POST', body: JSON.stringify({ ...plan, name, price_inr_month: Number(month), price_inr_year: year.trim() === '' ? null : Number(year), entitlements: ent, is_active: active }) });
+    setMsg(r.ok ? 'Saved.' : r.j.message ?? 'Could not save.');
+    if (r.ok) onSaved();
+  }
+  const inp = 'bg-[#242426] rounded-lg px-2 min-h-[40px] text-sm w-full';
+  return (
+    <li className="bg-[#1C1C1E] rounded-2xl p-4 space-y-3">
+      <div className="flex items-center gap-2"><span className="text-xs font-mono text-[#8E8E93]">{plan.key}</span><span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.06]">{plan.audience}</span>{plan.audience === 'coach' && <span className="text-xs text-[#8E8E93]">{plan.coaches_on_plan} coaches</span>}</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-[#8E8E93]">
+        <label>Name<input className={inp} value={name} maxLength={40} onChange={e => setName(e.target.value)} /></label>
+        <label>Rupees per month<input className={inp} inputMode="numeric" value={month} onChange={e => setMonth(e.target.value)} /></label>
+        <label>Rupees per year (optional)<input className={inp} inputMode="numeric" value={year} onChange={e => setYear(e.target.value)} /></label>
+        <label>{plan.audience === 'client' ? 'AI searches per day' : 'Client cap (empty = no cap)'}<input className={inp} inputMode="numeric" value={limit} onChange={e => setLimit(e.target.value)} /></label>
+      </div>
+      <div className="flex items-center gap-3">
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="w-5 h-5" checked={active} disabled={builtIn} onChange={e => setActive(e.target.checked)} />Offered{builtIn ? ' (built in)' : ''}</label>
+        <button onClick={save} className="px-4 min-h-[40px] rounded-full bg-[#C8F75E] text-[#111113] text-sm font-semibold">Save</button>
+        {msg && <span role="status" className="text-xs text-[#C7C7CC]">{msg}</span>}
+      </div>
+    </li>
+  );
+}
+
+function Plans() {
+  const [plans, setPlans] = useState<PlanRow[] | null>(null);
+  const [paid, setPaid] = useState(0);
+  const [err, setErr] = useState<string | null>(null);
+  const load = useCallback(() => { api('/api/admin-plans').then(r => { if (r.ok) { setPlans(r.j.plans); setPaid(r.j.active_paid_subscriptions); } else setErr(errText(r)); }); }, []);
+  useEffect(load, [load]);
+  if (err) return <p role="alert" className="text-sm text-[#FF6B6B]">{err}</p>;
+  if (!plans) return <Empty>Loading…</Empty>;
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-[#8E8E93]">{paid} active paid subscriptions. This is the plan catalog. The price shown on the payment screen and the AI search limits the app enforces today (5 free, 200 Pro) are still fixed in the app, so changing them here does not change what people pay or get yet. Client caps for coaches apply only when the v2_plans switch is on. Plans are switched off, never deleted.</p>
+      <ul className="space-y-2">{plans.map(p => <PlanEditor key={p.key + p.name + p.price_inr_month + (p.entitlements.max_clients ?? '') + (p.entitlements.ai_daily_limit ?? '')} plan={p} onSaved={load} />)}</ul>
+    </div>
+  );
+}
+
 function Flags() {
   const [flags, setFlags] = useState<Array<{ key: string; enabled: boolean; description: string | null; updated_at: string }> | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -171,6 +224,7 @@ export function AdminPlatform() {
       {s === 'overview' && <Overview />}
       {s === 'ai' && <AiUsage />}
       {s === 'coaches' && <Coaches />}
+      {s === 'plans' && <Plans />}
       {s === 'flags' && <Flags />}
       {s === 'audit' && <Audit />}
     </div>
