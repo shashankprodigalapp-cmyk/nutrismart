@@ -1,7 +1,7 @@
 import type { Env } from './auth';
 import { getSupabaseAdmin } from './auth';
 
-export type AiEndpoint = 'name' | 'describe' | 'vision' | 'vision_lookup' | 'embed';
+export type AiEndpoint = 'name' | 'describe' | 'vision' | 'vision_lookup' | 'embed' | 'review';
 export type AiProvider = 'gemini' | 'claude';
 
 /** Pull the model name out of a Gemini URL, or out of a Claude request body. Never reads the API key. */

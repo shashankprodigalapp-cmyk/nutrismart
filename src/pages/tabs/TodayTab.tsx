@@ -28,6 +28,7 @@ export default function TodayTab() {
   const { cal: baseGoal, protein: PROTEIN_GOAL, water: waterGlasses } = useTargets();
   const { eventBudget } = useAlerts();
   const flexOn = useFlag('v2_flexible_meals');
+  const reviewOn = useFlag('v2_weekly_review');
   // Same rule as the Log tab: an active event budget replaces the daily calorie goal.
   const CALORIE_GOAL = eventBudget.active ? eventBudget.daytimeBudget : baseGoal;
   const WATER_GOAL = waterGlasses * GLASS_ML;
@@ -85,6 +86,12 @@ export default function TodayTab() {
       <ProfileNudge />
 
       {flexOn && <FlexibleMealCard />}
+      {reviewOn && (
+        <Link to="/app/weekly-review" className="block bg-[#1C1C1E] rounded-2xl p-4 min-h-[44px]">
+          <span className="text-sm font-semibold">Your weekly review</span>
+          <span className="block text-xs text-[#8E8E93]">How last week went, with the numbers behind it</span>
+        </Link>
+      )}
 
       {/* Calories ring card */}
       <div className="bg-[#1C1C1E] rounded-2xl p-4">

@@ -13,8 +13,8 @@ Rule: every 2.0 screen is behind a feature flag (`feature_flags` table), off by 
 | 4 | Client timeline | DONE for coaches (client detail: Overview + Timeline, paginated by 50, IST day groups, scope filter, 6 tests). Client's own timeline view + Nutrition/Weight/Mood tabs come with later phases. |
 | 5 | Adherence engine | DONE (migration 022: stored daily metrics + adherence, triggers keep them fresh, 60-day backfill, 21 SQL checks in supabase/tests_v2_adherence.sql, Adherence tab, 5 unit tests). meal_plan, flexible_meal and goal adherence arrive with Phase 6 and weekly work. |
 | 6 | Flexible meal intelligence | DONE (FlexibleMealPlanner in src/lib/flexibleMeal.ts, 11 tests; migration 023 flexible_meals + events + timeline + flexible_adherence, 10 SQL checks; Today card behind flag v2_flexible_meals). Needs a connection to plan (not offline yet). Coach-set cap has no UI yet; the planner already supports it. |
-| 7 | Weekly AI review | NEXT |
-| 8 | Monthly AI review | todo |
+| 7 | Weekly AI review | DONE |
+| 8 | Monthly AI review | NEXT |
 | 9 | Needs Attention engine | todo |
 | 10 | Nudge system | todo |
 | 11 | Voice logging | todo |

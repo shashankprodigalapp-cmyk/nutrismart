@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { classify, pct, type ClientMetrics, type ClientStatus, type Reason } from '../../lib/coachMetrics';
 import { groupByDay, dayLabel, type TimelineEvent } from '../../lib/timeline';
+import WeeklyReviewPanel from '../../components/review/WeeklyReviewPanel';
 import { summarize, band, fillDays, type AdherenceRow } from '../../lib/adherenceView';
 
 interface Row extends ClientMetrics { relationship_id: string; client_id: string; client_name: string; goal_type: string | null }
@@ -152,7 +153,7 @@ export default function ClientDetailPage() {
   const { clientId = '' } = useParams();
   const [row, setRow] = useState<Row | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
-  const [tab, setTab] = useState<'overview' | 'adherence' | 'timeline'>('overview');
+  const [tab, setTab] = useState<'overview' | 'adherence' | 'weekly' | 'timeline'>('overview');
 
   useEffect(() => {
     let live = true;
@@ -174,13 +175,13 @@ export default function ClientDetailPage() {
       {state === 'ready' && row && (
         <>
           <h1 className="text-xl font-bold">{row.client_name}</h1>
-          <div role="tablist" className="flex gap-1.5">
-            {(['overview', 'adherence', 'timeline'] as const).map(t => (
+          <div role="tablist" className="flex flex-wrap gap-1.5">
+            {(['overview', 'adherence', 'weekly', 'timeline'] as const).map(t => (
               <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
-                className={`px-4 min-h-[40px] rounded-full text-sm ${tab === t ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{t === 'overview' ? 'Overview' : t === 'adherence' ? 'Adherence' : 'Timeline'}</button>
+                className={`px-4 min-h-[40px] rounded-full text-sm ${tab === t ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{t === 'overview' ? 'Overview' : t === 'adherence' ? 'Adherence' : t === 'weekly' ? 'Weekly review' : 'Timeline'}</button>
             ))}
           </div>
-          {tab === 'overview' ? <Overview row={row} /> : tab === 'adherence' ? <Adherence clientId={row.client_id} shared={!!row.share_scope.food} /> : <Timeline clientId={row.client_id} />}
+          {tab === 'overview' ? <Overview row={row} /> : tab === 'weekly' ? <WeeklyReviewPanel clientId={row.client_id} mode="coach" /> : tab === 'adherence' ? <Adherence clientId={row.client_id} shared={!!row.share_scope.food} /> : <Timeline clientId={row.client_id} />}
         </>
       )}
     </div>

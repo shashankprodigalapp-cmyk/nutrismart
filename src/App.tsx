@@ -27,6 +27,7 @@ const AdminPage      = React.lazy(() => import('./pages/AdminPage'));
 const CoachPage      = React.lazy(() => import('./pages/CoachPage'));
 const ClientDetailPage = React.lazy(() => import('./pages/coach/ClientDetailPage'));
 const JoinPage       = React.lazy(() => import('./pages/JoinPage'));
+const WeeklyReviewPage = React.lazy(() => import('./pages/WeeklyReviewPage'));
 const MyCoachPage    = React.lazy(() => import('./pages/MyCoachPage'));
 
 const Spinner = (
@@ -88,6 +89,7 @@ export default function App() {
               <Route path="/coach/client/:clientId" element={<ProtectedRoute><ClientDetailPage /></ProtectedRoute>} />
               <Route path="/coach/*" element={<ProtectedRoute><CoachPage /></ProtectedRoute>} />
               <Route path="/join/:token" element={<ProtectedRoute requiresKitchenProfile={false}><JoinPage /></ProtectedRoute>} />
+              <Route path="/app/weekly-review" element={<ProtectedRoute><WeeklyReviewPage /></ProtectedRoute>} />
               <Route path="/app/my-coach" element={<ProtectedRoute><MyCoachPage /></ProtectedRoute>} />
 
               {/* Admin */}
