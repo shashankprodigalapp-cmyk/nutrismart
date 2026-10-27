@@ -12,6 +12,10 @@ suite('describe', () => {
     expect(describe(ev('2', 'energy_logged', '2026-10-27T10:00:00Z', { level: 'low', meal_before: 'lunch' }, 'energy')).title).toBe('Energy: Low');
     expect(describe(ev('3', 'water_logged', '2026-10-27T10:00:00Z', { glasses: 5 }, 'water')).title).toBe('Water: 5 glasses today');
   });
+  it('shows flexible meal events', () => {
+    expect(describe(ev('9', 'flexible_meal_created', '2026-10-27T10:00:00Z', { label: 'Pizza', reserved_kcal: 1000, planned_time: '20:00' })).detail).toBe('1000 kcal set aside for 20:00');
+    expect(describe(ev('10', 'flexible_meal_consumed', '2026-10-27T10:00:00Z', { reserved_kcal: 1000, consumed_kcal: 1100 })).detail).toBe('1100 kcal of 1000 planned');
+  });
   it('never crashes on unknown events or odd data', () => {
     expect(describe(ev('4', 'weird_thing', '2026-10-27T10:00:00Z')).title).toBe('weird thing');
     expect(describe(ev('5', 'food_logged', '2026-10-27T10:00:00Z', { cal: 'abc' })).detail).toBe('');

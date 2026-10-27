@@ -9,6 +9,8 @@ import { localDb } from '../../lib/localDb';
 import { useTargets } from '../../lib/useTargets';
 import { useAlerts } from '../../components/ContextualAlerts';
 import { ProfileNudge } from '../../components/ProfileCompletion';
+import { FlexibleMealCard } from '../../components/FlexibleMealCard';
+import { useFlag } from '../../lib/useFlag';
 
 interface TodaySummary {
   calories:  number;
@@ -25,6 +27,7 @@ export default function TodayTab() {
   const { user } = useAuth();
   const { cal: baseGoal, protein: PROTEIN_GOAL, water: waterGlasses } = useTargets();
   const { eventBudget } = useAlerts();
+  const flexOn = useFlag('v2_flexible_meals');
   // Same rule as the Log tab: an active event budget replaces the daily calorie goal.
   const CALORIE_GOAL = eventBudget.active ? eventBudget.daytimeBudget : baseGoal;
   const WATER_GOAL = waterGlasses * GLASS_ML;
@@ -80,6 +83,8 @@ export default function TodayTab() {
       </div>
 
       <ProfileNudge />
+
+      {flexOn && <FlexibleMealCard />}
 
       {/* Calories ring card */}
       <div className="bg-[#1C1C1E] rounded-2xl p-4">

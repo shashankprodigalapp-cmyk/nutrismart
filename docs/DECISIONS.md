@@ -10,3 +10,6 @@
 8. **Timeline triggers swallow their own errors** so food, energy and water logging can never fail because of the timeline.
 9. **Testing in a sandbox without full node_modules:** `scripts/run-tests-lite.mjs` runs vitest-style tests; CI remains the source of truth for tsc/vitest/build.
 10. **Name:** product name is under review (conflict with an existing app); keep it in one place.
+
+11. **flexible_meal_recommendations** from the spec is stored as `plan_snapshot` (JSON) on `flexible_meals` instead of a separate table: one plan has one snapshot, and it stays with the meal for explanation.
+12. Flexible meal planning needs a connection for now (writes go to Supabase directly). Offline queueing is a later hardening step.

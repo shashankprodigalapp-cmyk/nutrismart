@@ -1,0 +1,22 @@
+CREATE OR REPLACE FUNCTION pg_temp.eq(label text, got numeric, want numeric) RETURNS void LANGUAGE plpgsql AS $$
+BEGIN RAISE NOTICE '% : % (got %, want %)', CASE WHEN got IS NOT DISTINCT FROM want THEN 'PASS' ELSE 'FAIL' END, label, got, want; END $$;
+TRUNCATE public.users CASCADE; TRUNCATE auth.users CASCADE;
+INSERT INTO auth.users(id,email) VALUES ('00000000-0000-0000-0000-0000000000f1','f@t'),('00000000-0000-0000-0000-0000000000f2','g@t');
+INSERT INTO public.users(id,email) SELECT id,email FROM auth.users ON CONFLICT DO NOTHING;
+INSERT INTO public.flexible_meals(user_id,planned_for,reserved_kcal,label) VALUES ('00000000-0000-0000-0000-0000000000f1','2026-10-20',1000,'Pizza night');
+SELECT pg_temp.eq('event created', (SELECT count(*) FROM public.flexible_meal_events WHERE event_type='created'), 1);
+SELECT pg_temp.eq('timeline line', (SELECT count(*) FROM public.timeline_events WHERE event_type='flexible_meal_created'), 1);
+SELECT pg_temp.eq('no flex score while only planned', (SELECT flexible_adherence FROM public.daily_adherence WHERE day='2026-10-20'), NULL);
+UPDATE public.flexible_meals SET status='consumed', consumed_kcal=1050 WHERE label='Pizza night';
+SELECT pg_temp.eq('flex score 100 within 10%', (SELECT flexible_adherence FROM public.daily_adherence WHERE day='2026-10-20'), 100);
+UPDATE public.flexible_meals SET consumed_kcal=1400 WHERE label='Pizza night';
+SELECT pg_temp.eq('flex score 25 at 40% over', (SELECT flexible_adherence FROM public.daily_adherence WHERE day='2026-10-20'), 25);
+SELECT pg_temp.eq('consumed timeline line', (SELECT count(*) FROM public.timeline_events WHERE event_type='flexible_meal_consumed'), 1);
+INSERT INTO public.flexible_meals(user_id,planned_for,reserved_kcal,status) VALUES ('00000000-0000-0000-0000-0000000000f1','2026-10-21',750,'skipped');
+SELECT pg_temp.eq('skipped is not penalised', (SELECT flexible_adherence FROM public.daily_adherence WHERE day='2026-10-21'), NULL);
+SET ROLE authenticated; SET request.jwt.claim.sub='00000000-0000-0000-0000-0000000000f2';
+SELECT pg_temp.eq('stranger sees no flexible meals', (SELECT count(*) FROM public.flexible_meals), 0);
+DO $$ BEGIN INSERT INTO public.flexible_meals(user_id,planned_for,reserved_kcal) VALUES ('00000000-0000-0000-0000-0000000000f1','2026-10-22',500); RAISE NOTICE 'FAIL : wrote for someone else';
+EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'PASS : cannot write for someone else'; END $$;
+DO $$ BEGIN INSERT INTO public.flexible_meals(user_id,planned_for,reserved_kcal) VALUES ('00000000-0000-0000-0000-0000000000f2','2026-10-22',50); RAISE NOTICE 'FAIL : tiny reservation allowed';
+EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'PASS : reservation limits enforced'; END $$;

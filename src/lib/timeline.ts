@@ -30,6 +30,9 @@ export function describe(e: TimelineEvent): Line {
     case 'food_deleted': return { ...base, icon: '🗑️', title: `Meal removed: ${String(p.food_name ?? 'food')}`, detail: '' };
     case 'energy_logged': return { ...base, icon: '⚡', title: `Energy: ${LEVEL[String(p.level)] ?? String(p.level ?? '')}`, detail: p.meal_before ? `after ${String(p.meal_before)}` : '' };
     case 'water_logged': return { ...base, icon: '💧', title: `Water: ${num(p.glasses) ?? 0} glasses today`, detail: '' };
+    case 'flexible_meal_created': return { ...base, icon: '📅', title: `Flexible meal planned${p.label ? ': ' + String(p.label) : ''}`, detail: r0(p.reserved_kcal) != null ? `${r0(p.reserved_kcal)} kcal set aside${p.planned_time ? ' for ' + String(p.planned_time) : ''}` : '' };
+    case 'flexible_meal_consumed': return { ...base, icon: '✅', title: `Flexible meal eaten${p.label ? ': ' + String(p.label) : ''}`, detail: r0(p.consumed_kcal) != null ? `${r0(p.consumed_kcal)} kcal of ${r0(p.reserved_kcal) ?? '?'} planned` : '' };
+    case 'flexible_meal_skipped': return { ...base, icon: '⏭️', title: 'Flexible meal skipped', detail: '' };
     default: return { ...base, icon: '•', title: e.event_type.replace(/_/g, ' '), detail: '' };
   }
 }
