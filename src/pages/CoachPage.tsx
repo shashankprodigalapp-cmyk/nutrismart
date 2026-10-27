@@ -4,8 +4,8 @@ import { supabase } from '../lib/supabase';
 import { coachApi } from '../lib/coachApi';
 import { useRoles } from '../lib/useRoles';
 import { AppSkeleton } from '../components/AppSkeleton';
+import { CoachDashboard } from '../components/coach/CoachDashboard';
 
-interface ClientRow { relationship_id: string; client_id: string; client_name: string; status: string; accepted_at: string | null }
 interface Invite { id: string; invite_label: string | null; invite_expires_at: string | null }
 
 function Apply({ onDone, open }: { onDone: () => void; open: boolean }) {
@@ -35,7 +35,6 @@ function Apply({ onDone, open }: { onDone: () => void; open: boolean }) {
 
 export default function CoachPage() {
   const { loading, roles, coachEnabled, coachSignupOpen } = useRoles();
-  const [clients, setClients] = useState<ClientRow[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [link, setLink] = useState<string | null>(null);
@@ -45,12 +44,8 @@ export default function CoachPage() {
 
   const load = useCallback(async () => {
     setError(null);
-    const [c, i] = await Promise.all([
-      supabase.rpc('coach_clients'),
-      supabase.from('coach_client_relationships').select('id, invite_label, invite_expires_at').eq('status', 'invited').order('invited_at', { ascending: false }),
-    ]);
-    if (c.error || i.error) { setError('Could not load your clients. Try again.'); return; }
-    setClients((c.data ?? []) as ClientRow[]);
+    const i = await supabase.from('coach_client_relationships').select('id, invite_label, invite_expires_at').eq('status', 'invited').order('invited_at', { ascending: false });
+    if (i.error) { setError('Could not load your invites. Try again.'); return; }
     setInvites((i.data ?? []) as Invite[]);
   }, []);
   useEffect(() => { if (roles.coach) void load(); }, [roles.coach, load]);
@@ -69,7 +64,7 @@ export default function CoachPage() {
 
   if (loading) return <AppSkeleton />;
   return (
-    <div className="min-h-dvh bg-[#111113] text-white p-4 md:p-8 max-w-4xl mx-auto space-y-4">
+    <div className="min-h-dvh bg-[#111113] text-white p-4 md:p-8 max-w-6xl mx-auto space-y-4">
       <div className="flex items-center justify-between pt-2">
         <h1 className="text-xl font-bold">Coach</h1>
         <Link to="/app/profile" className="text-xs text-[#8E8E93] underline">Back to app</Link>
@@ -80,6 +75,7 @@ export default function CoachPage() {
       {roles.coach && (
         <>
           {error && <p role="alert" className="text-sm text-[#FF6B6B]">{error}</p>}
+          <CoachDashboard />
           <div className="bg-[#1C1C1E] rounded-2xl p-5 space-y-3">
             <h2 className="font-semibold">Invite a client</h2>
             <div className="flex gap-2">
@@ -103,16 +99,6 @@ export default function CoachPage() {
                 ))}
               </ul>
             )}
-          </div>
-          <div className="bg-[#1C1C1E] rounded-2xl p-5">
-            <h2 className="font-semibold mb-2">Your clients ({clients.length})</h2>
-            {clients.length === 0
-              ? <p className="text-sm text-[#8E8E93]">No clients yet. Create an invite link above and send it to your first client.</p>
-              : <ul className="divide-y divide-white/5">{clients.map(c => (
-                  <li key={c.relationship_id} className="flex items-center justify-between py-2.5 text-sm">
-                    <span>{c.client_name}</span>
-                    <span className="text-[11px] text-[#8E8E93]">{c.status === 'paused' ? 'sharing paused' : 'active'}</span>
-                  </li>))}</ul>}
           </div>
         </>
       )}
