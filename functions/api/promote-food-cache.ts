@@ -1,4 +1,5 @@
 import type { Env } from '../_shared/auth';
+import { geminiFetch } from '../_shared/aiLog';
 import { verifyJWT, getSupabaseAdmin, preflightResponse, jsonResponse } from '../_shared/auth';
 import { validateNutrition } from '../_shared/nutritionValidator';
 
@@ -28,7 +29,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const t = setTimeout(() => controller.abort(), 4000);
   let embedding: number[] | null = null;
   try {
-    const res = await fetch(EMBED_URL, {
+    const res = await geminiFetch(EMBED_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

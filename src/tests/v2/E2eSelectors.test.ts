@@ -97,3 +97,16 @@ describe('flexible meal buttons and the own-rows rule', () => {
     expect(read('e2e/v21/crawler.spec.ts')).toContain('CR-1');
   });
 });
+
+describe('Edit on a logged meal always opens', () => {
+  it('rebuilds a food from the log entry when it is not in the food list', () => {
+    const s = read('src/components/DashboardLogging.tsx');
+    expect(s).toContain('setSheetFood(food ?? rebuilt)');
+    expect(s).not.toContain('if (!food) return; // food no longer');
+    expect(read('e2e/v2/workflows.spec.ts')).toContain('W-16');
+  });
+  it('the admin crawl visits every admin section, not just the first page', () => {
+    const c = read('e2e/v21/crawler.spec.ts');
+    for (const r of ['/admin/platform', '/admin/insights', '/admin/behaviour', '/admin/who', '/admin/free-tier', '/admin/analytics', '/admin/users', '/admin/payments', '/admin/contributions', '/admin/search-review']) expect(c).toContain(r);
+  });
+});

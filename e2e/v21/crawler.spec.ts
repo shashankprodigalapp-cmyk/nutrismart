@@ -61,6 +61,7 @@ async function crawl(page: Page, routes: string[], opts: { adminOnly?: boolean; 
       const seen = new Set<string>();
       document.querySelectorAll<HTMLElement>('button, [role="tab"]').forEach(el => {
         const r = el.getBoundingClientRect(); if (!r.width || !r.height || (el as HTMLButtonElement).disabled) return;
+        if (el.getAttribute('aria-selected') === 'true' || el.getAttribute('aria-pressed') === 'true' || el.getAttribute('aria-current')) return;   // already the chosen one: pressing it is meant to do nothing
         const name = (el.getAttribute('aria-label') || el.innerText || '').replace(/\s+/g, ' ').trim();
         const role = el.getAttribute('role') === 'tab' ? 'tab' : 'button';
         if (!name || name.length > 60 || seen.has(role + name)) return; seen.add(role + name); out.push({ name, role });
@@ -131,9 +132,10 @@ test('CR-2 coach: dashboard, client page, the coach\'s own Today; every button',
 
 test('CR-3 admin: every section loads and every tab, range and refresh works (looking only)', async ({ browser }, info) => {
   const { ctx, page } = await loginAs(browser, adminU.email);
-  const f = await crawl(page, ['/admin'], { adminOnly: true });
+  const f = await crawl(page, ['/admin/platform', '/admin/insights', '/admin/behaviour', '/admin/who', '/admin/free-tier', '/admin/analytics', '/admin/users', '/admin/payments', '/admin/contributions', '/admin/search-review'], { adminOnly: true });
   await report('admin', f, info); await ctx.close();
-  expect(f.pressed).toBeGreaterThan(6);
+  expect(f.screens).toBe(10);
+  expect(f.pressed, 'the eight section tabs on Platform 2.0 alone should be pressed').toBeGreaterThan(6);
   expect(f.errors).toEqual([]);
 });
 

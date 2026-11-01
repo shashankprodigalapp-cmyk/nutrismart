@@ -10,6 +10,19 @@ export function modelFrom(provider: AiProvider, url: string, init?: RequestInit)
   try { return JSON.parse(String(init?.body ?? '{}')).model ?? 'claude'; } catch { return 'claude'; }
 }
 
+/** Gemini accepts the key as a header for every key type (the newer "AQ." keys need it) and it keeps the key out of URLs and logs.
+ *  Takes a URL that still carries ?key=..., returns the clean URL and the request settings with the trimmed key in x-goog-api-key. */
+export function withGeminiKey(url: string, init: RequestInit): { url: string; init: RequestInit } {
+  const m = /([?&])key=([^&]*)/.exec(url);
+  if (!m) return { url, init };
+  let key = m[2]; try { key = decodeURIComponent(key); } catch { /* keep as is */ }
+  key = key.trim().replace(/^["']|["']$/g, '');
+  const clean = url.replace(/([?&])key=[^&]*&?/, (_all, sep) => (sep === '?' ? '?' : '')).replace(/[?&]$/, '');
+  return { url: clean, init: { ...init, headers: { ...(init.headers as Record<string, string> | undefined), 'x-goog-api-key': key } } };
+}
+
+export function geminiFetch(url: string, init: RequestInit): Promise<Response> { const g = withGeminiKey(url, init); return fetch(g.url, g.init); }
+
 export function usageFrom(provider: AiProvider, json: any): { input?: number; output?: number } {
   if (provider === 'gemini') {
     const u = json?.usageMetadata;
@@ -40,7 +53,7 @@ export async function aiFetch(
   const model = modelFrom(provider, url, init);
   let res: Response;
   try {
-    res = await fetch(url, init);
+    if (provider === 'gemini') { const g = withGeminiKey(url, init); res = await fetch(g.url, g.init); } else res = await fetch(url, init);
   } catch (e) {
     await record(env, { endpoint, provider, model, outcome: 'network_error', latency_ms: Date.now() - t0 });
     throw e;

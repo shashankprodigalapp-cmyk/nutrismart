@@ -1,4 +1,5 @@
 import type { Env } from '../_shared/auth';
+import { geminiFetch } from '../_shared/aiLog';
 import { verifyJWT, getSupabaseAdmin, preflightResponse, jsonResponse } from '../_shared/auth';
 
 const UTR_REGEX = /[A-Za-z0-9]{10,22}/;
@@ -49,7 +50,7 @@ If no transaction ID is visible: {"utr":null,"amount":null}`;
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), 8000);
   try {
-    const res = await fetch(GEMINI_VISION_URL, {
+    const res = await geminiFetch(GEMINI_VISION_URL, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       signal:  controller.signal,

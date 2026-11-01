@@ -1052,10 +1052,17 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
     const food =
       masterFoods.find(f => f.id === e.food_id) ??
       masterFoods.find(f => f.name.toLowerCase() === e.food_name.toLowerCase());
-    if (!food) return; // food no longer in the list (e.g. an AI food still waiting for admin approval)
+    // A food that is not in the list any more (an AI food waiting for approval, a removed food) must still be editable:
+    // rebuild one serving from what was logged, so the sheet opens and the person can change the amount, meal or home/outside.
+    const per = Math.max(0.01, (e.qty || 1) * (e.multiplier || 1));
+    const rebuilt = {
+      id: e.food_id ?? crypto.randomUUID(), name: e.food_name, portion: e.portion,
+      weight_g: undefined, calories: e.cal / per, protein: e.protein / Math.max(0.01, e.qty || 1), carbs: e.carbs / Math.max(0.01, e.qty || 1),
+      fat: e.fat / per, gl: e.gl / Math.max(0.01, e.qty || 1), gi: 0, type: 'MR', source: 'logged',
+    } as unknown as Food;
     viaUsualRef.current = false;
     setEditEntry(e);
-    setSheetFood(food);
+    setSheetFood(food ?? rebuilt);
   }, [masterFoods]);
 
   // ── Delete food ───────────────────────────────────────────────────────────

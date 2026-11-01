@@ -542,4 +542,15 @@ test.describe('Account deletion (throwaway account)', () => {
     if (await ci.count()) await expect(ci.getByRole('button', { name: 'Save' })).toBeDisabled();
     await ctx.close();
   });
+
+  test('W-16 a logged meal whose food is not in the food list can still be edited (the Edit button used to do nothing)', async ({ browser }) => {
+    const day = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    await rest(`daily_logs?user_id=eq.${client.id}`, { method: 'DELETE' });
+    await rest('daily_logs', { method: 'POST', body: { user_id: client.id, log_date: day, meal: 'dinner', food_name: 'Zz not in the list pudding', portion: '1 bowl', qty: 1, is_home: true, multiplier: 1, cal: 300, protein: 6, carbs: 40, fat: 10, gl: 12, anomaly: false, food_source: 'ai' } });
+    const { ctx, page } = await as(browser, client.email, '/app/log');
+    await page.getByRole('button', { name: 'Edit Zz not in the list pudding' }).click();
+    await expect(page.getByRole('button', { name: /Save changes/ })).toBeVisible({ timeout: 10_000 });
+    await page.keyboard.press('Escape');
+    await ctx.close();
+  });
 });
