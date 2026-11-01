@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { AttentionPanel } from './AttentionPanel';
+import { CoachInsights } from './CoachInsights';
 import { useFlag } from '../../lib/useFlag';
 import { classify, pct, daysSince, STATUS_ORDER, type ClientMetrics, type ClientStatus, type Reason } from '../../lib/coachMetrics';
 
@@ -97,6 +98,8 @@ export function CoachDashboard() {
           ))}
         </div>
       </div>
+
+      {rows.length > 0 && <CoachInsights clients={rows.map(r => ({ client_id: r.client_id, client_name: r.client_name, status: r.status }))} />}
 
       {rows.length === 0 ? (
         <div className="bg-[#1C1C1E] rounded-2xl p-5 text-sm text-[#8E8E93]">No clients yet. Create an invite link below and send it to your first client.</div>

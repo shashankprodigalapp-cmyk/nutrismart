@@ -38,3 +38,22 @@ Seed, link, scorecard (79/79) and cleanup pass on a clean Postgres 16 test datab
 - `05_test_mode_on.sql` switches every 2.0 feature on in one go (remembering what was on); `06_test_mode_off.sql` restores exactly that. Run in Supabase SQL Editor.
 - Add `TEST_MODE` = `on` in Cloudflare → Settings → Variables → **Preview only** to switch off the "too many tries" limiter while testing. Delete it afterwards. Never add it to Production.
 - Kept on purpose, even in test: login, role checks and data privacy rules. Removing those would make the test results meaningless and expose real users' data in the shared database.
+
+## End-to-end tests (automatic, in GitHub)
+`e2e/v2/platform.spec.ts` makes its own three test accounts (client, coach, admin; emails `e2e-...@sim.nutrismart.invalid`), then, against the real preview site and database:
+- client logs meals, a check-in and a flexible meal; stored totals are checked against the arithmetic; another person's data cannot be read or written;
+- coach sees the client's numbers, loses all access when the client stops sharing, snoozes an alert, sends a nudge (links refused), opens the weekly review;
+- admin loads every section, flips a feature switch (audited, then restored), and the chart numbers are checked;
+- a real browser logs in as each of the three and checks the Today, Coach (with charts) and Admin (every section, Trends) screens;
+- clients cannot use coach/admin endpoints and visitors are refused everywhere.
+It runs automatically after every push to `v2` (GitHub → Actions → "End-to-end tests"). The test accounts are removed by `03_cleanup.sql`.
+
+One-time setup (GitHub repo → Settings → Secrets and variables → Actions):
+1. Variables tab → New repository variable: `V2_PREVIEW_URL` = `https://v2.nutrismart-3bb.pages.dev`
+2. Secrets tab → New repository secret, three times: `SUPABASE_URL` (Supabase → Project Settings → API → Project URL), `SUPABASE_ANON_KEY` (the anon public key), `SUPABASE_SERVICE_ROLE_KEY` (the service_role key, which is secret: never paste it anywhere else).
+Until these are set, the e2e job says "Skipping" and the rest stays green.
+
+## Charts
+- Admin → Platform 2.0 → **Trends**: people active per day, new sign-ups, food logs, check-ins, how close people are to targets, how often people logged this week, subscription and coach mix. 14/30/90-day switch.
+- Coach dashboard: status donut, share of clients logging each day, group calorie and protein tracking against 100%, and a client-by-day heatmap. Each client's Overview page: calories, protein and energy per day against their targets. Days with nothing logged are gaps, never zeros.
+- Needs migration `038_chart_series.sql` (run in Supabase SQL Editor before the app update).

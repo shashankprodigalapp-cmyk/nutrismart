@@ -7,6 +7,8 @@ import { supabase } from '../../lib/supabase';
 import { Card, Empty, Kpi, fmtNum, STATUS_STYLE } from './adminUi';
 import { funnel, reviewOutcome, cohortRate } from '../../lib/v2Analytics';
 import { healthChecks, overall, type Metrics } from '../../lib/adminHealth';
+import { LineChart, BarChart, Donut, PALETTE } from '../charts/Charts';
+import { shortDay, mean } from '../../lib/chartMath';
 
 async function api<T = Record<string, any>>(path: string, init?: RequestInit): Promise<{ ok: boolean; status: number; j: T & { message?: string; error?: string } }> {
   const { data: s } = await supabase.auth.getSession();
@@ -17,8 +19,8 @@ async function api<T = Record<string, any>>(path: string, init?: RequestInit): P
 }
 const errText = (r: { status: number; j: { message?: string } }) => r.status === 403 ? 'This account is not an admin.' : r.j.message ?? 'Could not load. Try again in a minute.';
 
-type Section = 'overview' | 'usage' | 'ai' | 'coaches' | 'plans' | 'flags' | 'audit';
-const SECTIONS: Array<[Section, string]> = [['overview', 'Overview'], ['usage', 'Feature use'], ['ai', 'AI usage'], ['coaches', 'Coaches'], ['plans', 'Plans'], ['flags', 'Feature switches'], ['audit', 'Audit log']];
+type Section = 'overview' | 'trends' | 'usage' | 'ai' | 'coaches' | 'plans' | 'flags' | 'audit';
+const SECTIONS: Array<[Section, string]> = [['overview', 'Overview'], ['trends', 'Trends'], ['usage', 'Feature use'], ['ai', 'AI usage'], ['coaches', 'Coaches'], ['plans', 'Plans'], ['flags', 'Feature switches'], ['audit', 'Audit log']];
 
 function Overview() {
   const [m, setM] = useState<Record<string, any> | null>(null);
@@ -53,6 +55,51 @@ function Overview() {
         <p className="text-sm text-[#C7C7CC] mt-1">Nudges: {fmtNum(m.notifications_7d.sent)} sent, {fmtNum(m.notifications_7d.skipped)} skipped, {fmtNum(m.notifications_7d.failed)} failed, {fmtNum(m.notifications_7d.queued_now)} queued now. {fmtNum(m.notifications_7d.devices)} devices registered.</p>
         {Object.keys(m.notifications_7d.skip_reasons ?? {}).length > 0 && <p className="text-xs text-[#8E8E93] mt-1">Why skipped: {Object.entries(m.notifications_7d.skip_reasons as Record<string, number>).map(([k, v]) => `${k.replace(/_/g, ' ')} ${v}`).join(', ')}</p>}
       </Card>
+    </div>
+  );
+}
+
+function Trends() {
+  const [days, setDays] = useState(30);
+  const [s, setS] = useState<{ series: Array<Record<string, any>>; depth_7d: Array<{ days_logged: number; people: number }> } | null>(null);
+  const [m, setM] = useState<Record<string, any> | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => { setS(null); setErr(null); api(`/api/admin-series?days=${days}`).then(r => (r.ok ? setS(r.j.series as never) : setErr(errText(r)))); }, [days]);
+  useEffect(() => { api('/api/admin-platform').then(r => { if (r.ok) setM(r.j.metrics); }); }, []);
+  if (err) return <p role="alert" className="text-sm text-[#FF6B6B]">{err}</p>;
+  if (!s) return <Empty>Loading…</Empty>;
+  const rows = s.series; const labels = rows.map(r => shortDay(String(r.day)));
+  const col = (k: string) => rows.map(r => (r[k] == null ? null : Number(r[k])));
+  const last7 = rows.slice(-7);
+  const avgActive = mean(last7.map(r => Number(r.active_people)));
+  const subs = Object.entries((m?.subscriptions?.by_status ?? {}) as Record<string, number>);
+  const coachMix = m ? [['Active', m.coaches.active], ['Waiting', m.coaches.pending], ['Suspended', m.coaches.suspended]] as Array<[string, number]> : [];
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-1.5">{[14, 30, 90].map(n => <button key={n} onClick={() => setDays(n)} aria-pressed={days === n} className={`px-3 min-h-[36px] rounded-full text-xs ${days === n ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>Last {n} days</button>)}</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Kpi label="Active people today" value={fmtNum(Number(rows[rows.length - 1]?.active_people ?? 0))} sub="logged food or checked in" />
+        <Kpi label="Active per day (last 7)" value={avgActive == null ? 'n/a' : avgActive.toFixed(1)} sub="average" />
+        <Kpi label="New people" value={fmtNum(rows.reduce((a, r) => a + Number(r.new_users), 0))} sub={`in ${s.series.length} days`} />
+        <Kpi label="Food logs" value={fmtNum(rows.reduce((a, r) => a + Number(r.food_logs), 0))} sub={`in ${s.series.length} days`} />
+      </div>
+      <Card title="People active each day" hint="Different people who logged food or a check-in, and new sign-ups.">
+        <LineChart label="People active and new sign-ups per day" labels={labels} series={[{ name: 'Active people', values: col('active_people') }, { name: 'New people', values: col('new_users'), dashed: true }]} />
+      </Card>
+      <div className="grid md:grid-cols-2 gap-4">
+        <Card title="Food logs per day"><BarChart label="Food logs per day" labels={labels} values={col('food_logs')} highlightLast /></Card>
+        <Card title="Check-ins per day"><BarChart label="Check-ins per day" labels={labels} values={col('checkins')} color="#64D2FF" highlightLast /></Card>
+      </div>
+      <Card title="How close people are to their targets" hint="Average of each day's score, 100 = right on target. Days with nothing logged are left out, not counted as zero.">
+        <LineChart label="Average calorie and protein adherence per day" labels={labels} yMax={100} series={[{ name: 'Calories', values: col('avg_calorie_adherence') }, { name: 'Protein', values: col('avg_protein_adherence'), color: '#FFB340' }]} />
+      </Card>
+      <Card title="How often people logged this week" hint="Number of people by days logged in the last 7 days.">
+        <BarChart label="People by number of days logged in the last 7 days" labels={s.depth_7d.map(d => `${d.days_logged}d`)} values={s.depth_7d.map(d => d.people)} color="#BF5AF2" />
+      </Card>
+      {m && <div className="grid md:grid-cols-2 gap-4">
+        <Card title="Subscriptions by status"><Donut label="Subscriptions by status" center={fmtNum(subs.reduce((a, [, v]) => a + v, 0))} sub="total" slices={subs.map(([k, v], i) => ({ label: k, value: v, color: PALETTE[i % PALETTE.length] }))} /></Card>
+        <Card title="Coaches by status"><Donut label="Coaches by status" center={fmtNum(coachMix.reduce((a, [, v]) => a + v, 0))} sub="coaches" slices={coachMix.map(([k, v], i) => ({ label: k, value: v, color: [PALETTE[0], PALETTE[2], PALETTE[4]][i] }))} /></Card>
+      </div>}
     </div>
   );
 }
@@ -259,6 +306,7 @@ export function AdminPlatform() {
         <button key={k} role="tab" aria-selected={s === k} onClick={() => setS(k)} className={`px-3 min-h-[40px] rounded-full text-sm ${s === k ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{l}</button>
       ))}</div>
       {s === 'overview' && <Overview />}
+      {s === 'trends' && <Trends />}
       {s === 'usage' && <FeatureUse />}
       {s === 'ai' && <AiUsage />}
       {s === 'coaches' && <Coaches />}
