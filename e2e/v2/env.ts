@@ -39,6 +39,9 @@ export async function api(path: string, init: { method?: string; body?: unknown;
 }
 
 async function findUser(email: string): Promise<string | null> {
+  // Fastest and most reliable: the app's own users table (filled for every sign-up) holds the same id.
+  const q = await rest(`users?email=eq.${encodeURIComponent(email)}&select=id`);
+  if (q.status === 200 && Array.isArray(q.data) && q.data[0]?.id) return q.data[0].id;
   // The server may cap the page size, so keep reading pages until one comes back empty.
   for (let page = 1; page <= 50; page++) {
     const res = await fetch(`${SB}/auth/v1/admin/users?page=${page}&per_page=200`, { headers: svcHeaders });
