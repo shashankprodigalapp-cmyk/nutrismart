@@ -39,12 +39,14 @@ export async function api(path: string, init: { method?: string; body?: unknown;
 }
 
 async function findUser(email: string): Promise<string | null> {
-  for (let page = 1; page <= 10; page++) {
-    const res = await fetch(`${SB}/auth/v1/admin/users?page=${page}&per_page=1000`, { headers: svcHeaders });
+  // The server may cap the page size, so keep reading pages until one comes back empty.
+  for (let page = 1; page <= 50; page++) {
+    const res = await fetch(`${SB}/auth/v1/admin/users?page=${page}&per_page=200`, { headers: svcHeaders });
     const j: Json = await res.json().catch(() => ({}));
-    const hit = (j.users ?? []).find((u: Json) => String(u.email).toLowerCase() === email);
+    const users: Json[] = j.users ?? [];
+    const hit = users.find(u => String(u.email).toLowerCase() === email);
     if (hit) return hit.id;
-    if (!j.users || j.users.length < 1000) return null;
+    if (users.length === 0) return null;
   }
   return null;
 }

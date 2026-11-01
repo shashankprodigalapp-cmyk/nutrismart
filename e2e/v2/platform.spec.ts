@@ -145,8 +145,8 @@ test.describe('Screens in a real browser', () => {
   const login = async (page: any, email: string) => {
     await page.goto('/login');
     await page.getByPlaceholder('Email address').fill(email);
-    await page.getByPlaceholder('Password (min 8 chars)').fill(PASSWORD);
-    await page.getByRole('button', { name: 'Sign In' }).click();
+    await page.getByPlaceholder('Password', { exact: true }).fill(PASSWORD);
+    await page.locator('form button[type="submit"]').click();
     await page.waitForURL(/\/app\//, { timeout: 20_000 });
   };
   test('client sees Today and the logged calories', async ({ page }) => {
