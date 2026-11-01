@@ -3,7 +3,6 @@
 import { test, expect } from '@playwright/test';
 import { configured, api, rest, ensureUser, signIn, istToday, PASSWORD } from './env';
 
-test.describe.configure({ mode: 'serial' });
 test.skip(!configured, 'Set BASE_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and SUPABASE_ANON_KEY (see docs/SIMULATION.md)');
 
 let client: { id: string; email: string }, coach: { id: string; email: string }, adminU: { id: string; email: string };
@@ -27,6 +26,7 @@ test.beforeAll(async () => {
 });
 
 test.describe('Client: logging and daily modules', () => {
+  test.describe.configure({ mode: 'serial' });
   test('log three meals; stored daily totals match the arithmetic', async () => {
     const rows = [['breakfast', 'Test poha', 300, 8, 50, 8], ['lunch', 'Test dal rice', 600, 22, 90, 14], ['dinner', 'Test roti sabzi', 500, 16, 70, 12]].map(([meal, name, cal, p, c, f]) => ({
       user_id: client.id, log_date: today, meal, food_name: name, portion: '1 plate', qty: 1, is_home: true, multiplier: 1, cal, protein: p, carbs: c, fat: f, gl: 10, anomaly: false, food_source: 'master',
@@ -72,6 +72,7 @@ test.describe('Client: logging and daily modules', () => {
 });
 
 test.describe('Coach: dashboard, privacy and actions', () => {
+  test.describe.configure({ mode: 'serial' });
   test('dashboard shows the client with the numbers the client logged', async () => {
     const r = await rest('rpc/coach_dashboard', { method: 'POST', token: kt, body: { p_days: 7 } });
     const row = (r.data as any[]).find(x => x.client_id === client.id);
@@ -118,6 +119,7 @@ test.describe('Coach: dashboard, privacy and actions', () => {
 });
 
 test.describe('Admin: every section and the switches', () => {
+  test.describe.configure({ mode: 'serial' });
   test('metrics, analytics, plans, coaches and audit load with sensible numbers', async () => {
     const p = await api('/api/admin-platform', { token: at }); expect(p.status).toBe(200); expect(p.j.metrics.users.total).toBeGreaterThanOrEqual(3);
     expect((await api('/api/admin-v2-analytics', { token: at })).status).toBe(200);
@@ -155,6 +157,7 @@ test.describe('Screens in a real browser', () => {
   };
   test('client sees Today and the logged calories', async ({ page }) => {
     await login(page, client.email);
+    await page.goto('/app/today'); // sign-in lands on the Log tab
     await expect(page.getByText('Calories today')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('body')).toContainText('1400');
     await page.goto('/app/insights'); await expect(page.locator('body')).not.toContainText('Something went wrong');
