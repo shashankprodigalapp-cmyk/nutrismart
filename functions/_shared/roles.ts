@@ -38,6 +38,8 @@ export async function requireRole(
 
 /** Per-person limit in a short window. Returns a 429 response when over, otherwise null. Fails open if the counter is unavailable. */
 export async function throttle(env: Env, userId: string, bucket: string, windowSecs: number, max: number): Promise<Response | null> {
+  // TEST_MODE=on (set only in the Cloudflare Preview environment) turns the limiter off while testing. Never set it in Production.
+  if ((env as unknown as Record<string, string | undefined>).TEST_MODE === 'on') return null;
   try {
     const { data, error } = await getSupabaseAdmin(env).rpc('v2_hit', { p_user: userId, p_bucket: bucket, p_window_secs: windowSecs, p_max: max });
     if (error || !data) return null;

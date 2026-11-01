@@ -44,7 +44,11 @@ jobs:
       PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
-      - run: scripts/db-test.sh
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install
+      - name: Everything, including the 100-person simulation
+        run: scripts/test-all.sh
 
   deployed-smoke:
     name: Preview site smoke test
