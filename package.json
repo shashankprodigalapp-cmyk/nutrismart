@@ -12,7 +12,9 @@
     "test:integration": "vitest run --config tests-integration/vitest.integration.config.ts",
     "test:e2e": "playwright test",
     "cron:smoke-test": "node scripts/cron-smoke-test.mjs",
-    "lint": "eslint src --ext ts,tsx"
+    "lint": "eslint src --ext ts,tsx",
+    "test:all": "bash scripts/run-everything.sh",
+    "test:all:live": "bash scripts/run-everything.sh --live"
   },
   "dependencies": {
     "@block65/webcrypto-web-push": "^2.0.0",

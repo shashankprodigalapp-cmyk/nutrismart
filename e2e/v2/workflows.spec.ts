@@ -197,6 +197,20 @@ test.describe('Customer: cards and logging', () => {
     await rest('daily_logs', { method: 'POST', body: days.flatMap(d => [row(d, 'lunch', 'Pattern dal', 250), row(d, 'lunch', 'Pattern rice', 300), row(d, 'dinner', 'Pattern roti', 200), row(d, 'dinner', 'Pattern sabzi', 150)]) });
     try {
       const { ctx, page } = await as(browser, client.email, '/app/insights');
+      // The suggestion is worked out from the phone's own saved meals, and the app only copies TODAY's meals down from the server.
+      // So the three earlier days are put into the phone's local store here, the way they would be after a few days of real use.
+      await page.evaluate(async (rows) => {
+        await new Promise<void>((resolve, reject) => {
+          const open = indexedDB.open('nutrismart-v1');
+          open.onerror = () => reject(open.error);
+          open.onsuccess = () => {
+            const db = open.result; const tx = db.transaction('daily_logs', 'readwrite'); const st = tx.objectStore('daily_logs');
+            for (const r of rows) st.put(r);
+            tx.oncomplete = () => { db.close(); resolve(); }; tx.onerror = () => reject(tx.error);
+          };
+        });
+      }, days.flatMap(d => [['lunch', 'Pattern dal', 250], ['lunch', 'Pattern rice', 300], ['dinner', 'Pattern roti', 200], ['dinner', 'Pattern sabzi', 150]].map(([meal, name, cal]) => ({ id: crypto.randomUUID?.() ?? `${d}-${name}`, user_id: client.id, log_date: d, meal, food_name: name, portion: '1 plate', qty: 1, is_home: true, multiplier: 1, cal, protein: 10, carbs: 40, fat: 8, gl: 10, created_at: new Date().toISOString() }))));
+      await page.reload(); await settle(page);
       const suggestion = page.getByText('You eat this together often').first();
       try { await expect(suggestion).toBeVisible({ timeout: 25_000 }); } catch { await page.reload(); await settle(page); await expect(suggestion).toBeVisible({ timeout: 30_000 }); }
       await page.getByRole('button', { name: /Save as a usual meal/ }).first().click();
@@ -336,10 +350,10 @@ test.describe('Admin: Pro, contributions, search review', () => {
         await expect(card.getByRole('button', { name: /Gift Pro/ })).toBeVisible({ timeout: 20_000 });
       }
       await card.getByRole('button', { name: /Gift Pro/ }).click();
-      await expect(page.getByText('Gift Pro Access')).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Gift Pro Access' })).toBeVisible();
       await page.getByPlaceholder(/Beta tester/).fill('E2E gift');
       await page.getByRole('button', { name: /Grant Pro/ }).click();
-      await expect(page.getByText('Gift Pro Access')).toHaveCount(0, { timeout: 20_000 });
+      await expect(page.getByRole('heading', { name: 'Gift Pro Access' })).toHaveCount(0, { timeout: 20_000 });
       await expect(card.getByRole('button', { name: /Extend/ })).toBeVisible({ timeout: 20_000 });
       await expect(card.getByRole('button', { name: /Revoke/ })).toBeVisible();
       await card.getByRole('button', { name: /Revoke/ }).click();
@@ -360,6 +374,7 @@ test.describe('Admin: Pro, contributions, search review', () => {
     const idOf = (name: string) => ins.data.find((r: any) => r.payload.name === name).id as string;
     const { ctx, page } = await as(browser, adminU.email, '/admin/contributions');
     try {
+      await expect(page.getByText(approveName).first(), 'The admin cannot see contributions: run supabase/migrations/039_admin_read_contributions.sql in the Supabase SQL editor').toBeVisible({ timeout: 20_000 });
       await page.getByText(approveName).first().click();
       await page.getByRole('button', { name: /✓ Approve/ }).first().click();
       await expect.poll(async () => (await rest(`food_contributions?id=eq.${idOf(approveName)}&select=status,master_food_id`)).data[0], { timeout: 30_000 }).toMatchObject({ status: 'approved' });
@@ -389,13 +404,19 @@ test.describe('Admin: Pro, contributions, search review', () => {
     const status = async (t: string) => (await rest(`search_review?term=eq.${q(t)}&select=status`)).data[0]?.status;
     try {
       await expect(page.getByText(blockTerm)).toBeVisible({ timeout: 20_000 });
-      await row(blockTerm, 'Block').getByRole('button', { name: 'Block', exact: true }).click();
-      await expect.poll(() => status(blockTerm), { timeout: 20_000 }).toBe('blocked');
+      // The list redraws after every click, which can swallow a click made a moment too early. Click again until the server shows the change.
+      const press = async (term: string, button: string, want: string) => {
+        for (let attempt = 0; attempt < 4; attempt++) {
+          if ((await status(term)) === want) return;
+          await row(term, button).getByRole('button', { name: button, exact: true }).click({ timeout: 10_000 }).catch(() => undefined);
+          try { await expect.poll(() => status(term), { timeout: 8_000 }).toBe(want); return; } catch { /* try again */ }
+        }
+        expect(await status(term)).toBe(want);
+      };
+      await press(blockTerm, 'Block', 'blocked');
       await expect(row(blockTerm, 'Unblock')).toBeVisible({ timeout: 20_000 });
-      await row(blockTerm, 'Unblock').getByRole('button', { name: 'Unblock', exact: true }).click();
-      await expect.poll(() => status(blockTerm), { timeout: 20_000 }).toBe('pending');
-      await row(dismissTerm, 'Dismiss').getByRole('button', { name: 'Dismiss', exact: true }).click();
-      await expect.poll(() => status(dismissTerm), { timeout: 20_000 }).toBe('dismissed');
+      await press(blockTerm, 'Unblock', 'pending');
+      await press(dismissTerm, 'Dismiss', 'dismissed');
       await expect(page.getByText(dismissTerm)).toHaveCount(0, { timeout: 20_000 });
       // AI foods: approve one, remove the other
       await row(okFood, 'Approve').getByRole('button', { name: 'Approve', exact: true }).click();

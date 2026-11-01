@@ -109,7 +109,7 @@ function NutritionGoalsModal({
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60" />
       <div
-        className="relative w-full max-w-md bg-[#1C1C1E] border border-white/[0.08] rounded-t-3xl md:rounded-3xl px-5 pt-5 pb-8"
+        className="relative w-full max-w-md max-h-[90dvh] overflow-y-auto bg-[#1C1C1E] border border-white/[0.08] rounded-t-3xl md:rounded-3xl px-5 pt-5 pb-8"
         onClick={e => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
@@ -259,7 +259,7 @@ function NotificationsModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60" />
       <div
-        className="relative w-full max-w-md bg-[#1C1C1E] border border-white/[0.08] rounded-t-3xl md:rounded-3xl px-5 pt-5 pb-8"
+        className="relative w-full max-w-md max-h-[90dvh] overflow-y-auto bg-[#1C1C1E] border border-white/[0.08] rounded-t-3xl md:rounded-3xl px-5 pt-5 pb-8"
         onClick={e => e.stopPropagation()}
       >
         <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-4" />
