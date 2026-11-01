@@ -16,6 +16,8 @@ test.beforeAll(async () => {
   // Clean start: remove anything the previous run left for the test client, then link and promote.
   for (const t of ['daily_logs', 'daily_checkins', 'flexible_meals', 'nudges']) await rest(`${t}?user_id=eq.${client.id}`, { method: 'DELETE' });
   await rest(`coach_client_relationships?coach_id=eq.${coach.id}`, { method: 'DELETE' });
+  // Without a kitchen profile the app sends a new person to the onboarding questions, so give each test account one.
+  for (const u of [client, coach, adminU]) await rest('kitchen_profiles?on_conflict=user_id', { method: 'POST', body: { user_id: u.id }, prefer: 'resolution=ignore-duplicates' });
   await rest('admin_users', { method: 'POST', body: { user_id: adminU.id }, prefer: 'resolution=ignore-duplicates' });
   await rest('coach_profiles', { method: 'POST', body: { user_id: coach.id, display_name: 'E2E coach', credentials: 'test', status: 'active', approved_at: new Date().toISOString() }, prefer: 'resolution=merge-duplicates' });
   await rest('coach_client_relationships', { method: 'POST', body: { coach_id: coach.id, client_id: client.id, status: 'active', share_scope: { food: true, energy: true, water: true, weight: true, mood: true }, invited_at: new Date().toISOString(), accepted_at: new Date().toISOString() } });
