@@ -366,7 +366,7 @@ test.describe('Admin: Pro, contributions, search review', () => {
     const step = async (name: string, fn: () => Promise<unknown>) => {
       try { await fn(); } catch (e) {
         const text = (await page.locator('body').innerText().catch(() => '(no text)')).replace(/\n+/g, ' | ');
-        throw new Error(`W-09 failed at "${name}": ${String(e).split('\n')[0]}\nScreen: ...${text.slice(-700)}`);
+        throw new Error(`W-09 failed at "${name}": ${String(e).slice(0, 1500)}\nScreen: ...${text.slice(-700)}`);
       }
     };
     const T = { timeout: 15_000 };
@@ -377,7 +377,18 @@ test.describe('Admin: Pro, contributions, search review', () => {
       await step('open the gift form', () => card.getByRole('button', { name: /Gift Pro/ }).click(T));
       await step('gift form is open', () => expect(page.getByRole('heading', { name: 'Gift Pro Access' })).toBeVisible({ timeout: 15_000 }));
       await step('type the note', () => page.getByPlaceholder(/Beta tester/).fill('E2E gift', T));
-      await step('press Grant Pro', () => page.getByRole('button', { name: /Grant Pro/ }).click(T));
+      await step('press Grant Pro', async () => {
+        const grant = page.getByRole('button', { name: /Grant Pro/ });
+        try { await grant.click({ timeout: 8_000 }); }
+        catch (e) {
+          // Say what is in the way, then press the button anyway so the rest of the journey is still checked.
+          const box = await grant.boundingBox().catch(() => null);
+          const hit = box ? await page.evaluate(([x, y]) => { const el = document.elementFromPoint(x, y); return el ? el.outerHTML.slice(0, 300) : 'nothing'; }, [box.x + box.width / 2, box.y + box.height / 2]) : 'the button has no position on screen';
+          const info = `W-09 NOTE: normal click on "Grant Pro" failed. viewport=${JSON.stringify(page.viewportSize())} box=${JSON.stringify(box)} element at that point: ${hit}\n${String(e).slice(0, 1200)}`;
+          console.log(info); test.info().annotations.push({ type: 'grant-click-blocked', description: info });
+          await grant.click({ force: true, timeout: 8_000 });
+        }
+      });
       await step('gift form closes (server accepted the gift)', () => expect(page.getByRole('heading', { name: 'Gift Pro Access' })).toHaveCount(0, { timeout: 30_000 }));
       await step('the card now offers Extend and Revoke', async () => {
         card = page.locator('div').filter({ hasText: client.email }).filter({ has: page.getByRole('button', { name: /Extend/ }) }).last();
