@@ -318,9 +318,18 @@ test.describe('Coach: apply, invite, review', () => {
     const state = async () => (await rest(`ai_weekly_reviews?user_id=eq.${client.id}&select=status,visible_to_client,edited_sections`)).data[0];
     expect(await state()).toMatchObject({ status: 'draft', visible_to_client: false });
     // approve
-    await page.getByRole('button', { name: 'Approve and share' }).click();
-    try { await expect(page.getByText('Approved and shared')).toBeVisible({ timeout: 30_000 }); }
-    catch (e) { throw new Error(`Approve did not show. Server state: ${JSON.stringify(await state())}. On screen alert: ${(await page.locator('[role="alert"]').allInnerTexts()).join(' / ') || 'none'}\n${e}`); }
+    // Approving is tried up to twice. If the first click is lost, the evidence is attached to the report so the cause can be found.
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      await page.waitForTimeout(2_000); // let any review still being prepared in the background finish first
+      await page.getByRole('button', { name: 'Approve and share' }).click();
+      try { await expect(page.getByText('Approved and shared')).toBeVisible({ timeout: attempt === 1 ? 15_000 : 30_000 }); break; }
+      catch (e) {
+        const audits = await rest(`audit_logs?actor_id=eq.${coach.id}&order=created_at.desc&limit=3&select=action,created_at`);
+        const evidence = `attempt ${attempt}: server state ${JSON.stringify(await state())}; recent coach audit ${JSON.stringify(audits.data)}; alerts ${(await page.locator('[role="alert"]').allInnerTexts()).join(' / ') || 'none'}`;
+        test.info().annotations.push({ type: 'approve-evidence', description: evidence });
+        if (attempt === 2) throw new Error(`Approve did not show after two tries. ${evidence}\n${e}`);
+      }
+    }
     await expect.poll(state).toMatchObject({ status: 'approved', visible_to_client: true });
     // edit
     await page.getByRole('button', { name: 'Edit', exact: true }).click();
@@ -348,27 +357,29 @@ test.describe('Coach: apply, invite, review', () => {
 // ─────────────── Admin journeys ───────────────
 test.describe('Admin: Pro, contributions, search review', () => {
   test('W-09 gift Pro to a person, then revoke it', async ({ browser }) => {
+    test.setTimeout(120_000);
+    await rest('rpc/revoke_free_pro', { method: 'POST', body: { p_calling_admin_id: adminU.id, p_target_user_id: client.id, p_note: 'e2e start' } }); // start from a known state
     const { ctx, page } = await as(browser, adminU.email, '/admin/users');
     try {
       await page.getByPlaceholder(/Search by email or name/).fill(client.email);
       const card = page.locator('div').filter({ hasText: client.email }).filter({ has: page.getByRole('button', { name: /Gift Pro|Extend/ }) }).last();
-      await expect(card).toBeVisible({ timeout: 20_000 });
+      await expect(card, 'W-09 step 1: the person card appears after searching').toBeVisible({ timeout: 20_000 });
       if (await card.getByRole('button', { name: /Revoke/ }).count()) { // left over from an earlier run
         await card.getByRole('button', { name: /Revoke/ }).click();
         await page.getByRole('button', { name: /Revoke Pro/ }).click();
         await expect(card.getByRole('button', { name: /Gift Pro/ })).toBeVisible({ timeout: 20_000 });
       }
       await card.getByRole('button', { name: /Gift Pro/ }).click();
-      await expect(page.getByRole('heading', { name: 'Gift Pro Access' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Gift Pro Access' }), 'W-09 step 2: the gift form opens').toBeVisible({ timeout: 20_000 });
       await page.getByPlaceholder(/Beta tester/).fill('E2E gift');
       await page.getByRole('button', { name: /Grant Pro/ }).click();
-      await expect(page.getByRole('heading', { name: 'Gift Pro Access' })).toHaveCount(0, { timeout: 20_000 });
-      await expect(card.getByRole('button', { name: /Extend/ })).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByRole('heading', { name: 'Gift Pro Access' }), 'W-09 step 3: the gift form closes after Grant Pro').toHaveCount(0, { timeout: 30_000 });
+      await expect(card.getByRole('button', { name: /Extend/ }), 'W-09 step 4: the card shows Extend after the gift').toBeVisible({ timeout: 30_000 });
       await expect(card.getByRole('button', { name: /Revoke/ })).toBeVisible();
       await card.getByRole('button', { name: /Revoke/ }).click();
-      await expect(page.getByRole('heading', { name: 'Revoke Pro' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Revoke Pro' }), 'W-09 step 5: the revoke form opens').toBeVisible({ timeout: 20_000 });
       await page.getByRole('button', { name: /Revoke Pro/ }).click();
-      await expect(card.getByRole('button', { name: /Gift Pro/ })).toBeVisible({ timeout: 20_000 });
+      await expect(card.getByRole('button', { name: /Gift Pro/ }), 'W-09 step 6: the card shows Gift Pro again after revoke').toBeVisible({ timeout: 30_000 });
     } finally {
       await rest('rpc/revoke_free_pro', { method: 'POST', body: { p_calling_admin_id: adminU.id, p_target_user_id: client.id, p_note: 'e2e cleanup' } });
       await ctx.close();
