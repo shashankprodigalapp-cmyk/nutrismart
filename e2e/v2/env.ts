@@ -23,6 +23,7 @@ export async function rest(path: string, init: { method?: string; body?: unknown
     method: init.method ?? 'GET',
     headers: { apikey: init.token ? ANON : SERVICE, Authorization: `Bearer ${init.token ?? SERVICE}`, 'Content-Type': 'application/json', ...(init.prefer ? { Prefer: init.prefer } : {}) },
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
+    signal: AbortSignal.timeout(25_000), // a stuck database call must fail loudly, not freeze the test until its time runs out
   });
   const text = await res.text();
   let data: any = null; try { data = text ? JSON.parse(text) : null; } catch { data = text; }

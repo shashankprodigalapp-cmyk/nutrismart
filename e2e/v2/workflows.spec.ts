@@ -357,32 +357,42 @@ test.describe('Coach: apply, invite, review', () => {
 // ─────────────── Admin journeys ───────────────
 test.describe('Admin: Pro, contributions, search review', () => {
   test('W-09 gift Pro to a person, then revoke it', async ({ browser }) => {
-    test.setTimeout(120_000);
-    await rest('rpc/revoke_free_pro', { method: 'POST', body: { p_calling_admin_id: adminU.id, p_target_user_id: client.id, p_note: 'e2e start' } }); // start from a known state
+    test.setTimeout(150_000);
+    const reset = (note: string) => rest('rpc/revoke_free_pro', { method: 'POST', body: { p_calling_admin_id: adminU.id, p_target_user_id: client.id, p_note: note } });
+    const r0 = await reset('e2e start'); // start from a known state
+    expect(r0.status, `W-09 setup: revoke_free_pro answered ${JSON.stringify(r0.data)}`).toBeLessThan(300);
     const { ctx, page } = await as(browser, adminU.email, '/admin/users');
-    try {
-      await page.getByPlaceholder(/Search by email or name/).fill(client.email);
-      const card = page.locator('div').filter({ hasText: client.email }).filter({ has: page.getByRole('button', { name: /Gift Pro|Extend/ }) }).last();
-      await expect(card, 'W-09 step 1: the person card appears after searching').toBeVisible({ timeout: 20_000 });
-      if (await card.getByRole('button', { name: /Revoke/ }).count()) { // left over from an earlier run
-        await card.getByRole('button', { name: /Revoke/ }).click();
-        await page.getByRole('button', { name: /Revoke Pro/ }).click();
-        await expect(card.getByRole('button', { name: /Gift Pro/ })).toBeVisible({ timeout: 20_000 });
+    // Every action has its own short limit and a name, so a failure says exactly which step and what the screen showed.
+    const step = async (name: string, fn: () => Promise<unknown>) => {
+      try { await fn(); } catch (e) {
+        const text = (await page.locator('body').innerText().catch(() => '(no text)')).replace(/\n+/g, ' | ');
+        throw new Error(`W-09 failed at "${name}": ${String(e).split('\n')[0]}\nScreen: ...${text.slice(-700)}`);
       }
-      await card.getByRole('button', { name: /Gift Pro/ }).click();
-      await expect(page.getByRole('heading', { name: 'Gift Pro Access' }), 'W-09 step 2: the gift form opens').toBeVisible({ timeout: 20_000 });
-      await page.getByPlaceholder(/Beta tester/).fill('E2E gift');
-      await page.getByRole('button', { name: /Grant Pro/ }).click();
-      await expect(page.getByRole('heading', { name: 'Gift Pro Access' }), 'W-09 step 3: the gift form closes after Grant Pro').toHaveCount(0, { timeout: 30_000 });
-      await expect(card.getByRole('button', { name: /Extend/ }), 'W-09 step 4: the card shows Extend after the gift').toBeVisible({ timeout: 30_000 });
-      await expect(card.getByRole('button', { name: /Revoke/ })).toBeVisible();
-      await card.getByRole('button', { name: /Revoke/ }).click();
-      await expect(page.getByRole('heading', { name: 'Revoke Pro' }), 'W-09 step 5: the revoke form opens').toBeVisible({ timeout: 20_000 });
-      await page.getByRole('button', { name: /Revoke Pro/ }).click();
-      await expect(card.getByRole('button', { name: /Gift Pro/ }), 'W-09 step 6: the card shows Gift Pro again after revoke').toBeVisible({ timeout: 30_000 });
+    };
+    const T = { timeout: 15_000 };
+    let card = page.locator('div').filter({ hasText: client.email }).filter({ has: page.getByRole('button', { name: /Gift Pro|Extend/ }) }).last();
+    try {
+      await step('search for the person', () => page.getByPlaceholder(/Search by email or name/).fill(client.email, T));
+      await step('the card appears', () => expect(card).toBeVisible({ timeout: 20_000 }));
+      await step('open the gift form', () => card.getByRole('button', { name: /Gift Pro/ }).click(T));
+      await step('gift form is open', () => expect(page.getByRole('heading', { name: 'Gift Pro Access' })).toBeVisible({ timeout: 15_000 }));
+      await step('type the note', () => page.getByPlaceholder(/Beta tester/).fill('E2E gift', T));
+      await step('press Grant Pro', () => page.getByRole('button', { name: /Grant Pro/ }).click(T));
+      await step('gift form closes (server accepted the gift)', () => expect(page.getByRole('heading', { name: 'Gift Pro Access' })).toHaveCount(0, { timeout: 30_000 }));
+      await step('the card now offers Extend and Revoke', async () => {
+        card = page.locator('div').filter({ hasText: client.email }).filter({ has: page.getByRole('button', { name: /Extend/ }) }).last();
+        await expect(card.getByRole('button', { name: /Revoke/ })).toBeVisible({ timeout: 30_000 });
+      });
+      await step('open the revoke form', () => card.getByRole('button', { name: /Revoke/ }).click(T));
+      await step('revoke form is open', () => expect(page.getByRole('heading', { name: 'Revoke Pro' })).toBeVisible({ timeout: 15_000 }));
+      await step('press Revoke Pro', () => page.getByRole('button', { name: /Revoke Pro/ }).click(T));
+      await step('the card offers Gift Pro again', async () => {
+        card = page.locator('div').filter({ hasText: client.email }).filter({ has: page.getByRole('button', { name: /Gift Pro/ }) }).last();
+        await expect(card).toBeVisible({ timeout: 30_000 });
+      });
     } finally {
-      await rest('rpc/revoke_free_pro', { method: 'POST', body: { p_calling_admin_id: adminU.id, p_target_user_id: client.id, p_note: 'e2e cleanup' } });
-      await ctx.close();
+      await reset('e2e cleanup').catch(() => undefined);
+      await ctx.close().catch(() => undefined);
     }
   });
 
