@@ -244,6 +244,7 @@ test.describe('Coach: apply, invite, review', () => {
   test('W-06 apply to be a coach, admin approves, the new coach gets the coach area', async ({ browser }) => {
     test.skip(!flags.v2_coach || !flags.v2_coach_signup, 'coach sign-up switches are off');
     await rest(`coach_profiles?user_id=eq.${applicant.id}`, { method: 'DELETE' });
+    await rest(`v2_rate_limits?user_id=eq.${applicant.id}`, { method: 'DELETE' }); // a retry must not inherit the first try's count
     const a = await as(browser, applicant.email, null);
     await a.page.goto('/coach'); await settle(a.page);
     await expect(a.page.getByText('Apply to be a coach')).toBeVisible({ timeout: 20_000 });

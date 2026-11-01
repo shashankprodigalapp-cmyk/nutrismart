@@ -68,6 +68,9 @@ export async function ensureUser(role: string): Promise<{ id: string; email: str
     const res = await fetch(`${SB}/auth/v1/admin/users/${id}`, { method: 'PUT', headers: svcHeaders, body: JSON.stringify({ password: PASSWORD, email_confirm: true }) });
     if (!res.ok) throw new Error(`could not reset ${email}: ${await res.text()}`);
   }
+  // The server limits how often one person can do some things (for example 3 coach applications an hour). The same test
+  // accounts are reused every run, so their counters are cleared here; otherwise a second run within the hour fails with "too many tries".
+  await fetch(`${SB}/rest/v1/v2_rate_limits?user_id=eq.${id}`, { method: 'DELETE', headers: svcHeaders }).catch(() => undefined);
   return { id: id!, email };
 }
 
