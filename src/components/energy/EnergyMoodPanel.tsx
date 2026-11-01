@@ -42,7 +42,8 @@ function DayGraph({ clientId, day }: { clientId?: string; day: string }) {
     (async () => {
       let m = supabase.from('daily_logs').select('created_at, meal, cal').eq('log_date', day);
       let e = supabase.from('energy_logs').select('log_time, level').eq('log_date', day);
-      if (clientId) { m = m.eq('user_id', clientId); e = e.eq('user_id', clientId); }
+      const who = clientId ?? (await supabase.auth.getUser()).data.user?.id;   // never read other people's rows a coach role could see
+      if (who) { m = m.eq('user_id', who); e = e.eq('user_id', who); }
       const [a, b] = await Promise.all([m, e]);
       if (!live) return;
       setD({
@@ -85,7 +86,8 @@ export function EnergyMoodPanel({ clientId, proteinTarget, mode }: { clientId?: 
     let dc = supabase.from('daily_checkins').select('log_date, energy, mood, hunger, sleep, stress').gte('log_date', from);
     let mf = supabase.from('meal_feelings').select('log_date, meal, energy_change, fullness, mood_change').gte('log_date', from);
     let nm = supabase.from('daily_nutrition_metrics').select('day, protein_g, meals, water_glasses').gte('day', from);
-    if (clientId) { dc = dc.eq('user_id', clientId); mf = mf.eq('user_id', clientId); nm = nm.eq('user_id', clientId); }
+    const who = clientId ?? (await supabase.auth.getUser()).data.user?.id;
+    if (who) { dc = dc.eq('user_id', who); mf = mf.eq('user_id', who); nm = nm.eq('user_id', who); }
     const [a, b, c] = await Promise.all([q(dc), q(mf), q(nm)]);
     if (a.error) { setState('error'); return; }
     const byDay = new Map<string, DayRow>();

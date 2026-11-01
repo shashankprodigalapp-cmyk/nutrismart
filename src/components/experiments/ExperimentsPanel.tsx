@@ -33,7 +33,8 @@ export function ExperimentsPanel({ mode, clientId }: { mode: 'self' | 'coach'; c
   const load = useCallback(async () => {
     setState('loading');
     let q = supabase.from('experiments').select('id, template, title, actions, metrics, start_date, duration_days, baseline_days, status, result').order('start_date', { ascending: false }).limit(10);
-    if (clientId) q = q.eq('user_id', clientId);
+    const who = clientId ?? (await supabase.auth.getUser()).data.user?.id;
+    if (who) q = q.eq('user_id', who);
     const { data, error } = await q;
     if (error) { setState('error'); return; }
     const rows = (data ?? []) as unknown as Row[];

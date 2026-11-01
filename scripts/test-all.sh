@@ -23,5 +23,12 @@ $Q -f supabase/sim/06_test_mode_off.sql >/dev/null; after=$(psql -At -d $PGDATAB
 echo "== 7. Cleanup removes everyone =="; $Q -f supabase/sim/03_cleanup.sql >/dev/null
 left=$(psql -At -d $PGDATABASE -c "select count(*) from auth.users where email like '%@sim.nutrismart.invalid'")
 [ "$left" = 0 ] && echo "PASS cleanup" || { echo "FAIL cleanup ($left left)"; fail=1; }
+echo "== 7b. Every button, link and label listed against the browser tests =="; node scripts/ui-inventory.mjs --md docs/UI_COVERAGE.md | tail -4
+echo "== 8. 2.1 simulation: 100 people x 7 days through the intelligence engine, then the database rules =="
+node scripts/sim/sim21.mjs /tmp | grep -E "FAIL|passed" ; [ "${PIPESTATUS[0]}" = 0 ] || fail=1
+$Q -f /tmp/sim21-load.sql >/dev/null 2>&1 || { echo "FAIL could not load simulated 2.1 rows"; fail=1; }
+o21=$(psql -d $PGDATABASE -f scripts/sim/sim21-checks.sql 2>&1); echo "$o21" | grep -cE "PASS" | sed 's/^/2.1 database checks passed: /'
+echo "$o21" | grep -E "FAIL|ERROR" && fail=1
+psql -q -d $PGDATABASE -c "truncate public.users cascade; truncate auth.users cascade" >/dev/null 2>&1
 [ "$fail" = 0 ] && echo "ALL AUTOMATED TESTS PASSED" || echo "SOME TESTS FAILED"
 exit $fail

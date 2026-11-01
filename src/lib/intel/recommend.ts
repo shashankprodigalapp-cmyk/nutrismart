@@ -93,7 +93,7 @@ export function recommend(inp: RecInput): Recommendation[] {
     const days = Math.round((lc.value / 100) * 7);
     out.push({
       rec_type: 'behaviour_nudge', rec_key: 'logging_gap', window_day: wk,
-      reason: 'You logged on only some days this week.',
+      reason: days === 0 ? 'Nothing has been logged in the last 7 days.' : 'You logged on only some days this week.',
       evidence: [`You logged on ${days} of the last 7 days.`, ...(lc.baseline != null ? [`The 7 days before that: ${Math.round((lc.baseline / 100) * 7)} of 7.`] : [])],
       confidence: 'high',
       action: 'Tomorrow, log just one meal. One entry keeps the picture honest.',

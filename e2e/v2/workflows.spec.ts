@@ -513,4 +513,33 @@ test.describe('Account deletion (throwaway account)', () => {
     expect((await api('/api/delete-my-account', { method: 'POST', body: { confirm: 'DELETE' } })).status).toBe(401);
     expect((await rest(`users?id=eq.${client.id}&select=id`)).data.length).toBe(1);
   });
+
+  test('W-15 a coach sees only their own plans, check-in and meal feelings on Today, never a client\'s (the Birthday dinner bug)', async ({ browser }) => {
+    test.skip(!flags.v2_flexible_meals, 'flexible meals switch is off');
+    const day = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    await rest(`flexible_meals?user_id=in.(${client.id},${coach.id})`, { method: 'DELETE' });
+    await rest(`daily_checkins?user_id=in.(${client.id},${coach.id})`, { method: 'DELETE' });
+    await rest('flexible_meals', { method: 'POST', body: { user_id: client.id, planned_for: day, planned_time: '20:00', label: 'Client birthday dinner', reserved_kcal: 900 } });
+    await rest('daily_checkins', { method: 'POST', body: { user_id: client.id, log_date: day, energy: 5 } });
+    // the coach can read the client's plan through the privacy rules (that is the point of coaching) ...
+    expect(((await rest('flexible_meals?select=id', { token: kt })).data as unknown[]).length).toBeGreaterThan(0);
+    // ... but the coach's own Today screen must not show it, and Skipped / Cancel must act on the coach's own plan
+    const { ctx, page } = await as(browser, coach.email);
+    const card = page.locator('[aria-label="Flexible meal"]');
+    await expect(card).toBeVisible({ timeout: 20_000 });
+    await expect(card.getByText('Client birthday dinner')).toHaveCount(0);
+    await expect(card.getByRole('button', { name: 'Skipped' })).toHaveCount(0);
+    await card.getByRole('button', { name: 'Plan one' }).click();
+    await card.getByLabel('Meal name').fill('Coach own dinner');
+    await card.getByRole('button', { name: 'Save plan' }).click();
+    await expect(card.getByText('Coach own dinner · 750 kcal · 20:00')).toBeVisible({ timeout: 20_000 });
+    await card.getByRole('button', { name: 'Skipped' }).click();
+    await expect(card.getByText('Coach own dinner: skipped')).toBeVisible({ timeout: 20_000 });
+    await expect.poll(async () => (await rest(`flexible_meals?user_id=eq.${coach.id}&select=status`)).data).toEqual([{ status: 'skipped' }]);
+    expect((await rest(`flexible_meals?user_id=eq.${client.id}&select=status`)).data).toEqual([{ status: 'planned' }]);   // the client's plan is untouched
+    // the coach's check-in card starts empty (the client's answer is not shown as the coach's)
+    const ci = page.getByLabel('Morning check-in');
+    if (await ci.count()) await expect(ci.getByRole('button', { name: 'Save' })).toBeDisabled();
+    await ctx.close();
+  });
 });

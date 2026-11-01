@@ -109,3 +109,11 @@ describe('2.1 smart meal and food history', () => {
     expect(nextMealFor([], 8)).toBe('breakfast'); expect(nextMealFor(['breakfast'], 13)).toBe('lunch'); expect(nextMealFor(['breakfast', 'lunch'], 13)).toBe('snack');
   });
 });
+
+describe('logging gap wording when nothing at all was logged', () => {
+  it('does not claim "some days" for a person with none', () => {
+    const rows: any[] = [];
+    const r = recommend({ features: feats(rows, []), rows, meals: [], targets: TARGETS, today: TODAY }).find(x => x.rec_key === 'logging_gap');
+    if (r) expect(r.reason).toBe('Nothing has been logged in the last 7 days.');
+  });
+});

@@ -38,7 +38,7 @@ export function FlexibleMealCard() {
     const day = today();
     const ws = weekStart();
     const [f, logs, m, p] = await Promise.all([
-      supabase.from('flexible_meals').select('id, planned_for, planned_time, label, reserved_kcal, status, consumed_kcal').eq('planned_for', day).order('created_at'),
+      supabase.from('flexible_meals').select('id, planned_for, planned_time, label, reserved_kcal, status, consumed_kcal').eq('user_id', user.id).eq('planned_for', day).order('created_at'),
       localDb.daily_logs.where('log_date').equals(day).toArray(),
       ws.daysBefore > 0 ? supabase.from('daily_nutrition_metrics').select('calories').eq('user_id', user.id).gte('day', ws.start).lt('day', day) : Promise.resolve({ data: [] as Array<{ calories: number }>, error: null }),
       supabase.from('user_profile').select('diet').eq('user_id', user.id).maybeSingle(),
@@ -72,9 +72,9 @@ export function FlexibleMealCard() {
   };
   const setStatus = async (id: string, status: 'consumed' | 'skipped' | 'cancelled', consumed?: number) => {
     setBusy(true); setError(null);
-    const { error: e } = await supabase.from('flexible_meals').update({ status, consumed_kcal: consumed ?? null, updated_at: new Date().toISOString() }).eq('id', id);
+    const { data, error: e } = await supabase.from('flexible_meals').update({ status, consumed_kcal: consumed ?? null, updated_at: new Date().toISOString() }).eq('id', id).eq('user_id', user!.id).select('id');
     setBusy(false);
-    if (e) { setError('That did not save. Please try again.'); return; }
+    if (e || !data || data.length === 0) { setError('That did not save. Please try again.'); void load(); return; }
     if (status === 'consumed') track('flexible_meal_consumed');
     setEatenFor(null); void load();
   };

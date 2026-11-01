@@ -30,9 +30,11 @@ export function MealFeelingCard() {
 
   useEffect(() => {
     (async () => {
+      const uid = (await supabase.auth.getUser()).data.user?.id;
+      if (!uid) { setState('error'); return; }
       const [a, b] = await Promise.all([
-        supabase.from('daily_logs').select('meal').eq('log_date', day),
-        supabase.from('meal_feelings').select('meal, energy_change, fullness, mood_change').eq('log_date', day),
+        supabase.from('daily_logs').select('meal').eq('user_id', uid).eq('log_date', day),
+        supabase.from('meal_feelings').select('meal, energy_change, fullness, mood_change').eq('user_id', uid).eq('log_date', day),
       ]);
       if (a.error || b.error) { setState('error'); return; }
       const set = new Set((a.data ?? []).map(r => r.meal as Meal));

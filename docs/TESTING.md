@@ -16,3 +16,8 @@
 - Browser: `e2e/v21/intelligence.spec.ts` (runs with `npx playwright test e2e/v2`; skips with a message if migrations 041 to 043 are not applied). It switches the ten 2.1 switches on for the run and restores them.
 - Guard: `E2eSelectors.test.ts` checks every heading and button name the spec uses exists in the app.
 - Stories and phone checks: `docs/TEST_CASES_2_1.md`.
+
+## Press-every-button suite and own-rows rule
+- `e2e/v21/crawler.spec.ts` presses every visible button, tab and in-app link on every customer, coach and admin screen and fails on JS errors, error screens, 5xx, refused API calls, refused saves and stuck loading. Admin pressing is look-only.
+- `src/tests/v2/OwnRowsOnly.test.ts` fails if any customer screen reads or changes a person-owned table without filtering by the signed-in person (the cause of the Birthday dinner Skipped / Cancel bug: coaches can read clients' rows, so unfiltered reads show clients' data).
+- `node scripts/ui-inventory.mjs --md docs/UI_COVERAGE.md` lists every button, link, field and label and whether a browser test names it.

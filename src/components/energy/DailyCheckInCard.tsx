@@ -47,7 +47,9 @@ export function DailyCheckInCard() {
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase.from('daily_checkins').select('*').eq('log_date', day).maybeSingle();
+      const uid = (await supabase.auth.getUser()).data.user?.id;
+      if (!uid) { setState('error'); return; }
+      const { data, error } = await supabase.from('daily_checkins').select('*').eq('user_id', uid).eq('log_date', day).maybeSingle();
       if (error) { setState('error'); return; }
       if (data) { setF({ ...EMPTY, ...(data as Form) }); setState('saved'); } else setState('open');
     })();

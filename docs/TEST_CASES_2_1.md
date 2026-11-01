@@ -65,3 +65,6 @@ Log meals, refresh (analytics update), recommendation appears, decision recorded
 3. Open What NutriSmart has learned: three tabs scroll sideways without clipping.
 4. As a coach on the phone: Draft, edit, Approve and send, then check the client phone receives it.
 5. Turn all ten switches off: the app looks exactly like 2.0.
+
+## Simulation
+See docs/SIMULATION.md, section "2.1 simulation". It covers case studies A to E at scale: 100 people, 700 person-days, 600+ notification decisions a day.

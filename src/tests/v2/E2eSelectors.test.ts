@@ -88,3 +88,12 @@ describe('2.1: the browser spec for intelligence only relies on things the app r
     expect(read('scripts/run-everything.sh')).toContain('e2e/v2');
   });
 });
+
+describe('flexible meal buttons and the own-rows rule', () => {
+  it('the three buttons and their messages exist, and the card only loads the signed-in person\'s plans', () => {
+    const s = read('src/components/FlexibleMealCard.tsx');
+    for (const t of ['I had it', 'Skipped', 'Cancel plan', 'Save plan', 'Plan one', 'That did not save. Please try again.', "aria-label=\"Flexible meal\"", ".eq('user_id', user.id).eq('planned_for', day)"]) expect(s).toContain(t);
+    expect(read('e2e/v2/workflows.spec.ts')).toContain('W-15');
+    expect(read('e2e/v21/crawler.spec.ts')).toContain('CR-1');
+  });
+});

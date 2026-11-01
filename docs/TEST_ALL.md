@@ -17,6 +17,8 @@ Pass rule: all steps green. A skipped test (switch off, or phone-only) is report
 | File | Case |
 |---|---|---|
 | intelligence.spec (v21) | I-01 to I-10: features and recommendation, Today parts, learned page and reports, coach brief and approval, who can see what, smart tips settings, check-in extras, switches off, export, cron secret (see TEST_CASES_2_1.md) |
+| crawler.spec (v21) | CR-1 to CR-4: every customer, coach and admin screen is opened and every button, tab and in-app link pressed (money, sign-out, delete and shared-data actions skipped). Fails on any JavaScript error, error screen, server error, refused call to our API, save the database refuses, or screen stuck on Loading. Lists buttons that did nothing. CR-4 checks phone width |
+| workflows.spec | W-15 a coach's own Today shows only their own plans; Skipped / Cancel plan work and leave a client's plan untouched |
 | platform.spec | log three meals; stored daily totals match the arithmetic |
 | platform.spec | daily check-in saves and reads back |
 | platform.spec | flexible meal can be planned and marked eaten |

@@ -84,3 +84,13 @@ export function plausibleDescription(raw: string): boolean {
   if (t.length > 300 || t.split(' ').length > 60 || looksLikeInjection(t) || hasWordIn(ADULT_WORDS, t)) return false;
   return t.length >= 4 && /[A-Za-zऀ-ॿ઀-૿]{3}/.test(t) && !/https?:|www\./i.test(t);
 }
+
+
+/** What to tell the person when the AI lookup fails. `reason` is the internal note (never shown); the message says what to do next. */
+export function aiFailure(reason: string | undefined): { kind: 'busy' | 'unavailable' | 'slow' | 'unclear'; message: string } {
+  const r = reason ?? '';
+  if (/^gemini_http_429/.test(r)) return { kind: 'busy', message: 'AI search is busy right now. Your search was not used. Try again in a few minutes, or log it from the list.' };
+  if (/^gemini_http_(400|401|403|404)/.test(r)) return { kind: 'unavailable', message: 'AI search is not available right now. Your search was not used. We have been told. You can still log it from the list.' };
+  if (/^gemini_http_5|^exception|abort|timeout/i.test(r)) return { kind: 'slow', message: 'AI search took too long. Your search was not used. Please try again.' };
+  return { kind: 'unclear', message: 'Could not identify this food. Try describing it instead.' };
+}

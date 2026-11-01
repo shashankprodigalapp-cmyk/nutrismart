@@ -1,4 +1,4 @@
-import { plausibleFoodQuery, plausibleDescription, NOT_FOOD_MESSAGE, cleanQuery, normalizeFoodKey, cleanAiText, hitsBlockedTerm } from '../_shared/foodQuery';
+import { aiFailure, plausibleFoodQuery, plausibleDescription, NOT_FOOD_MESSAGE, cleanQuery, normalizeFoodKey, cleanAiText, hitsBlockedTerm } from '../_shared/foodQuery';
 import { resolveLimits } from '../_shared/freeTier';
 import type { Env } from '../_shared/auth';
 import { aiFetch } from '../_shared/aiLog';
@@ -155,10 +155,10 @@ Calories must be > 0. Protein must be less than calories/4.`;
           generationConfig: { temperature: 0.0, maxOutputTokens: 2048, responseMimeType: 'application/json' },
         }),
       });
-      if (!retryRes.ok) return null;
+      if (!retryRes.ok) { dbg.reason = `gemini_http_${retryRes.status}: retry`; return null; }
       const retryData = await retryRes.json() as any;
       const retryText = retryData.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-      try { parsed = safeParseJSON(retryText); } catch { return null; }
+      try { parsed = safeParseJSON(retryText); } catch { dbg.reason = `bad_json (finish: ${retryData.candidates?.[0]?.finishReason ?? 'none'}, ${retryText.length} chars)`; return null; }
     }
 
     if ((parsed as any)?.not_food === true) { dbg.reason = 'not_food'; return null; }
@@ -453,7 +453,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       let result = await geminiNameLookup(query.trim(), env, dbg);
       if (!result) {
         const isNotFood = dbg.reason === 'not_food';
-        const providerFault = !dbg.reason || dbg.reason.startsWith('gemini_http') || dbg.reason.startsWith('exception');
+        const providerFault = !dbg.reason || dbg.reason.startsWith('gemini_http') || dbg.reason.startsWith('exception') || dbg.reason.startsWith('bad_json');
         if (isNotFood) {
           // The AI said it is not a food: the search stays used, and counts as a strike.
           await logEvent(env, auth.userId, 'search_blocked_not_food', { stage: 'ai' });
@@ -464,10 +464,12 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         } else {
           await logEvent(env, auth.userId, 'search_not_found', {});
         }
+        const why = aiFailure(dbg.reason);
+        if (!isNotFood) await logEvent(env, auth.userId, 'ai_search_failed', { kind: why.kind, reason: (dbg.reason ?? 'none').slice(0, 160), query: query.trim().slice(0, 60) });
         return jsonResponse(env, 200, {
           found:   false,
-          error:   dbg.reason === 'not_food' ? 'not_food' : 'not_found',
-          message: dbg.reason === 'not_food' ? NOT_FOOD_MESSAGE : 'Could not identify this food. Try describing it instead.',
+          error:   isNotFood ? 'not_food' : why.kind === 'unclear' ? 'not_found' : 'ai_' + why.kind,
+          message: isNotFood ? NOT_FOOD_MESSAGE : why.message,
         });
       }
       result = tidyResult(result, query.trim());
