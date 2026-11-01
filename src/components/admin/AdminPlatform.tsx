@@ -39,7 +39,7 @@ function Overview() {
         <Kpi label="Still around" value={m.users.retained_pct == null ? 'n/a' : `${m.users.retained_pct}%`} sub="of people who joined 8 to 30 days ago, opened the app this week" />
         <Kpi label="Logged food (7 days)" value={fmtNum(m.users.loggers_7d)} sub="different people" />
         <Kpi label="Active coaches" value={fmtNum(m.coaches.active)} sub={`${fmtNum(m.coaches.pending)} waiting for approval`} />
-        <Kpi label="Active coached clients" value={fmtNum(m.coaches.active_clients)} sub={`${fmtNum(m.coaches.pending_invites)} invites open`} />
+        <Kpi label="People with an active coach" value={fmtNum(m.coaches.active_clients)} sub={`each person counted once · ${fmtNum(m.coaches.pending_invites)} invites open`} />
         <Kpi label="Paid subscriptions" value={fmtNum(m.subscriptions.paid_active)} sub={Object.entries(m.subscriptions.by_status as Record<string, number>).map(([k, v]) => `${k} ${v}`).join(', ') || 'none yet'} />
         <Kpi label="Foods in database" value={fmtNum(m.food_database.foods)} sub={`${fmtNum(m.food_database.unverified)} to verify`} />
       </div>

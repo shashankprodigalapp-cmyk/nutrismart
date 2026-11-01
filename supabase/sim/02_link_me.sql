@@ -4,7 +4,7 @@
 -- 2. Run in the Supabase SQL Editor after 01_seed_100.sql. It can be removed by 03_cleanup.sql (the links go with the sim clients).
 DO $link$
 DECLARE
-  my_email TEXT := 'PUT_YOUR_EMAIL_HERE';   -- <== YOUR EMAIL (keep the quotes)
+  my_email TEXT := 'shashankprodigalapp@gmail.com';   -- <== YOUR EMAIL (keep the quotes)
   me UUID; n INT := 0; r RECORD;
 BEGIN
   SELECT id INTO me FROM auth.users WHERE lower(email) = lower(my_email) AND email NOT LIKE '%@sim.nutrismart.invalid';

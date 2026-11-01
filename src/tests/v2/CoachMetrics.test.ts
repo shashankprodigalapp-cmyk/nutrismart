@@ -7,6 +7,25 @@ const base: ClientMetrics = {
   energy_checkins: 5, energy_avg: 2.2, energy_prev_avg: 2.2, last_activity: new Date().toISOString(),
 };
 
+describe('new clients', () => {
+  it('does not flag logging for a client who started today', () => {
+    const r = classify({ ...base, days_logged: 1, days_eligible: 1 });
+    expect(r.reasons.find(x => x.signal === 'logging_decline')).toBeUndefined();
+  });
+  it('does not judge logging before 3 days since starting', () => {
+    expect(classify({ ...base, days_logged: 1, days_eligible: 2 }).reasons.some(x => x.signal === 'logging_decline')).toBe(false);
+  });
+  it('judges a 4-day-old client on those 4 days', () => {
+    expect(classify({ ...base, days_logged: 4, days_eligible: 4 }).reasons.some(x => x.signal === 'logging_decline')).toBe(false);
+    const r = classify({ ...base, days_logged: 1, days_eligible: 4 });
+    expect(r.status).toBe('attention'); expect(r.reasons[0].text).toContain('1 of 4 days since starting');
+  });
+  it('established clients are unchanged', () => {
+    expect(classify({ ...base, days_logged: 2, days_eligible: 7 }).status).toBe('attention');
+    expect(classify({ ...base, days_logged: 2, days_eligible: null }).status).toBe('attention');
+  });
+});
+
 describe('classify', () => {
   it('is on track when everything is near target', () => { expect(classify(base).status).toBe('on_track'); });
   it('flags low logging as attention with the numbers', () => {

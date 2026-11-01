@@ -7,6 +7,8 @@ export interface ClientMetrics {
   share_scope: Record<string, boolean>;
   link_status: string;
   days_in_window: number;
+  /** Days since the client's first logged meal, capped at the window. Absent or equal to the window for established clients. */
+  days_eligible?: number | null;
   days_logged: number | null;
   avg_cal: number | null;
   avg_protein: number | null;
@@ -31,6 +33,7 @@ export const RULES = {
   energyDropAttention: 0.2, // energy average fell by 20% or more
   energyDropDrift: 0.1,
   silentDays: 7,
+  newClientMinDays: 3,      // fewer days than this since the first meal: logging is not judged yet
 } as const;
 
 export const pct = (actual: number | null, target: number | null): number | null =>
@@ -53,8 +56,17 @@ export function classify(m: ClientMetrics, now: Date = new Date()): { status: Cl
     if (logged === 0 && (silent == null || silent >= RULES.silentDays)) {
       return { status: 'no_activity', reasons: [{ signal: 'logging_stopped', severity: 'attention', text: silent == null ? 'Nothing logged yet.' : `No activity for ${silent} days.` }] };
     }
-    if (logged <= RULES.loggingAttentionMax) reasons.push({ signal: 'logging_decline', severity: 'attention', text: `Logged on ${logged} of ${n} days.` });
-    else if (logged <= RULES.loggingDriftMax) reasons.push({ signal: 'logging_decline', severity: 'drifting', text: `Logged on ${logged} of ${n} days.` });
+    const eligible = m.days_eligible != null && m.days_eligible < n ? Math.max(m.days_eligible, 0) : n;
+    if (eligible >= n) {
+      if (logged <= RULES.loggingAttentionMax) reasons.push({ signal: 'logging_decline', severity: 'attention', text: `Logged on ${logged} of ${n} days.` });
+      else if (logged <= RULES.loggingDriftMax) reasons.push({ signal: 'logging_decline', severity: 'drifting', text: `Logged on ${logged} of ${n} days.` });
+    } else if (eligible >= RULES.newClientMinDays) {
+      // A newer client is judged only on the days since they started, using the same proportions as a full week.
+      const ratio = logged / eligible;
+      const text = `Logged on ${logged} of ${eligible} days since starting.`;
+      if (ratio <= RULES.loggingAttentionMax / 7) reasons.push({ signal: 'logging_decline', severity: 'attention', text });
+      else if (ratio <= RULES.loggingDriftMax / 7) reasons.push({ signal: 'logging_decline', severity: 'drifting', text });
+    } // fewer than newClientMinDays since starting: too early to judge logging
 
     const protein = m.avg_protein != null && m.target_protein ? m.avg_protein / m.target_protein : null;
     if (protein != null && logged > 0) {

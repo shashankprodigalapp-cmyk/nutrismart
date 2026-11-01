@@ -14,13 +14,13 @@ export const LIMITS = { aiFailWarn: 0.1, aiFailCritical: 0.3, notifFailWarn: 0.1
 export function healthChecks(m: Metrics): Check[] {
   const out: Check[] = [];
   const ai = m.ai_7d ?? {}; const calls = ai.calls ?? 0; const fails = ai.failures ?? 0;
-  if (calls < LIMITS.minCalls) out.push({ id: 'ai', name: 'AI calls', level: 'unknown', detail: `Only ${calls} calls in 7 days, too few to judge.` });
+  if (calls < LIMITS.minCalls) out.push({ id: 'ai', name: 'AI calls', level: 'unknown', detail: calls === 0 ? 'No AI calls in 7 days, too few to judge.' : `Only ${calls} calls in 7 days, too few to judge.` });
   else {
     const rate = fails / calls;
     out.push({ id: 'ai', name: 'AI calls', level: rate >= LIMITS.aiFailCritical ? 'critical' : rate >= LIMITS.aiFailWarn ? 'warn' : 'ok', detail: `${fails} of ${calls} calls failed in 7 days (${Math.round(rate * 100)}%).` });
   }
   const n = m.notifications_7d ?? {}; const tried = (n.sent ?? 0) + (n.failed ?? 0);
-  if (tried < LIMITS.minCalls) out.push({ id: 'push', name: 'Notifications', level: 'unknown', detail: `Only ${tried} delivery attempts in 7 days, too few to judge.` });
+  if (tried < LIMITS.minCalls) out.push({ id: 'push', name: 'Notifications', level: 'unknown', detail: tried === 0 ? 'No delivery attempts in 7 days, too few to judge.' : `Only ${tried} delivery attempts in 7 days, too few to judge.` });
   else {
     const rate = (n.failed ?? 0) / tried;
     out.push({ id: 'push', name: 'Notifications', level: rate >= LIMITS.notifFailCritical ? 'critical' : rate >= LIMITS.notifFailWarn ? 'warn' : 'ok', detail: `${n.failed ?? 0} of ${tried} deliveries failed (${Math.round(rate * 100)}%).` });

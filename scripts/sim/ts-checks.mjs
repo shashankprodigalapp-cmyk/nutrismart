@@ -32,7 +32,7 @@ check('coaches see 32 clients (33 linked, 1 ended is hidden)', all.length === 32
 const arch = (r) => String(r.uname).replace(/^Sim \d+ /, '');
 const num = (r) => Number(String(r.uname).match(/^Sim (\d+)/)?.[1]);
 const scored = all.map(r => {
-  const m = { share_scope: r.share_scope, link_status: r.link_status, days_in_window: r.days_in_window, days_logged: r.days_logged,
+  const m = { share_scope: r.share_scope, link_status: r.link_status, days_in_window: r.days_in_window, days_eligible: r.days_eligible, days_logged: r.days_logged,
     avg_cal: r.avg_cal == null ? null : Number(r.avg_cal), avg_protein: r.avg_protein == null ? null : Number(r.avg_protein),
     target_cal: r.target_cal, target_protein: r.target_protein, energy_checkins: r.energy_checkins,
     energy_avg: r.energy_avg == null ? null : Number(r.energy_avg), energy_prev_avg: r.energy_prev_avg == null ? null : Number(r.energy_prev_avg), last_activity: r.last_activity };
@@ -44,6 +44,7 @@ const sig = (s) => s.reasons.map(x => x.signal);
 const dist = Object.entries(by).map(([k, v]) => `${k}: ${v.map(s => s.status).join(',')}`);
 console.log(dist.join('\n'));
 
+for (const s of by['new_today'] ?? []) check(`new_today #${s.n} is not flagged for logging days`, !sig(s).includes('logging_decline'), sig(s).join('+') + ' eligible ' + s.r.days_eligible);
 const foodShared = (s) => !!s.r.share_scope?.food && s.r.link_status === 'active';
 for (const s of by['silent'] ?? []) if (foodShared(s)) check(`silent #${s.n} is flagged (no_activity/attention)`, ['no_activity', 'attention'].includes(s.status), s.status);
 for (const s of by['sparse'] ?? []) if (foodShared(s)) check(`sparse #${s.n} flagged for logging`, sig(s).includes('logging_decline') || s.status === 'no_activity', sig(s).join('+'));
