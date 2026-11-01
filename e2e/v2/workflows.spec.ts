@@ -33,8 +33,10 @@ async function login(page: Page, email: string, landing: string | null = '/app/t
   await settle(page);
 }
 const opened: Page[] = [];
+const openCtx: Array<{ close: () => Promise<void> }> = [];
 async function as(browser: Browser, email: string, landing: string | null = '/app/today') {
   const ctx = await browser.newContext({ baseURL: BASE });
+  openCtx.push(ctx);
   const page = await ctx.newPage();
   opened.push(page);
   await login(page, email, landing);
@@ -48,7 +50,10 @@ test.afterEach(async ({ page }, info) => {
       console.log(`DIAGNOSTIC [${info.title}] url=${pg.url()}\n${text.slice(0, 600).replace(/\n+/g, ' | ')}`);
     }
   }
-  opened.length = 0;
+  // A test that fails halfway never reaches its own ctx.close(). A signed-in page left open keeps syncing in the background
+  // and can change the numbers the next test relies on, so every window is closed here, pass or fail.
+  for (const c of openCtx) await c.close().catch(() => undefined);
+  openCtx.length = 0; opened.length = 0;
 });
 const q = encodeURIComponent;
 
@@ -171,12 +176,14 @@ test.describe('Customer: cards and logging', () => {
   });
 
   test('W-04 water: add and remove glasses, and the count survives a reload', async ({ browser }) => {
+    await rest(`water_logs?user_id=eq.${client.id}&log_date=eq.${today}`, { method: 'DELETE' }); // start from a known empty day
     const { ctx, page } = await as(browser, client.email, '/app/log');
     const add = page.getByLabel('Add glass'), rem = page.getByLabel('Remove glass');
     await expect(add).toBeVisible({ timeout: 20_000 });
     const counter = add.locator('xpath=..').getByText(/^\d+\/\d+$/);
     const read = async () => Number((await counter.innerText()).split('/')[0]);
-    const start = await read();
+    let start = await read();
+    for (let i = 0; i < 6; i++) { await page.waitForTimeout(1000); const n = await read(); if (n === start) break; start = n; } // wait until the first sync has landed
     test.skip(start > 15, 'water counter already near its limit');
     await add.click(); await expect.poll(read).toBe(start + 1);
     await add.click(); await expect.poll(read).toBe(start + 2);
@@ -311,7 +318,8 @@ test.describe('Coach: apply, invite, review', () => {
     expect(await state()).toMatchObject({ status: 'draft', visible_to_client: false });
     // approve
     await page.getByRole('button', { name: 'Approve and share' }).click();
-    await expect(page.getByText('Approved and shared')).toBeVisible({ timeout: 30_000 });
+    try { await expect(page.getByText('Approved and shared')).toBeVisible({ timeout: 30_000 }); }
+    catch (e) { throw new Error(`Approve did not show. Server state: ${JSON.stringify(await state())}. On screen alert: ${(await page.locator('[role="alert"]').allInnerTexts()).join(' / ') || 'none'}\n${e}`); }
     await expect.poll(state).toMatchObject({ status: 'approved', visible_to_client: true });
     // edit
     await page.getByRole('button', { name: 'Edit', exact: true }).click();

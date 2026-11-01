@@ -30,8 +30,10 @@ async function login(page: Page, email: string, landing: string | null = '/app/t
   await settle(page);
 }
 const opened: Page[] = [];
+const openCtx: Array<{ close: () => Promise<void> }> = [];
 async function as(browser: Browser, email: string, vp?: { width: number; height: number }, landing: string | null = '/app/today') {
   const ctx = await browser.newContext(vp ? { viewport: vp, baseURL: BASE } : { baseURL: BASE });
+  openCtx.push(ctx);
   const page = await ctx.newPage();
   opened.push(page);
   await login(page, email, landing);
@@ -46,7 +48,9 @@ test.afterEach(async ({ page }, info) => {
       console.log(`DIAGNOSTIC [${info.title}] url=${pg.url()}\n${text.slice(0, 600).replace(/\n+/g, ' | ')}`);
     }
   }
-  opened.length = 0;
+  // Close every window, pass or fail: a page left open keeps syncing and can disturb later tests.
+  for (const c of openCtx) await c.close().catch(() => undefined);
+  openCtx.length = 0; opened.length = 0;
 });
 async function healthy(page: Page) {
   await expect(page.locator('body')).not.toContainText(BAD);
