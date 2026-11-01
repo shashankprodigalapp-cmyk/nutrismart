@@ -14,7 +14,7 @@ const today = istToday();
 test.beforeAll(async () => {
   client = await ensureUser('client'); coach = await ensureUser('coach'); adminU = await ensureUser('admin');
   // Clean start: remove anything the previous run left for the test client, then link and promote.
-  for (const t of ['daily_logs', 'daily_checkins', 'flexible_meals']) await rest(`${t}?user_id=eq.${client.id}`, { method: 'DELETE' });
+  for (const t of ['daily_logs', 'daily_checkins', 'flexible_meals', 'nudges']) await rest(`${t}?user_id=eq.${client.id}`, { method: 'DELETE' });
   await rest(`coach_client_relationships?coach_id=eq.${coach.id}`, { method: 'DELETE' });
   await rest('admin_users', { method: 'POST', body: { user_id: adminU.id }, prefer: 'resolution=ignore-duplicates' });
   await rest('coach_profiles', { method: 'POST', body: { user_id: coach.id, display_name: 'E2E coach', credentials: 'test', status: 'active', approved_at: new Date().toISOString() }, prefer: 'resolution=merge-duplicates' });
@@ -104,6 +104,8 @@ test.describe('Coach: dashboard, privacy and actions', () => {
     if (flags.v2_nudges) {
       expect((await api('/api/nudge-send', { method: 'POST', token: kt, body: { client_id: client.id, text: 'visit www.example.com' } })).status).toBe(400);
       expect((await api('/api/nudge-send', { method: 'POST', token: kt, body: { client_id: coach.id, text: 'hello' } })).status).toBe(404);
+      const again = await api('/api/nudge-send', { method: 'POST', token: kt, body: { client_id: client.id, text: 'A second message the same day' } });
+      expect(again.status).toBe(429); expect(again.j.error).toBe('already_sent_today'); // the one-nudge-a-day rule
     }
   });
   test('coach can open the client\'s weekly review, a stranger cannot', async () => {
