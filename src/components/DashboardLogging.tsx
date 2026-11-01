@@ -220,12 +220,13 @@ function WaterQuickAdd({
   return (
     <div className="mx-4 md:mx-0 mt-3 bg-[#1C1C1E] border border-[#7DD3FC]/20 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <span className="text-[11px] font-bold text-[#7DD3FC]">💧 Water</span>
+        <span className="text-[11px] font-bold text-[#7DD3FC]">💧 Water <span className="font-normal text-[#8E8E93]">· 1 glass = 250 ml</span></span>
         <div className="flex flex-wrap gap-[3px] mt-1">
           {Array.from({ length: target }).map((_, i) => (
             <span key={i} className={`text-[10px] ${i < glasses ? 'opacity-100' : 'opacity-20'}`}>💧</span>
           ))}
         </div>
+        <p className="text-[10px] text-[#8E8E93] mt-1">{glasses * 250} / {target * 250} ml</p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <button
@@ -1667,29 +1668,6 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
               );
             })}
           </div>
-        </div>
-      )}
-
-      {/* Search results */}
-      {results.length > 0 && (
-        <div className="px-4 mt-3 flex flex-col gap-2">
-          {results.map((food) => (
-            <button
-              key={food.id}
-              onClick={() => setSheetFood(food)}
-              className="bg-[#1C1C1E] border border-white/[0.07] rounded-xl px-3 py-3 flex items-center gap-3 text-left active:bg-[#242426]"
-            >
-              <span className="text-[20px] flex-shrink-0">{getFoodEmoji(food.name)}</span>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium text-[#F5F5F5] truncate">{food.name}</div>
-                <div className="text-[10px] text-[#636366] mt-0.5">{food.portion}</div>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <div className="text-[13px] font-bold text-[#E8D5B0]">{food.calories}</div>
-                <div className="text-[9px] text-[#636366]">kcal</div>
-              </div>
-            </button>
-          ))}
         </div>
       )}
 
