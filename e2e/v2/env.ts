@@ -55,7 +55,7 @@ async function findUser(email: string): Promise<string | null> {
 }
 
 /** Creates the account if needed, sets this run's password, returns the id. */
-export async function ensureUser(role: 'client' | 'coach' | 'admin'): Promise<{ id: string; email: string }> {
+export async function ensureUser(role: string): Promise<{ id: string; email: string }> {
   const email = `e2e-${role}${DOMAIN}`;
   let id = await findUser(email);
   const body = { email, password: PASSWORD, email_confirm: true, user_metadata: { name: `E2E ${role}` } };

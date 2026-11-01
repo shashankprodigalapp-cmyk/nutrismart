@@ -118,8 +118,8 @@ test.describe('Customer: sign in, sign up, first run', () => {
       await page.getByPlaceholder('Password', { exact: true }).fill(PASSWORD);
       await page.locator('form button[type="submit"]').click();
       await page.waitForURL(/\/onboarding/, { timeout: 20_000 });
-      await expect(page.getByText('Your Kitchen Multiplier')).toBeVisible();
-      const options = ['Very light', 'Health conscious', 'Self-cooked, controlled'];
+      await expect(page.getByText('How much oil / ghee per dish?')).toBeVisible();
+      const options = ['Very light', 'I cook', 'Health conscious'];
       for (let i = 0; i < 4; i++) {
         for (const o of options) { const b = page.getByText(o, { exact: true }).first(); if (await b.isVisible().catch(() => false)) { await b.click(); break; } }
         const build = page.getByRole('button', { name: 'Build my Kitchen Profile' });
@@ -154,7 +154,7 @@ test.describe('Customer: main screens', () => {
     test.skip(!flags.v2_weekly_review && !flags.v2_checkins, 'both switches are off in this environment');
     const { ctx, page } = await as(browser, client.email);
     if (flags.v2_weekly_review) { await page.getByText('Your weekly review').click(); await expect(page).toHaveURL(/weekly-review/); await healthy(page); await page.goBack(); }
-    if (flags.v2_checkins) { await page.getByText('Energy and mood').first().click(); await expect(page).toHaveURL(/energy-mood/); await healthy(page); }
+    if (flags.v2_checkins) { await page.getByText('Energy and mood').first().click(); await expect(page).toHaveURL(/energy-mood/); await expect(page.getByText('Loading…')).toHaveCount(0, { timeout: 20_000 }); await healthy(page); }
     await ctx.close();
   });
   test('CU-08 Log screen: search box is there, typing finds a food, clearing works', async ({ browser }) => {
@@ -170,7 +170,11 @@ test.describe('Customer: main screens', () => {
   test('CU-09 Profile: sections, footer, and the very-low-calorie warning', async ({ browser }) => {
     const { ctx, page } = await as(browser, client.email);
     await page.goto('/app/profile');
-    for (const t of ['Nutrition Goals', 'Data & Privacy', 'Nutri Smart v2.0', 'support@nutrismart.co.in']) await expect(page.locator('body')).toContainText(t, { timeout: 20_000 });
+    for (const t of ['Nutrition Goals', 'Data & Privacy', 'Nutri Smart v2.0']) await expect(page.locator('body')).toContainText(t, { timeout: 20_000 });
+    await page.getByText('Data & Privacy').first().click();
+    await expect(page.locator('body')).toContainText('support@nutrismart.co.in', { timeout: 20_000 });
+    await page.keyboard.press('Escape');
+    await page.reload();
     await page.getByText('Nutrition Goals').first().click();
     await page.locator('input[type="number"], input[inputmode="numeric"]').first().fill('900');
     await expect(page.getByText('Under 1200 kcal a day is very low')).toBeVisible();
@@ -273,8 +277,10 @@ test.describe('Coach screens', () => {
     await rest(`nudges?user_id=eq.${client.id}`, { method: 'DELETE' });
     const { ctx, page } = await as(browser, coach.email, undefined, null);
     await page.goto('/coach');
-    await page.getByRole('link', { name: 'E2E client' }).first().click();
-    await page.getByRole('button', { name: 'Send a nudge' }).click();
+    await settle(page);
+    const nudgeBtn = page.getByRole('button', { name: 'Send a nudge' }).first();
+    await expect(nudgeBtn, 'the client must appear under Needs your attention').toBeVisible({ timeout: 20_000 });
+    await nudgeBtn.click();
     await expect(page.getByText('Short message (max 140 characters, no links)')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeDisabled();
     await page.getByRole('button', { name: /Remember your protein/ }).click();
@@ -303,7 +309,8 @@ test.describe('Coach screens', () => {
     const { ctx, page } = await as(browser, coach.email, undefined, null);
     await page.goto('/admin/platform');
     await settle(page);
-    await expect(page.locator('body')).not.toContainText('Feature switches');
+    await expect(page.getByText('This account is not an admin.')).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('body')).not.toContainText('System health');
     await ctx.close();
   });
   test('CO-07 a client is turned away from the coach area data', async ({ browser }) => {
@@ -319,12 +326,14 @@ test.describe('Coach screens', () => {
 test.describe('Admin screens', () => {
   const TABS: Array<[string, string]> = [['/admin/platform', 'Feature switches'], ['/admin/insights', ''], ['/admin/behaviour', ''], ['/admin/who', ''], ['/admin/free-tier', 'Free tier'], ['/admin/analytics', ''], ['/admin/users', ''], ['/admin/payments', 'UPI'], ['/admin/contributions', ''], ['/admin/search-review', '']];
   test('AD-01 all ten tabs open, are not blank and show no error', async ({ browser }) => {
+    test.setTimeout(150_000);
     const { ctx, page } = await as(browser, adminU.email, undefined, null);
     const errors: string[] = [];
     page.on('pageerror', e => errors.push(e.message));
     for (const [path] of TABS) {
       await page.goto(path); await settle(page);
       await expect(page.locator('body')).not.toContainText('Admin access required');
+      await expect(page.locator('body')).not.toBeEmpty();
       await healthy(page);
     }
     expect(errors).toEqual([]);
@@ -345,7 +354,7 @@ test.describe('Admin screens', () => {
     const { ctx, page } = await as(browser, adminU.email, undefined, null);
     await page.goto('/admin/platform');
     for (const name of ['Overview', 'Trends', 'Feature use', 'AI usage', 'Coaches', 'Plans', 'Feature switches', 'Audit log']) {
-      await page.getByRole('button', { name, exact: true }).click();
+      await page.getByRole('tab', { name, exact: true }).click();
       await expect(page.locator('body')).not.toContainText(/Could not load|Could not reach the server/);
     }
     await ctx.close();
@@ -353,7 +362,7 @@ test.describe('Admin screens', () => {
   test('AD-05 Trends charts draw (svg with a name) and the totals match the day the client logged', async ({ browser }) => {
     const { ctx, page } = await as(browser, adminU.email, undefined, null);
     await page.goto('/admin/platform');
-    await page.getByRole('button', { name: 'Trends', exact: true }).click();
+    await page.getByRole('tab', { name: 'Trends', exact: true }).click();
     await expect(page.getByText('People active each day')).toBeVisible({ timeout: 20_000 });
     const charts = page.locator('svg[role="img"][aria-label]');
     expect(await charts.count()).toBeGreaterThanOrEqual(3);

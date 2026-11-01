@@ -176,17 +176,18 @@ test.describe('Screens in a real browser', () => {
     await login(page, adminU.email);
     await page.goto('/admin/platform');
     await expect(page.getByText('USERS', { exact: false }).first()).toBeVisible({ timeout: 20_000 });
-    await page.getByRole('button', { name: 'Trends', exact: true }).click();
+    await page.getByRole('tab', { name: 'Trends', exact: true }).click();
     await expect(page.getByText('People active each day')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('svg[role="img"]').first()).toBeVisible();
     for (const name of ['Feature use', 'AI usage', 'Coaches', 'Plans', 'Feature switches', 'Audit log']) {
-      await page.getByRole('button', { name, exact: true }).click();
+      await page.getByRole('tab', { name, exact: true }).click();
       await expect(page.locator('body')).not.toContainText('Could not load');
     }
   });
   test('a non-admin is turned away from the admin screen', async ({ page }) => {
     await login(page, client.email);
     await page.goto('/admin/platform');
-    await expect(page.locator('body')).not.toContainText('Feature switches');
+    await expect(page.getByText('This account is not an admin.')).toBeVisible({ timeout: 20_000 });
+    await expect(page.locator('body')).not.toContainText('System health');
   });
 });
