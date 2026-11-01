@@ -1,0 +1,2 @@
+# Recommendations
+Rules: protein per meal, calories over or under, logging gap, flexible meal planning, streak, coach review. Each carries reason, evidence, confidence, action, expected outcome and follow-up date, and names foods the person already logs (needs at least 2 uses and protein of 8g or more per serving). "Not now" hides it for a week. Outcome is measured on the same metric after the follow-up date.

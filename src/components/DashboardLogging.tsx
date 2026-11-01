@@ -52,7 +52,6 @@ import { useAlerts } from './ContextualAlerts';
 import { track } from '../lib/analytics';
 import { useFlag } from '../lib/useFlag';
 import { parseUtterance } from '../lib/voiceParse';
-import { rangeText, confidenceNote, chooseSource } from '../lib/photoEstimate';
 import { VoiceLogButton } from './voice/VoiceLogButton';
 import { VoiceReview, type VoiceRow } from './voice/VoiceReview';
 
@@ -110,26 +109,6 @@ interface SheetFood {
   isHome:      boolean;
   meal:        Meal;
   metricMode:  MetricMode;
-}
-
-// Photo food logging — returned by ai-vision.ts
-interface PhotoDish {
-  name:               string;
-  estimated_portion:  string;
-  confidence:         'high' | 'medium' | 'low';
-  ask_clarification?: string;
-  nutrition: {
-    name:        string;
-    portion:     string;
-    weight_g:    number;
-    calories:    number;
-    protein:     number;
-    carbs:       number;
-    fat:         number;
-    gl:          number;
-    gi?:         number;
-    confidence?: string;
-  } | null;
 }
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
@@ -237,6 +216,7 @@ function WaterQuickAdd({
         <span className="text-[14px] font-bold text-[#7DD3FC] w-10 text-center">
           {glasses}/{target}
         </span>
+        <span className="sr-only">glasses</span>
         <button
           onPointerDown={(e) => { e.preventDefault(); onAdd(); }}
           className="w-8 h-8 rounded-full bg-[#7DD3FC]/20 text-[#7DD3FC] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
@@ -784,21 +764,17 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
   const effectiveCal = eventBudget.active ? eventBudget.daytimeBudget : targets.cal;
   const [profile,       setProfile]       = useState<KitchenProfile | null>(null);
   const [mealTemplates, setMealTemplates] = useState<MealTemplate[]>([]);
-  // Photo logging state
-  const [photoLoading,  setPhotoLoading]  = useState(false);
-  const [photoResults,  setPhotoResults]  = useState<PhotoDish[] | null>(null);
-  const [photoError,    setPhotoError]    = useState<string | null>(null);
-  const photoInputRef = useRef<HTMLInputElement>(null);
+  // AI name-search state
+  const [aiLoading,  setAiLoading]  = useState(false);
+  const [aiError,    setAiError]    = useState<string | null>(null);
   const viaUsualRef   = useRef(false);   // true when the add-sheet was opened from My Usuals / frequents (usage stats only)
   // Voice logging (2.0, behind the v2_voice switch)
   const voiceOn = useFlag('v2_voice');
-  const photoV2 = useFlag('v2_photo');
   const [voiceHeard, setVoiceHeard] = useState<string | null>(null);
   const [voiceRows,  setVoiceRows]  = useState<VoiceRow[]>([]);
   const [voiceQty,   setVoiceQty]   = useState<number | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<{ listening: boolean; message: string | null }>({ listening: false, message: null });
   const viaVoiceRef  = useRef(false);
-  const viaPhotoRef  = useRef(false);   // photo dish matched to the food list (still counts as a photo log)
   const voicePickRef = useRef<string | null>(null);   // which heard item is open in the add-sheet
 
   const today   = todayIST();
@@ -1042,10 +1018,9 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
 
     {
       const src = sheetFood?.source ?? '';
-      const method = viaVoiceRef.current ? 'voice' : viaPhotoRef.current ? 'photo' : viaUsualRef.current ? 'usual' : src === 'ai_photo' ? 'photo' : /ai/i.test(src) ? 'ai_search' : 'search';
+      const method = viaVoiceRef.current ? 'voice' : viaUsualRef.current ? 'usual' : /ai/i.test(src) ? 'ai_search' : 'search';
       viaUsualRef.current = false;
       viaVoiceRef.current = false;
-      viaPhotoRef.current = false;
       track('food_logged', { method, meal: entryData.meal, adjusted: entryData.qty !== 1 || (!!sheetFood && entryData.portion !== sheetFood.portion) });
     }
     // Editing a logged meal: the new version replaces the old one.
@@ -1173,10 +1148,10 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
     const served = await trySmartQuickLog(query);
     if (served) return;
     const q = query.trim();
-    if (!q) { setPhotoError('Type a food name first, then tap "Search with AI".'); return; }
-    if (!plausibleFoodQuery(q)) { setPhotoError(NOT_FOOD_MESSAGE); return; }
-    setPhotoLoading(true);
-    setPhotoError(null);
+    if (!q) { setAiError('Type a food name first, then tap "Search with AI".'); return; }
+    if (!plausibleFoodQuery(q)) { setAiError(NOT_FOOD_MESSAGE); return; }
+    setAiLoading(true);
+    setAiError(null);
     try {
       const session = (await supabase.auth.getSession()).data.session;
       if (!session) throw new Error('Not authenticated');
@@ -1187,12 +1162,12 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
       });
       const data = await res.json().catch(() => ({}));
       if (res.status === 429) {
-        setPhotoError(data.message ?? 'You have used all 5 AI searches for today. They reset tomorrow. Photo search has its own daily allowance.');
+        setAiError(data.message ?? 'You have used all 5 AI searches for today. They reset tomorrow.');
         return;
       }
       if (!res.ok) throw new Error(data.message ?? 'AI search failed — please try again');
       if (!data.found || !data.result) {
-        setPhotoError(data.message ?? 'Could not identify this food. Try a simpler name.');
+        setAiError(data.message ?? 'Could not identify this food. Try a simpler name.');
         return;
       }
       const n = data.result;
@@ -1211,121 +1186,11 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
         source:   'ai_search',
       } as Food);
     } catch (err: any) {
-      setPhotoError(err.message ?? 'AI search failed — please try again');
+      setAiError(err.message ?? 'AI search failed — please try again');
     } finally {
-      setPhotoLoading(false);
+      setAiLoading(false);
     }
   }, [aiOk, query, showUpgrade, trySmartQuickLog]);
-
-  // ── PHOTO FOOD LOGGING ────────────────────────────────────────────────────
-  // Connects existing ai-vision.ts and get-upload-url.ts Netlify functions
-  // to the food log flow. Flow:
-  //   1. User taps camera → file input opens
-  //   2. Photo selected → POST get-upload-url → PUT to Supabase Storage
-  //   3. POST ai-vision with path → returns [{name, portion, nutrition}]
-  //   4. Review card shown → user confirms each dish
-  //   5. Each confirmed dish → handleConfirmEntry() → existing Dexie + SyncManager
-
-  const handlePhotoSelect = useCallback(async (file: File) => {
-    if (!aiOk) { showUpgrade(); return; }
-    if (!user) return;
-
-    setPhotoLoading(true);
-    setPhotoError(null);
-    setPhotoResults(null);
-
-    try {
-      // Step 1: Get a signed upload URL from the server
-      const session = (await supabase.auth.getSession()).data.session;
-      if (!session) throw new Error('Not authenticated');
-
-      const urlRes = await fetch('/api/get-upload-url', {
-        method:  'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization:  `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          ext:     file.name.split('.').pop()?.toLowerCase() ?? 'jpg',
-          purpose: 'meal-photo',
-        }),
-      });
-
-      if (!urlRes.ok) {
-        const err = await urlRes.json().catch(() => ({}));
-        throw new Error(err.message ?? 'Upload URL failed');
-      }
-
-      const { upload_url, path } = await urlRes.json();
-
-      // Step 2: PUT the file directly to Supabase Storage (no Netlify size limits)
-      const uploadRes = await fetch(upload_url, {
-        method:  'PUT',
-        headers: { 'Content-Type': file.type },
-        body:    file,
-      });
-
-      if (!uploadRes.ok) throw new Error('Image upload failed — please try again');
-
-      // Step 3: Call ai-vision with only the storage path (not the image bytes)
-      const visionRes = await fetch('/api/ai-vision', {
-        method:  'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization:  `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ image_path: path, mime_type: file.type }),
-      });
-
-      const visionData = await visionRes.json();
-
-      if (!visionData.found) {
-        setPhotoError(visionData.message ?? 'No food detected. Try better lighting or describe what you ate.');
-        return;
-      }
-
-      // Step 4: Show review card with identified dishes
-      setPhotoResults(visionData.results as PhotoDish[]);
-
-    } catch (err: any) {
-      setPhotoError(err.message ?? 'Photo analysis failed. Please try again.');
-    } finally {
-      setPhotoLoading(false);
-      // Reset file input so the same photo can be re-selected
-      if (photoInputRef.current) photoInputRef.current.value = '';
-    }
-  }, [aiOk, user, showUpgrade]);
-
-  // Confirm a photo-identified dish — converts to a Food and opens AddFoodSheet
-  const handlePhotoDishConfirm = useCallback((dish: PhotoDish, listFood?: Food) => {
-    if (listFood) {            // matched to our own food list: use the verified entry, normal add sheet to adjust the portion
-      track('photo_dish_picked', { confidence: dish.confidence, source: 'food_list' });
-      setPhotoResults(null);
-      viaPhotoRef.current = true;
-      setSheetFood(listFood);
-      return;
-    }
-    if (!dish.nutrition) return;
-    track('photo_dish_picked', { confidence: dish.confidence, source: 'ai_estimate' });
-    const n = dish.nutrition;
-    const food: Food = {
-      id:       crypto.randomUUID(),  // ephemeral ID for this session
-      name:     n.name,
-      portion:  n.portion,
-      weight_g: n.weight_g,
-      calories: n.calories,
-      protein:  n.protein,
-      carbs:    n.carbs,
-      fat:      n.fat,
-      gl:       n.gl,
-      gi:       n.gi,
-      type:     'MR',            // photo foods assumed home-cooked (MR)
-      source:   'ai_photo',
-      // dish.confidence available for analytics but not stored in Food interface
-    };
-    setPhotoResults(null);         // close review card
-    setSheetFood(food);            // open standard AddFoodSheet for confirmation
-  }, []);
 
   // ── Hide from My Usuals ────────────────────────────────────────────────────
   // Stores {food_id → hidden_at_count} in user_prefs['hidden_usuals'].
@@ -1524,36 +1389,11 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
             className="flex-1 bg-transparent text-[#F5F5F5] text-[14px] outline-none placeholder-[#636366]"
             autoComplete="off"
           />
-          {/* Camera button — triggers photo food recognition (Pro) */}
-          <button
-            onClick={() => {
-              if (!aiOk) { showUpgrade(); return; }
-              photoInputRef.current?.click();
-            }}
-            disabled={photoLoading}
-            className="text-[20px] min-w-[40px] min-h-[40px] flex items-center justify-center opacity-60 hover:opacity-100 active:scale-90 transition-all disabled:opacity-30"
-            aria-label="Photograph your meal"
-            title="Photograph your meal (1 free a day)"
-          >
-            {photoLoading ? '⏳' : '📷'}
-          </button>
-          {voiceOn && <VoiceLogButton onTranscript={handleTranscript} onStatus={setVoiceStatus} disabled={photoLoading} />}
+          {voiceOn && <VoiceLogButton onTranscript={handleTranscript} onStatus={setVoiceStatus} disabled={aiLoading} />}
           {query && (
             <button onClick={() => setQuery('')} aria-label="Clear search" className="text-[#636366] text-[18px] min-w-[40px] min-h-[40px] flex items-center justify-center">×</button>
           )}
         </div>
-
-        {/* Hidden file input for photo selection */}
-        <input
-          ref={photoInputRef}
-          type="file"
-          accept="image/jpeg,image/jpg,image/png,image/webp"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handlePhotoSelect(file);
-          }}
-        />
 
         {/* AI search button */}
         <button
@@ -1579,99 +1419,31 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
         />
       )}
 
-      {/* Photo loading indicator */}
-      {photoLoading && (
+      {/* AI search loading indicator */}
+      {aiLoading && (
         <div className="mx-4 mt-3 bg-[#1C1C1E] border border-[#C8F75E]/20 rounded-xl px-4 py-4 text-center">
           <div className="text-[24px] mb-1">🔍</div>
-          <p className="text-[13px] font-semibold text-[#C8F75E]">Analysing your meal…</p>
-          <p className="text-[11px] text-[#636366] mt-1">Gemini Vision is identifying dishes</p>
+          <p className="text-[13px] font-semibold text-[#C8F75E]">Looking up this food…</p>
+          <p className="text-[11px] text-[#636366] mt-1">Checking nutrition for your search</p>
         </div>
       )}
 
-      {/* Photo error */}
-      {photoError && !photoLoading && (
+      {/* AI search error */}
+      {aiError && !aiLoading && (
         <div className="mx-4 mt-3 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 flex items-start gap-3">
           <span className="text-[18px]">⚠️</span>
           <div className="flex-1">
-            <p className="text-[12px] text-[#FF6B6B] font-medium">{photoError}</p>
+            <p className="text-[12px] text-[#FF6B6B] font-medium">{aiError}</p>
           </div>
           <button
-            onClick={() => setPhotoError(null)}
+            onClick={() => setAiError(null)}
             aria-label="Dismiss"
             className="text-[#636366] text-[16px] flex-shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center"
           >×</button>
         </div>
       )}
 
-      {/* Photo results review card */}
-      {photoResults && !photoLoading && (
-        <div className="mx-4 mt-3 bg-[#1C1C1E] border border-[#C8F75E]/20 rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b border-white/[0.07] flex items-center justify-between">
-            <div>
-              <p className="text-[13px] font-bold text-[#F5F5F5]">📷 Dishes Found</p>
-              <p className="text-[10px] text-[#636366] mt-0.5">
-                Tap to add — review before confirming
-              </p>
-            </div>
-            <button
-              onClick={() => setPhotoResults(null)}
-              aria-label="Close photo results"
-              className="text-[#636366] text-[16px] min-w-[40px] min-h-[40px] flex items-center justify-center"
-            >×</button>
-          </div>
-          <div className="divide-y divide-white/[0.05]">
-            {photoResults.map((dish, i) => {
-              const hit = photoV2 ? fuseRef.current?.search(dish.name)[0] : undefined;
-              const choice = photoV2 ? chooseSource({ dbScore: hit?.score ?? null, dbCalories: hit?.item.calories ?? null, aiCalories: dish.nutrition?.calories ?? null }) : null;
-              const useList = !!(choice && choice.source === 'food_list' && hit);
-              const conf = dish.confidence ?? 'medium';
-              const note = photoV2 ? confidenceNote(conf, !!dish.ask_clarification) : null;
-              const shownCal = useList ? hit!.item.calories : dish.nutrition?.calories;
-              return (
-              <div key={i} className="px-4 py-3">
-                <button
-                  onClick={() => (useList ? handlePhotoDishConfirm(dish, hit!.item) : dish.nutrition && handlePhotoDishConfirm(dish))}
-                  disabled={!dish.nutrition && !useList}
-                  className="w-full flex items-center gap-3 text-left active:bg-[#242426] disabled:opacity-40 transition-colors"
-                >
-                  <span className="text-[22px]">{getFoodEmoji(dish.name)}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-[#F5F5F5] truncate">{useList ? hit!.item.name : dish.name}</p>
-                    <p className="text-[10px] text-[#636366] mt-0.5">{useList ? `${hit!.item.portion} (from our food list)` : dish.estimated_portion}</p>
-                    {photoV2 && shownCal != null && <p className="text-[10px] text-[#8E8E93] mt-0.5">{useList ? `${Math.round(shownCal)} kcal per portion` : `AI estimate: ${rangeText(shownCal, conf)}`}</p>}
-                    {dish.ask_clarification && (
-                      <p className="text-[10px] text-[#FFD93D] mt-0.5">
-                        ❓ {dish.ask_clarification}
-                      </p>
-                    )}
-                    {note && <p className="text-[10px] text-[#FFB347] mt-0.5">{note}</p>}
-                    {choice?.disagree && <p className="text-[10px] text-[#FFB347] mt-0.5">The AI guessed {choice.disagree === 'higher' ? 'more' : 'less'} than our food list. Check the portion.</p>}
-                  </div>
-                  {dish.nutrition || useList ? (
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-[14px] font-bold text-[#E8D5B0]">
-                        {photoV2 ? '~' : ''}{Math.round(shownCal ?? 0)}
-                      </p>
-                      <p className="text-[9px] text-[#636366]">kcal</p>
-                      <p className="text-[8px] mt-1 px-1.5 py-0.5 rounded-full bg-[#2C2C2E] text-[#636366]">
-                        {useList ? 'food list' : dish.confidence}
-                      </p>
-                    </div>
-                  ) : (
-                    <span className="text-[10px] text-[#636366]">no data</span>
-                  )}
-                </button>
-                {useList && dish.nutrition && (
-                  <button onClick={() => handlePhotoDishConfirm(dish)} className="mt-2 ml-9 px-3 min-h-[32px] rounded-full bg-[#242426] text-[11px] text-[#C7C7CC]">Use the AI estimate instead</button>
-                )}
-              </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-          {/* Search results */}
+      {/* Search results */}
           {results.length > 0 && (
             <div className="px-4 mt-3 flex flex-col gap-2 md:px-0">
               {results.map((food) => (
@@ -1707,7 +1479,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           initialHome={editEntry?.is_home}
           editing={!!editEntry}
           onConfirm={handleConfirmEntry}
-          onClose={() => { viaUsualRef.current = false; viaVoiceRef.current = false; viaPhotoRef.current = false; voicePickRef.current = null; setVoiceQty(null); setEditEntry(null); setSheetFood(null); }}
+          onClose={() => { viaUsualRef.current = false; viaVoiceRef.current = false; voicePickRef.current = null; setVoiceQty(null); setEditEntry(null); setSheetFood(null); }}
         />
       )}
     </div>

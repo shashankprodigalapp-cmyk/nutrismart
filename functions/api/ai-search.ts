@@ -506,7 +506,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
     return jsonResponse(env, 400, {
       error:   'invalid_mode',
-      message: 'mode must be "name" or "describe". For photos, use the ai-vision endpoint.',
+      message: 'mode must be "name" or "describe".',
     });
   } catch (err) {
     console.error('[ai-search] Unhandled error:', err);

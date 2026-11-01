@@ -13,9 +13,8 @@ I tested logic, database rules and permissions automatically. These need you, on
 - [ ] Deny microphone permission: the app says so politely and nothing breaks.
 - [ ] On iPhone Safari voice may be unavailable: the button should be hidden or explain why.
 
-## Photo (v2_photo)
-- [ ] Photograph a plate: you get a calorie range, not a single exact number; you can pick the food-list match or the AI estimate.
-- [ ] A blurry or non-food photo: sensible message.
+## Photo
+Removed in 2.1. The camera button must no longer appear on the Log screen.
 
 ## Check-in and mood (v2_checkins)
 - [ ] Daily check-in saves; editing the same day updates it.

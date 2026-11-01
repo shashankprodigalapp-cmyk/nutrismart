@@ -16,6 +16,7 @@ Pass rule: all steps green. A skipped test (switch off, or phone-only) is report
 
 | File | Case |
 |---|---|---|
+| intelligence.spec (v21) | I-01 to I-10: features and recommendation, Today parts, learned page and reports, coach brief and approval, who can see what, smart tips settings, check-in extras, switches off, export, cron secret (see TEST_CASES_2_1.md) |
 | platform.spec | log three meals; stored daily totals match the arithmetic |
 | platform.spec | daily check-in saves and reads back |
 | platform.spec | flexible meal can be planned and marked eaten |
@@ -90,7 +91,7 @@ Pass rule: all steps green. A skipped test (switch off, or phone-only) is report
 
 ## Still manual (needs a real phone)
 
-See docs/MANUAL_TESTS.md (12 cases): install on iPhone/Android, offline logging and sync, camera photo search, voice, push notification delivery, verification and reset emails.
+See docs/MANUAL_TESTS.md (12 cases): install on iPhone/Android, offline logging and sync, voice, push notification delivery, verification and reset emails.
 
 ## When a browser test fails
 

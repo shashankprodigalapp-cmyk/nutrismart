@@ -17,10 +17,10 @@ const TEXTS: Array<[string, string, string[]]> = [
   ['3.4 Flexible meal', 'src/components/FlexibleMealCard.tsx', ['Flexible meal', 'Plan one', 'Meal name', 'Meal time', 'Calories to set aside', 'Custom calories', 'Save plan', 'Cancel plan', 'I had it', 'Skipped', 'Before your planned meal']],
   ['3.4 Daily check-in', 'src/components/energy/DailyCheckInCard.tsx', ['Morning check-in', 'How are you feeling today?', 'Sleep last night', 'Hunger', 'Stress', 'Check-in saved']],
   ['3.4 Meal feeling', 'src/components/energy/MealFeelingCard.tsx', ['How did that meal feel?', 'Still hungry', 'Comfortable', 'Too full', 'Log a meal first, then come back to say how it felt.']],
-  ['3.5 Log', 'src/components/DashboardLogging.tsx', ['My Usuals', 'Tap to log all', 'Recents', 'Add glass', 'Remove glass', 'Search food', 'Photograph your meal', 'Hide from My Usuals?', 'Keep it', 'Use the AI estimate instead', 'No food detected', 'Could not identify this food']],
+  ['3.5 Log', 'src/components/DashboardLogging.tsx', ['My Usuals', 'Tap to log all', 'Recents', 'Add glass', 'Remove glass', 'Search food', 'Hide from My Usuals?', 'Keep it', 'Could not identify this food']],
   ['3.5 Voice', 'src/components/voice/VoiceLogButton.tsx', ['Say what you ate', 'Stop listening', 'English']],
   ['3.6 Insights', 'src/pages/tabs/InsightsTab.tsx', ['Energy patterns', 'Your eating patterns', "What you've learned", 'My Usual Meals', 'Good for your energy', 'Heavy for you', 'not medical advice']],
-  ['3.7 Profile', 'src/pages/tabs/ProfileTab.tsx', ['Nutrition Goals', 'Data & Privacy', 'Type DELETE to confirm', 'Under 1200 kcal a day is very low', 'Push Notifications', 'My coach', 'Quick setup', 'Carbs (automatic)', 'Questions: support@nutrismart.co.in', 'Nutri Smart v2.0', 'send the food name or photo to Google Gemini or Anthropic Claude', 'General guidance, not medical advice.']],
+  ['3.7 Profile', 'src/pages/tabs/ProfileTab.tsx', ['Nutrition Goals', 'Data & Privacy', 'Type DELETE to confirm', 'Under 1200 kcal a day is very low', 'Push Notifications', 'My coach', 'Quick setup', 'Carbs (automatic)', 'Questions: support@nutrismart.co.in', 'Nutri Smart v2.0', 'sends the food name to Google Gemini or Anthropic Claude', 'General guidance, not medical advice.']],
   ['3.8 Nudge settings', 'src/pages/NudgeSettingsPage.tsx', ['Reminders and messages', 'Evening log reminder', 'Messages from my coach', 'Quiet hours']],
   ['3.8 My coach', 'src/pages/MyCoachPage.tsx', ['Pause sharing', 'Resume sharing', 'Leave coach', 'Your coach can see:', 'Stop working with this coach? They will no longer see your data.']],
   ['3.8 Join', 'src/pages/JoinPage.tsx', ['Accept and join', 'Not now', 'This invite link is not valid.']],
@@ -57,13 +57,13 @@ describe('blueprint contract: routes and functions', () => {
     const admin = read('src/pages/AdminPage.tsx');
     expect(ADMIN_ROUTES.filter(r => !admin.includes(`'${r}'`))).toEqual([]);
   });
-  it('the blueprint says 36 server functions; the folder agrees', () => {
+  it('the blueprint says 41 server functions; the folder agrees', () => {
     const n = readdirSync(join(root, 'functions/api')).filter(f => f.endsWith('.ts')).length;
-    expect(n).toBe(36);
+    expect(n).toBe(41);
   });
-  it('the blueprint says 39 migrations; the folder agrees', () => {
+  it('the blueprint says 43 migrations; the folder agrees', () => {
     const n = readdirSync(join(root, 'supabase/migrations')).filter(f => f.endsWith('.sql')).length;
-    expect(n).toBe(39);
+    expect(n).toBe(43);
   });
   it('the blueprint lists 16 v2 switches; the migrations create exactly these', () => {
     const found = new Set<string>();

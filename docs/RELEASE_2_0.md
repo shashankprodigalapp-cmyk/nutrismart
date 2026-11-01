@@ -15,7 +15,7 @@ Wait a day between groups. Watch Overview health and the Audit log.
 |---|---|---|
 | 1 | v2_checkins, v2_mood_insights | Check-in card appears, Energy and mood page works |
 | 2 | v2_flexible_meals | Planner on Today tab, calories add up |
-| 3 | v2_voice, v2_photo | Try both on your phone |
+| 3 | v2_voice | Try both on your phone |
 | 4 | v2_weekly_review, v2_monthly_review | Review appears after 3 logged days |
 | 5 | v2_patterns, v2_experiments | Shown only when enough data |
 | 6 | v2_coach, then v2_coach_signup | Make one test coach yourself, invite your own second account |

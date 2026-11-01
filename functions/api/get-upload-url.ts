@@ -3,7 +3,7 @@ import {
   verifyJWT,
   getSupabaseAdmin,
   preflightResponse,
-  jsonResponse, peekRateLimit } from '../_shared/auth';
+  jsonResponse } from '../_shared/auth';
 
 const BUCKET = 'meal-photos';
 const ALLOWED_EXT = new Set(['jpg', 'jpeg', 'png', 'webp']);
@@ -16,24 +16,13 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   const auth = await verifyJWT(request, env);
   if (!auth) return jsonResponse(env, 401, { error: 'unauthorized' });
 
-  let body: { ext?: string; purpose?: 'meal-photo' | 'payment-proof' };
+  let body: { ext?: string; purpose?: 'payment-proof' };
   try { body = await request.json(); }
   catch { return jsonResponse(env, 400, { error: 'invalid_json' }); }
 
-  const purpose = body.purpose ?? 'meal-photo';
-
-  // Photo search is open to everyone, with a daily allowance (1 free, 20 Pro). Stop here if today's is used,
-  // so no photo is uploaded for nothing.
-  if (purpose === 'meal-photo') {
-    const { used, limit } = await peekRateLimit(env, auth.userId, auth.plan === 'pro' ? 'pro' : 'free', 'photo');
-    if (used >= limit) {
-      return jsonResponse(env, 429, {
-        error:   'photo_limit',
-        message: auth.plan === 'pro'
-          ? 'You have used all of today\'s photo searches. They reset at midnight. You can still search by typing the food name.'
-          : 'You have used today\'s free photo search. It resets at midnight. You can still search by typing the food name.',
-      });
-    }
+  // Meal photos were removed in 2.1. This endpoint now only prepares uploads of payment proof.
+  if (body.purpose !== 'payment-proof') {
+    return jsonResponse(env, 400, { error: 'purpose_not_supported', message: 'Photo upload is no longer available.' });
   }
 
   const ext = (body.ext ?? 'jpg').toLowerCase().replace('.', '');

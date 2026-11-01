@@ -9,3 +9,10 @@
 - Deployed copy: `node scripts/smoke-v2.mjs <address>` (no side effects).
 - GitHub runs unit, build, database and the smoke test automatically (workflow "2.0 checks").
 - By hand on a phone: MANUAL_TESTS.md.
+
+## 2.1 additions
+- Unit: `src/tests/intel21/*` (features, recommendations, notification decisions, energy/coach/reports, loop, security).
+- Database: `supabase/tests_v2_intel.sql` (RLS, write refusal, check constraints) runs inside `scripts/db-test.sh`.
+- Browser: `e2e/v21/intelligence.spec.ts` (runs with `npx playwright test e2e/v2`; skips with a message if migrations 041 to 043 are not applied). It switches the ten 2.1 switches on for the run and restores them.
+- Guard: `E2eSelectors.test.ts` checks every heading and button name the spec uses exists in the app.
+- Stories and phone checks: `docs/TEST_CASES_2_1.md`.

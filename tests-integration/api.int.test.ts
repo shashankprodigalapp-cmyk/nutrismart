@@ -21,7 +21,6 @@ const AUTH_REQUIRED_ENDPOINTS = [
   { path: '/api/get-upload-url', method: 'POST', body: { fileName: 'test.jpg', bucket: 'meal-photos' } },
   { path: '/api/cron-morning-verdict', method: 'GET' },
   { path: '/api/ai-search', method: 'POST', body: { mode: 'name', query: 'dal' } },
-  { path: '/api/ai-vision', method: 'POST', body: {} },
   { path: '/api/extract-utr', method: 'POST', body: {} },
   { path: '/api/get-admin-analytics', method: 'GET' },
 ];

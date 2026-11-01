@@ -11,6 +11,7 @@ import { useAlerts } from '../../components/ContextualAlerts';
 import { ProfileNudge } from '../../components/ProfileCompletion';
 import { FlexibleMealCard } from '../../components/FlexibleMealCard';
 import { DailyCheckInCard } from '../../components/energy/DailyCheckInCard';
+import { DailyIntelligence } from '../../components/intel/DailyIntelligence';
 import { useFlag } from '../../lib/useFlag';
 
 interface TodaySummary {
@@ -31,6 +32,7 @@ export default function TodayTab() {
   const flexOn = useFlag('v2_flexible_meals');
   const reviewOn = useFlag('v2_weekly_review');
   const checkinsOn = useFlag('v2_checkins');
+  const intelOn = useFlag('daily_intelligence');
   // Same rule as the Log tab: an active event budget replaces the daily calorie goal.
   const CALORIE_GOAL = eventBudget.active ? eventBudget.daytimeBudget : baseGoal;
   const WATER_GOAL = waterGlasses * GLASS_ML;
@@ -86,6 +88,8 @@ export default function TodayTab() {
       </div>
 
       <ProfileNudge />
+
+      {intelOn && <DailyIntelligence />}
 
       {checkinsOn && <DailyCheckInCard />}
       {checkinsOn && (

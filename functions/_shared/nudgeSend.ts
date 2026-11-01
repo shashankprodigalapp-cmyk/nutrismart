@@ -3,14 +3,14 @@ import type { Env } from './auth';
 import { sendWebPush } from './webPush';
 import { DEFAULT_PREFS, decideNudge, istDayStart, type NudgePrefs } from './nudgeRules';
 
-export interface NudgeRow { id: string; user_id: string; kind: 'log_reminder' | 'coach_message'; title: string; body: string }
+export interface NudgeRow { id: string; user_id: string; kind: 'log_reminder' | 'coach_message' | 'smart'; title: string; body: string }
 export type Outcome = { state: 'sent' } | { state: 'queued'; reason: string } | { state: 'skipped'; reason: string } | { state: 'failed' };
 
 /** Applies the rules, then sends. Updates the nudge row with what happened and why. */
 export async function deliverNudge(env: Env, admin: SupabaseClient, n: NudgeRow, now: Date = new Date()): Promise<Outcome> {
   if (!env.VAPID_PUBLIC_KEY || !env.VAPID_PRIVATE_KEY) return { state: 'queued', reason: 'push_not_configured' };
   const [{ data: p }, { data: subs }, { data: today }, { data: last }] = await Promise.all([
-    admin.from('nudge_preferences').select('log_reminders, coach_nudges, quiet_start, quiet_end, max_per_day').eq('user_id', n.user_id).maybeSingle(),
+    admin.from('nudge_preferences').select('log_reminders, coach_nudges, quiet_start, quiet_end, max_per_day, smart_nudges').eq('user_id', n.user_id).maybeSingle(),
     admin.from('push_subscriptions').select('endpoint, p256dh, auth_key').eq('user_id', n.user_id),
     admin.from('nudges').select('id').eq('user_id', n.user_id).eq('status', 'sent').gte('sent_at', istDayStart(now).toISOString()),
     admin.from('nudges').select('sent_at').eq('user_id', n.user_id).eq('status', 'sent').order('sent_at', { ascending: false }).limit(1).maybeSingle(),

@@ -25,7 +25,6 @@ const YOUR_WHATSAPP_NUMBER = '919876543210';        // ← 91 + your 10-digit nu
 
 const FEATURE_LABELS: Record<ProFeature, string> = {
   ai_food_search:    'AI Food Search',
-  photo_recognition: 'Photo Food Recognition',
   nl_description:    'Natural Language Logging',
   meal_feedback:     'Smart Meal Feedback',
   dinner_suggester:  'AI Dinner Suggester',
@@ -139,7 +138,6 @@ export function UpgradeModal({ feature, onClose }: UpgradeModalProps) {
             <div className="bg-[#242426] rounded-xl p-4 mb-5">
               {[
                 ['🤖', 'AI Food Search (200/day)', '5 searches/day on free'],
-                ['📸', 'Photo Recognition', 'Log meals by clicking a photo'],
                 ['🧠', 'Smart Meal Feedback', 'Insight after every meal'],
                 ['🌙', 'AI Dinner Suggester', 'Best dinner for remaining macros'],
                 ['💪', 'Fitness Insights', 'Deep deficit & trend analysis'],

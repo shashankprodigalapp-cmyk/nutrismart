@@ -52,8 +52,8 @@ export interface ModelUsage { model: string; calls: number; limited: number; pea
 
 /** The three Gemini models the app calls, with the limits read from Google AI Studio on 2026-10-25. */
 export const GEMINI_MODELS: { model: string; label: string; what: string; defaults: ModelLimit }[] = [
-  { model: 'gemini-3.5-flash-lite', label: 'Flash Lite', what: 'name search and photo nutrition', defaults: { rpd: 500, rpm: 15 } },
-  { model: 'gemini-3.8-flash', label: '3.8 Flash', what: 'photo identify', defaults: { rpd: 20, rpm: 5 } },
+  { model: 'gemini-3.5-flash-lite', label: 'Flash Lite', what: 'name search and meal description', defaults: { rpd: 500, rpm: 15 } },
+  { model: 'gemini-3.8-flash', label: '3.8 Flash', what: 'payment screenshot reading', defaults: { rpd: 20, rpm: 5 } },
   { model: 'gemini-embedding-001', label: 'Embedding', what: 'matching similar foods', defaults: { rpd: 1000, rpm: 100 } },
 ];
 

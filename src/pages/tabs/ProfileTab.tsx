@@ -402,7 +402,7 @@ function DataPrivacyModal({ onClose }: { onClose: () => void }) {
         <div className="space-y-3 text-sm text-[#EBEBF5]/70 leading-relaxed">
           <p>Your data is stored with our database provider and is never sold.</p>
           <p>It is encrypted in transit and encrypted at rest by our providers. You can download or delete it at any time, right here.</p>
-          <p>AI food search and photo search send the food name or photo to Google Gemini or Anthropic Claude to work out the nutrition. Do not type personal details. The Privacy Policy has the full list.</p>
+          <p>AI food search sends the food name to Google Gemini or Anthropic Claude to work out the nutrition. Do not type personal details. The Privacy Policy has the full list.</p>
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
@@ -570,7 +570,7 @@ export default function ProfileTab() {
               )}
             </div>
             {!profile?.is_pro && (
-              <span className="text-xs text-[#636366]">{profileDone ? '10 AI searches + 1 photo search a day.' : '5 AI searches + 1 photo search a day. Complete your profile for 10 AI searches.'}</span>
+              <span className="text-xs text-[#636366]">{profileDone ? '10 AI searches a day.' : '5 AI searches a day. Complete your profile for 10 AI searches.'}</span>
             )}
           </div>
         </div>

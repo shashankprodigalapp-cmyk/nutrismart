@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useFlag } from '../lib/useFlag';
 
-interface Prefs { log_reminders: boolean; coach_nudges: boolean; quiet_start: number; quiet_end: number; max_per_day: number }
-const DEFAULTS: Prefs = { log_reminders: false, coach_nudges: true, quiet_start: 1290, quiet_end: 450, max_per_day: 2 };
+interface Prefs { log_reminders: boolean; coach_nudges: boolean; quiet_start: number; quiet_end: number; max_per_day: number; smart_nudges?: boolean; smart_kinds_off?: string[]; channel?: 'push' | 'in_app' }
+const DEFAULTS: Prefs = { log_reminders: false, coach_nudges: true, quiet_start: 1290, quiet_end: 450, max_per_day: 2, smart_nudges: false, smart_kinds_off: [], channel: 'push' };
+const SMART_KINDS: Array<[string, string]> = [['morning_verdict', 'Morning summary'], ['meal_suggestion', 'Meal suggestions'], ['protein_reminder', 'Protein tips'], ['flexible_prep', 'Flexible meal planning'], ['check_in', 'Energy check-in'], ['positive', 'Encouragement'], ['missed_logging', 'Missed logging'], ['weekly_review', 'Weekly review']];
 interface Nudge { id: string; kind: string; title: string; body: string; status: string; created_at: string }
 
 const toTime = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
@@ -14,6 +16,7 @@ export default function NudgeSettingsPage() {
   const [recent, setRecent] = useState<Nudge[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [saved, setSaved] = useState<string | null>(null);
+  const smartOn = useFlag('smart_notifications');
 
   useEffect(() => {
     (async () => {
@@ -21,7 +24,7 @@ export default function NudgeSettingsPage() {
       const uid = u.user?.id;
       if (!uid) { setState('error'); return; }
       const [a, b] = await Promise.all([
-        supabase.from('nudge_preferences').select('log_reminders, coach_nudges, quiet_start, quiet_end, max_per_day').eq('user_id', uid).maybeSingle(),
+        supabase.from('nudge_preferences').select('*').eq('user_id', uid).maybeSingle(),
         supabase.from('nudges').select('id, kind, title, body, status, created_at').eq('user_id', uid).eq('status', 'sent').order('created_at', { ascending: false }).limit(10),
       ]);
       if (a.error || b.error) { setState('error'); return; }
@@ -32,7 +35,8 @@ export default function NudgeSettingsPage() {
   async function save(next: Prefs) {
     setP(next); setSaved(null);
     const { data: u } = await supabase.auth.getUser();
-    const { error } = await supabase.from('nudge_preferences').upsert({ user_id: u.user!.id, ...next, updated_at: new Date().toISOString() });
+    const body = smartOn ? next : { log_reminders: next.log_reminders, coach_nudges: next.coach_nudges, quiet_start: next.quiet_start, quiet_end: next.quiet_end, max_per_day: next.max_per_day };
+    const { error } = await supabase.from('nudge_preferences').upsert({ user_id: u.user!.id, ...body, updated_at: new Date().toISOString() });
     setSaved(error ? 'Could not save. Try again.' : 'Saved');
   }
 
@@ -66,6 +70,28 @@ export default function NudgeSettingsPage() {
                 </select></label>
             </div>
           </div>
+          {smartOn && (
+            <section aria-label="Smart tips" className="bg-[#1C1C1E] rounded-2xl divide-y divide-white/[0.06]">
+              <label className="flex items-center gap-3 p-4 min-h-[56px]">
+                <span className="flex-1"><span className="block text-sm">Smart tips</span><span className="block text-xs text-[#8E8E93]">Timely notes based on your own logs. We pause if they stop being useful.</span></span>
+                <input type="checkbox" aria-label="Smart tips" checked={!!p.smart_nudges} onChange={e => save({ ...p, smart_nudges: e.target.checked })} className="w-6 h-6" />
+              </label>
+              {p.smart_nudges && (
+                <div className="p-4 space-y-2">
+                  <p className="text-xs text-[#8E8E93]">Choose what you want to hear about</p>
+                  {SMART_KINDS.map(([k, label]) => (
+                    <label key={k} className="flex items-center gap-3 min-h-[44px] text-sm">
+                      <input type="checkbox" checked={!(p.smart_kinds_off ?? []).includes(k)} onChange={e => save({ ...p, smart_kinds_off: e.target.checked ? (p.smart_kinds_off ?? []).filter(x => x !== k) : [...(p.smart_kinds_off ?? []), k] })} className="w-5 h-5" />{label}
+                    </label>
+                  ))}
+                  <label className="flex items-center gap-2 text-sm pt-2">Where
+                    <select value={p.channel ?? 'push'} onChange={e => save({ ...p, channel: e.target.value as 'push' | 'in_app' })} className="bg-[#242426] rounded-lg px-2 py-2">
+                      <option value="push">Phone notifications</option><option value="in_app">Inside the app only</option>
+                    </select></label>
+                </div>
+              )}
+            </section>
+          )}
           {saved && <p role="status" className={`text-xs ${saved === 'Saved' ? 'text-[#30D158]' : 'text-[#FF6B6B]'}`}>{saved}</p>}
           <p className="text-xs text-[#8E8E93]">Daily reminders for meals and energy are separate and are not affected here.</p>
           <section className="space-y-2">

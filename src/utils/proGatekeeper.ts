@@ -16,7 +16,6 @@ import { useAuth }   from '../context/AuthContext';
 
 export const PRO_FEATURES = [
   'ai_food_search',
-  'photo_recognition',
   'nl_description',
   'meal_feedback',
   'dinner_suggester',

@@ -2,7 +2,7 @@ import type { Env } from '../_shared/auth';
 import { verifyJWT, getSupabaseAdmin, preflightResponse, corsHeaders } from '../_shared/auth';
 
 // POST /api/export-my-data  (signed-in user) -> a JSON file with everything stored about that user.
-const TABLES: { table: string; col: string; select: string; filter?: [string, boolean] }[] = [
+const TABLES: { table: string; col: string; select: string; filter?: [string, boolean | string] }[] = [
   { table: 'users',              col: 'id',      select: '*' },
   { table: 'user_profile',       col: 'user_id', select: '*' },
   { table: 'kitchen_profiles',   col: 'user_id', select: '*' },
@@ -37,6 +37,12 @@ const TABLES: { table: string; col: string; select: string; filter?: [string, bo
   // Coach drafts the person has not been shown stay out; approved or self-service reviews are included.
   { table: 'ai_weekly_reviews',  col: 'user_id', select: '*', filter: ['visible_to_client', true] },
   { table: 'ai_monthly_reviews', col: 'user_id', select: '*', filter: ['visible_to_client', true] },
+  // 2.1 tables. Message drafts a coach has not sent stay out.
+  { table: 'personal_features',  col: 'user_id', select: '*' },
+  { table: 'recommendations',    col: 'user_id', select: '*' },
+  { table: 'intel_reports',      col: 'user_id', select: '*' },
+  { table: 'notification_decisions', col: 'user_id', select: '*' },
+  { table: 'intel_messages',     col: 'user_id', select: 'sender_type, reason, body, status, delivery, response, outcome, created_at, sent_at, responded_at', filter: ['status', 'sent'] },
   { table: 'coach_profiles',     col: 'user_id', select: 'display_name, credentials, status, created_at' },
   { table: 'coach_client_relationships', col: 'client_id', select: 'id, coach_id, status, share_scope, invited_at, accepted_at, ended_at' },
 ];

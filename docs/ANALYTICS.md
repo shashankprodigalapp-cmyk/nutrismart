@@ -18,3 +18,6 @@ Voice and photo use are counted from `food_logged` events, so they only cover pe
 
 ## Tests
 `V2Analytics.test.ts` (7), `supabase/tests_v2_analytics.sql` (11).
+
+## 2.1 feature store
+Features: calories, protein, carbs, fat averages; calorie and protein versus goal; logging consistency and streak; meals per day; per-meal protein; home share; flexible-meal frequency; energy, hunger, mood, fullness averages; weekday versus weekend; recommendation acceptance. Each has value, baseline, delta, trend, sample size, confidence, calculated_at. Weight, sleep and stress are not captured by the app, so no feature exists for them (nothing is invented).

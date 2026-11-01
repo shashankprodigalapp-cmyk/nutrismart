@@ -431,7 +431,7 @@ test.describe('Cross-cutting', () => {
   });
   test('X-06 the AI endpoints refuse bad input from a signed-in person without crashing', async () => {
     const ct = await signIn(client.email);
-    for (const [path, body] of [['/api/ai-search', {}], ['/api/ai-search', { query: '' }], ['/api/ai-vision', {}]] as const) {
+    for (const [path, body] of [['/api/ai-search', {}], ['/api/ai-search', { query: '' }]] as const) {
       const r = await api(path, { method: 'POST', token: ct, body });
       expect(r.status, `${path} with ${JSON.stringify(body)}`).toBeLessThan(500);
       expect(r.status).not.toBe(200);

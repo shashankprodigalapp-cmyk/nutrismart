@@ -32,6 +32,7 @@ const EnergyMoodPage = React.lazy(() => import('./pages/EnergyMoodPage'));
 const NudgeSettingsPage = React.lazy(() => import('./pages/NudgeSettingsPage'));
 const WeeklyReviewPage = React.lazy(() => import('./pages/WeeklyReviewPage'));
 const MyCoachPage    = React.lazy(() => import('./pages/MyCoachPage'));
+const LearnedPage    = React.lazy(() => import('./pages/LearnedPage'));
 
 const Spinner = (
   <div className="min-h-dvh bg-[#111113] flex items-center justify-center">
@@ -97,6 +98,7 @@ export default function App() {
               <Route path="/app/nudges" element={<ProtectedRoute><NudgeSettingsPage /></ProtectedRoute>} />
               <Route path="/app/weekly-review" element={<ProtectedRoute><WeeklyReviewPage /></ProtectedRoute>} />
               <Route path="/app/my-coach" element={<ProtectedRoute><MyCoachPage /></ProtectedRoute>} />
+              <Route path="/app/learned" element={<ProtectedRoute><LearnedPage /></ProtectedRoute>} />
 
               {/* Admin */}
               <Route path="/admin/*" element={

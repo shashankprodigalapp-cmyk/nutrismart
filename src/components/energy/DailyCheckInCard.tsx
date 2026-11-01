@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { todayIST } from '../../lib/kitchenIntelligence';
 import { track } from '../../lib/analytics';
+import { useFlag } from '../../lib/useFlag';
 
 type Sleep = 'poor' | 'okay' | 'good'; type Stress = 'low' | 'medium' | 'high';
-interface Form { energy: number | null; mood: number | null; hunger: number | null; sleep: Sleep | null; stress: Stress | null }
-const EMPTY: Form = { energy: null, mood: null, hunger: null, sleep: null, stress: null };
+type Digestion = 'comfortable' | 'heavy' | 'upset';
+interface Form { energy: number | null; mood: number | null; hunger: number | null; sleep: Sleep | null; stress: Stress | null; fullness?: number | null; digestion?: Digestion | null }
+const EMPTY: Form = { energy: null, mood: null, hunger: null, sleep: null, stress: null, fullness: null, digestion: null };
 
 function Scale({ label, value, onChange, low, high }: { label: string; value: number | null; onChange: (n: number) => void; low: string; high: string }) {
   return (
@@ -41,12 +43,13 @@ export function DailyCheckInCard() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const day = todayIST();
+  const extraOn = useFlag('energy_intelligence');   // 2.1: fullness and digestion
 
   useEffect(() => {
     (async () => {
-      const { data, error } = await supabase.from('daily_checkins').select('energy, mood, hunger, sleep, stress').eq('log_date', day).maybeSingle();
+      const { data, error } = await supabase.from('daily_checkins').select('*').eq('log_date', day).maybeSingle();
       if (error) { setState('error'); return; }
-      if (data) { setF(data as Form); setState('saved'); } else setState('open');
+      if (data) { setF({ ...EMPTY, ...(data as Form) }); setState('saved'); } else setState('open');
     })();
   }, [day]);
 
@@ -54,7 +57,7 @@ export function DailyCheckInCard() {
     setBusy(true); setErr(null);
     const { data: u } = await supabase.auth.getUser();
     if (!u.user) { setBusy(false); setErr('Please sign in again.'); return; }
-    const { error } = await supabase.from('daily_checkins').upsert({ user_id: u.user.id, log_date: day, ...f, updated_at: new Date().toISOString() }, { onConflict: 'user_id,log_date' });
+    const { error } = await supabase.from('daily_checkins').upsert({ user_id: u.user.id, log_date: day, ...(extraOn ? f : { energy: f.energy, mood: f.mood, hunger: f.hunger, sleep: f.sleep, stress: f.stress }), updated_at: new Date().toISOString() }, { onConflict: 'user_id,log_date' });
     setBusy(false);
     if (error) { setErr('Could not save. Check your connection and try again.'); return; }
     track('daily_checkin_saved', { fields: Object.values(f).filter(v => v != null).length });
@@ -63,7 +66,7 @@ export function DailyCheckInCard() {
 
   if (state === 'loading') return null;
   if (state === 'error') return null;   // table not there yet or offline: stay out of the way
-  const any = Object.values(f).some(v => v != null);
+  const any = (extraOn ? Object.values(f) : [f.energy, f.mood, f.hunger, f.sleep, f.stress]).some(v => v != null);
   if (state === 'saved') {
     return (
       <div className="bg-[#1C1C1E] rounded-2xl p-4 flex items-center gap-3">
@@ -81,6 +84,15 @@ export function DailyCheckInCard() {
       <Scale label="Hunger" value={f.hunger} onChange={n => setF({ ...f, hunger: n })} low="not hungry" high="very hungry" />
       <Pick<Sleep> label="Sleep last night" value={f.sleep} options={['poor', 'okay', 'good']} onChange={v => setF({ ...f, sleep: v })} />
       <Pick<Stress> label="Stress" value={f.stress} options={['low', 'medium', 'high']} onChange={v => setF({ ...f, stress: v })} />
+      {extraOn && (
+        <details className="group">
+          <summary className="text-xs text-[#8E8E93] min-h-[44px] flex items-center cursor-pointer">More (optional): fullness and digestion</summary>
+          <div className="space-y-3 mt-2">
+            <Scale label="Fullness after meals" value={f.fullness ?? null} onChange={n => setF({ ...f, fullness: n })} low="still hungry" high="very full" />
+            <Pick<Digestion> label="Digestion" value={f.digestion ?? null} options={['comfortable', 'heavy', 'upset']} onChange={v => setF({ ...f, digestion: v })} />
+          </div>
+        </details>
+      )}
       {err && <p role="alert" className="text-xs text-[#FF6B6B]">{err}</p>}
       <button disabled={!any || busy} onClick={save} className="w-full min-h-[44px] rounded-full bg-[#C8F75E] text-[#111113] font-semibold text-sm disabled:opacity-40">{busy ? 'Saving…' : 'Save'}</button>
       <p className="text-[11px] text-[#636366]">Answer only what you like. Skip the rest.</p>

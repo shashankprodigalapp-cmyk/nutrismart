@@ -2,7 +2,7 @@
  * Nudge rules (deterministic). One place decides whether a nudge may go out now.
  * Time is IST (the app's only timezone for now).
  */
-export interface NudgePrefs { log_reminders: boolean; coach_nudges: boolean; quiet_start: number; quiet_end: number; max_per_day: number }
+export interface NudgePrefs { log_reminders: boolean; coach_nudges: boolean; quiet_start: number; quiet_end: number; max_per_day: number; smart_nudges?: boolean }
 export const DEFAULT_PREFS: NudgePrefs = { log_reminders: false, coach_nudges: true, quiet_start: 1290, quiet_end: 450, max_per_day: 2 };
 
 export const MAX_NUDGE_CHARS = 140;
@@ -29,11 +29,12 @@ export type Decision = { ok: true } | { ok: false; reason: 'muted' | 'quiet_hour
 
 /** wait=true means "try again later" (the nudge stays queued); otherwise it is dropped. */
 export function decideNudge(a: {
-  kind: 'log_reminder' | 'coach_message'; now: Date; prefs: NudgePrefs; sentToday: number; lastSentAt: Date | null; hasDevice: boolean;
+  kind: 'log_reminder' | 'coach_message' | 'smart'; now: Date; prefs: NudgePrefs; sentToday: number; lastSentAt: Date | null; hasDevice: boolean;
 }): Decision {
   const { kind, now, prefs } = a;
   if (kind === 'log_reminder' && !prefs.log_reminders) return { ok: false, reason: 'muted' };
   if (kind === 'coach_message' && !prefs.coach_nudges) return { ok: false, reason: 'muted' };
+  if (kind === 'smart' && !prefs.smart_nudges) return { ok: false, reason: 'muted' };
   if (!a.hasDevice) return { ok: false, reason: 'no_device' };
   if (prefs.max_per_day <= 0 || a.sentToday >= prefs.max_per_day) return { ok: false, reason: 'daily_cap' };
   if (inQuietHours(istParts(now).minuteOfDay, prefs.quiet_start, prefs.quiet_end)) return { ok: false, reason: 'quiet_hours', wait: true };

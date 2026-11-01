@@ -1,0 +1,2 @@
+# Notifications (2.1 smart tips)
+Opt-in per person (Profile, Nudges, Smart tips). Kinds: morning summary, meal suggestion, protein tip, flexible meal planning, energy check-in, encouragement, missed logging, weekly review. Each can be turned off. Decision order: opt-out, quiet hours, daily cap, cooldown per kind, duplicate, fatigue, then best timing from past opens. Every decision (sent or blocked) is stored with the reason. Channel: push or in-app only.

@@ -1,0 +1,2 @@
+# AI in 2.1
+Numbers, trends and recommendations are computed by code. Gemini is used only for food-name search help and optional wording; it never changes a calculated value. Photo analysis is removed. AI drafts for coaches are cleaned (140 characters, no links) and are never sent until a coach approves. Medical language is not produced: wording is observational ("on 4 of your last 6 logged days") and never causal or diagnostic.

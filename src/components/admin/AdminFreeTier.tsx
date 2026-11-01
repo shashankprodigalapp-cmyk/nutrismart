@@ -6,8 +6,8 @@ import { saveGeminiLimits, useAdminInsights } from './useAdminInsights';
 import { Bars, Card, Empty, Meter, STATUS_STYLE, fmtBytes, fmtNum } from './adminUi';
 
 const MODELS = [
-  { model: 'gemini-3.5-flash-lite', label: 'Flash Lite', what: 'name search and photo nutrition' },
-  { model: 'gemini-3.8-flash', label: '3.8 Flash', what: 'photo identify' },
+  { model: 'gemini-3.5-flash-lite', label: 'Flash Lite', what: 'name search and meal description' },
+  { model: 'gemini-3.8-flash', label: '3.8 Flash', what: 'payment screenshot reading' },
   { model: 'gemini-embedding-001', label: 'Embedding', what: 'matching similar foods' },
 ];
 
@@ -122,7 +122,7 @@ export function AdminFreeTier() {
                   <tbody>
                     {ins.ai_endpoints.map(e => (
                       <tr key={e.endpoint + e.provider} className="border-t border-white/[0.06] text-white">
-                        <td className="py-1.5">{({ name: 'Food name lookup', describe: 'Describe a meal', vision: 'Photo identify', vision_lookup: 'Photo nutrition', embed: 'Cache matching' } as Record<string, string>)[e.endpoint] ?? e.endpoint}</td>
+                        <td className="py-1.5">{({ name: 'Food name lookup', describe: 'Describe a meal', vision: 'Photo identify (removed)', vision_lookup: 'Photo nutrition (removed)', embed: 'Cache matching' } as Record<string, string>)[e.endpoint] ?? e.endpoint}</td>
                         <td>{e.provider === 'gemini' ? 'Gemini' : 'Claude'}</td><td>{fmtNum(e.calls)}</td>
                         <td>{e.calls ? Math.round((e.ok / e.calls) * 100) : 0}%</td><td>{(e.avg_ms / 1000).toFixed(1)}s</td>
                       </tr>
