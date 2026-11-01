@@ -155,7 +155,7 @@ test.describe('Screens in a real browser', () => {
   };
   test('client sees Today and the logged calories', async ({ page }) => {
     await login(page, client.email);
-    await expect(page.getByText(/Good (morning|afternoon|evening)/)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText('Calories today')).toBeVisible({ timeout: 20_000 });
     await expect(page.locator('body')).toContainText('1400');
     await page.goto('/app/insights'); await expect(page.locator('body')).not.toContainText('Something went wrong');
   });
