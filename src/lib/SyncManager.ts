@@ -198,6 +198,8 @@ export class SyncManager {
         key:   'last_sync',
         value: new Date().toISOString(),
       });
+      // Tell open screens that today's data from the server has just landed in the phone's store.
+      try { window.dispatchEvent(new Event('nutrismart:synced')); } catch { /* not in a browser */ }
     } catch {
       // Network error — continue with local data silently
     }

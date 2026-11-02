@@ -588,7 +588,7 @@ export function UserManagement() {
 
       {/* User list */}
       <div className="px-4">
-        {loading ? (
+        {loading && users.length === 0 ? (
           <div className="flex justify-center py-12">
             <div className="w-6 h-6 border-2 border-[#C8F75E] border-t-transparent rounded-full animate-spin" />
           </div>

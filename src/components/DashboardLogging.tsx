@@ -781,6 +781,19 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
   const today   = todayIST();
   const fuseRef = useRef<Fuse<Food> | null>(null);
 
+  // The background pull from the server finishes after this screen opens (new phone, or a meal logged elsewhere).
+  // Read the local store again when it says it is done, so those meals appear without reopening the page.
+  useEffect(() => {
+    const again = async () => {
+      try {
+        setEntries(await localDb.daily_logs.where('log_date').equals(today).toArray());
+        if (user) { const w = await localDb.water_logs.get([user.id, today]); if (w) setGlasses(w.glasses ?? 0); }
+      } catch { /* the screen keeps what it has */ }
+    };
+    window.addEventListener('nutrismart:synced', again);
+    return () => window.removeEventListener('nutrismart:synced', again);
+  }, [user, today]);
+
   // ── Load data on mount ───────────────────────────────────────────────────
   useEffect(() => {
     if (!user) return;

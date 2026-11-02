@@ -315,7 +315,7 @@ test.describe('Coach: apply, invite, review', () => {
     await page.getByRole('tab', { name: 'Weekly review' }).click();
     await page.getByRole('button', { name: /^This week/ }).click();
     await expect(page.getByText('Draft, not yet shared')).toBeVisible({ timeout: 60_000 });
-    const state = async () => (await rest(`ai_weekly_reviews?user_id=eq.${client.id}&select=status,visible_to_client,edited_sections`)).data[0];
+    const state = async () => (await rest(`ai_weekly_reviews?user_id=eq.${client.id}&select=status,visible_to_client,edited_sections&order=week_start.desc&limit=1`)).data[0];
     expect(await state()).toMatchObject({ status: 'draft', visible_to_client: false });
     // approve
     // Approving is tried up to twice. If the first click is lost, the evidence is attached to the report so the cause can be found.

@@ -126,3 +126,14 @@ describe('Carbs on every food row, one-time search bonus', () => {
     expect(read('supabase/migrations/044_drj_food_import_and_search_bonus.sql')).toContain('ON CONFLICT (user_id) DO NOTHING');
   });
 });
+
+describe('Screens refresh after sync; admin list keeps its forms open', () => {
+  it('the sync tells open screens it is done and the Log screen listens', () => {
+    expect(read('src/lib/SyncManager.ts')).toContain("new Event('nutrismart:synced')");
+    expect(read('src/components/DashboardLogging.tsx')).toContain("addEventListener('nutrismart:synced'");
+  });
+  it('refreshing the admin user list does not replace it with a spinner (that closed the Gift Pro form)', () => {
+    const s = read('src/components/admin/UserManagement.tsx');
+    expect(s).toContain('loading && users.length === 0');
+  });
+});
