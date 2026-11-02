@@ -362,6 +362,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   // Quota is charged only when a real AI call is needed (see charge()).
   // Repeat searches served from the shared database / cache are free for the user.
+  let chargedFromBonus = false;
+  const refund = () => refundRateLimit(env, auth.userId, 'search', chargedFromBonus);
   const charge = async (): Promise<Response | null> => {
     if (await aiBusy(env)) {
       return jsonResponse(env, 503, {
@@ -369,14 +371,15 @@ export const onRequest: PagesFunction<Env> = async (context) => {
         message: 'AI search is very busy today and has paused to stay free for everyone. Foods already in NutriSmart still work. Try again tomorrow. This did not use your searches.',
       });
     }
-    const { allowed, resetAt, limit } = await checkRateLimit(env, auth.userId, auth.plan);
+    const { allowed, resetAt, limit, fromBonus, bonusLeft } = await checkRateLimit(env, auth.userId, auth.plan);
+    chargedFromBonus = !!fromBonus;
     if (allowed) return null;
     return jsonResponse(env, 429, {
       error:    'rate_limit_exceeded',
       plan:     auth.plan,
       reset_at: resetAt,
       message:  auth.plan === 'free'
-        ? `You have used all ${limit ?? 5} AI searches for today. They reset tomorrow.${(limit ?? 5) <= 5 ? ' Complete your profile (Profile tab) to get 5 more every day.' : ''} Photo search has its own daily allowance.`
+        ? `You have used all ${limit ?? 5} AI searches for today. They reset tomorrow.${bonusLeft === 0 ? ' Your one-time bonus is used up too.' : ''}${bonusLeft === undefined ? ' Complete your profile (Profile tab) to get 4 extra searches, one time.' : ''}`
         : 'You have used 200 AI searches today. Limit resets at midnight IST.',
     });
   };
@@ -466,7 +469,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
           await logEvent(env, auth.userId, 'search_blocked_not_food', { stage: 'ai' });
           await noteForReview(env, normalizeFoodKey(query));
         } else if (providerFault || activity.notFound < 3) {
-          await refundRateLimit(env, auth.userId, 'search');
+          await refund();
           if (!providerFault) await logEvent(env, auth.userId, 'search_not_found', {});
         } else {
           await logEvent(env, auth.userId, 'search_not_found', {});
@@ -498,7 +501,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       if (limited) return limited;
       const results = (await claudeDescriptionLookup(query.trim(), env)).slice(0, 10).map(r => tidyResult(r, 'Food'));
       if (results.length === 0) {
-        if (activity.notFound < 3) await refundRateLimit(env, auth.userId, 'search');
+        if (activity.notFound < 3) await refund();
         await logEvent(env, auth.userId, 'search_not_found', {});
         return jsonResponse(env, 200, {
           found:   false,

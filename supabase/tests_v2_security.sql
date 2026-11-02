@@ -109,3 +109,27 @@ EXCEPTION WHEN OTHERS THEN RAISE NOTICE 'FAIL : admin gift raised %', SQLERRM; E
 SET request.jwt.claim.role = 'service_role'; RESET request.jwt.claim.sub;
 SELECT pg_temp.expect('server can still grant provisional Pro', (public.grant_provisional_pro('00000000-0000-0000-0000-0000000000b2', 24)->>'success'), 'true');
 RESET request.jwt.claim.role;
+
+-- ── 044: one-time search bonus and DrJ food import ───────────────────────────
+do $$
+declare u uuid := gen_random_uuid(); ok boolean; n int; c int;
+begin
+  insert into auth.users(id,email) values (u,'bonus-test@example.com');
+  select count(*) into n from public.master_foods where source='DRJ_SHEET';
+  if n < 400 then raise exception 'FAIL 044: only % DrJ foods imported', n; end if;
+  select count(*) into c from (select lower(name),lower(portion) from public.master_foods group by 1,2 having count(*)>1) d;
+  if c > 0 then raise exception 'FAIL 044: % duplicate food name+portion', c; end if;
+  for i in 1..4 loop
+    select public.use_search_bonus(u,4) into ok;
+    if not ok then raise exception 'FAIL 044: bonus search % refused', i; end if;
+  end loop;
+  select public.use_search_bonus(u,4) into ok;
+  if ok then raise exception 'FAIL 044: fifth bonus search was allowed'; end if;
+  perform public.refund_search_bonus(u);
+  select public.use_search_bonus(u,4) into ok;
+  if not ok then raise exception 'FAIL 044: refund did not give one back'; end if;
+  perform public.refund_search_bonus(u); perform public.refund_search_bonus(u); perform public.refund_search_bonus(u); perform public.refund_search_bonus(u); perform public.refund_search_bonus(u);
+  select used into n from public.search_bonus where user_id=u;
+  if n <> 0 then raise exception 'FAIL 044: used went below zero or stuck (%)', n; end if;
+  raise notice 'PASS 044 one-time bonus and food import';
+end $$;

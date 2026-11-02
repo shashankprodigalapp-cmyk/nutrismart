@@ -110,3 +110,19 @@ describe('Edit on a logged meal always opens', () => {
     for (const r of ['/admin/platform', '/admin/insights', '/admin/behaviour', '/admin/who', '/admin/free-tier', '/admin/analytics', '/admin/users', '/admin/payments', '/admin/contributions', '/admin/search-review']) expect(c).toContain(r);
   });
 });
+
+describe('Carbs on every food row, one-time search bonus', () => {
+  it('search results and logged rows both show carbs next to protein, fat and GL', () => {
+    const s = read('src/components/DashboardLogging.tsx');
+    expect(s).toContain('C {Number(food.carbs).toFixed(0)}g');
+    expect(s).toContain('C {(entry.carbs ?? 0).toFixed(0)}g');
+  });
+  it('the profile bonus is 4 searches, once, never a daily top-up', () => {
+    const a = read('functions/_shared/auth.ts');
+    expect(a).toContain('PROFILE_BONUS_SEARCHES = 4');
+    expect(a).toContain("rpc('use_search_bonus'");
+    expect(a).not.toContain('limit += ');
+    expect(read('src/lib/profileOptions.ts')).toContain('BONUS_SEARCHES = 4');
+    expect(read('supabase/migrations/044_drj_food_import_and_search_bonus.sql')).toContain('ON CONFLICT (user_id) DO NOTHING');
+  });
+});

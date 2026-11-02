@@ -76,18 +76,18 @@ export async function verifyJWT(request: Request, env: Env): Promise<AuthResult 
 export type RateKind = 'search';
 const RATE_LIMITS = { search: { free: 5, pro: 200 } } as const;
 
-/** Extra daily AI searches for free users who have completed their profile (all five answers and consent). */
-export const PROFILE_BONUS_SEARCHES = 5;
+/** One-time extra AI searches for free users who complete their profile (all five answers and consent). Never repeats. */
+export const PROFILE_BONUS_SEARCHES = 4;
 
 function windowStartFor(istDate: string, _kind: RateKind): string {
   return new Date(new Date(istDate + 'T00:00:00+05:30').getTime()).toISOString();
 }
 
-async function profileBonus(admin: ReturnType<typeof getSupabaseAdmin>, userId: string): Promise<number> {
+async function profileComplete(admin: ReturnType<typeof getSupabaseAdmin>, userId: string): Promise<boolean> {
   try {
     const { data } = await admin.from('user_profile').select('completed_at').eq('user_id', userId).maybeSingle();
-    return data?.completed_at ? PROFILE_BONUS_SEARCHES : 0;
-  } catch { return 0; }
+    return !!data?.completed_at;
+  } catch { return false; }
 }
 
 export async function checkRateLimit(
@@ -95,10 +95,9 @@ export async function checkRateLimit(
   userId: string,
   plan: 'free' | 'pro',
   kind: RateKind = 'search',
-): Promise<{ allowed: boolean; resetAt?: string; limit?: number }> {
+): Promise<{ allowed: boolean; resetAt?: string; limit?: number; fromBonus?: boolean; bonusLeft?: number }> {
   const supabaseAdmin = getSupabaseAdmin(env);
-  let limit: number = RATE_LIMITS[kind][plan];
-  if (kind === 'search' && plan === 'free') limit += await profileBonus(supabaseAdmin, userId);
+  const limit: number = RATE_LIMITS[kind][plan];
   const now = new Date();
 
   const istDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(now);
@@ -115,13 +114,31 @@ export async function checkRateLimit(
     console.error('[rate_limit] RPC error:', error.message);
     return { allowed: true };
   }
-  return { allowed: data?.allowed ?? true, resetAt, limit };
+  const allowed = data?.allowed ?? true;
+  if (allowed || kind !== 'search' || plan !== 'free') return { allowed, resetAt, limit };
+
+  // Today's searches are used up. A completed profile unlocks a one-time bonus of 4 that never refills.
+  let complete = false;
+  try {
+    complete = await profileComplete(supabaseAdmin, userId);
+    if (complete) {
+      const { data: spent } = await supabaseAdmin.rpc('use_search_bonus', { p_user_id: userId, p_grant: PROFILE_BONUS_SEARCHES });
+      if (spent === true) {
+        // The refused attempt above was counted; take it back so today's count stays at the limit.
+        await supabaseAdmin.from('rate_limits').update({ count: limit }).eq('user_id', userId).eq('window_start', windowStart).gt('count', limit);
+        const { data: row } = await supabaseAdmin.from('search_bonus').select('granted, used').eq('user_id', userId).maybeSingle();
+        return { allowed: true, resetAt, limit, fromBonus: true, bonusLeft: row ? Math.max(0, row.granted - row.used) : 0 };
+      }
+    }
+  } catch (e) { console.error('[rate_limit] bonus error:', e instanceof Error ? e.message : e); }
+  return { allowed: false, resetAt, limit, bonusLeft: complete ? 0 : undefined };
 }
 
 /** Give one search back when our side failed (Google error, unreadable result), so the person does not lose their allowance for nothing. */
-export async function refundRateLimit(env: Env, userId: string, kind: RateKind = 'search'): Promise<void> {
+export async function refundRateLimit(env: Env, userId: string, kind: RateKind = 'search', fromBonus = false): Promise<void> {
   try {
     const admin = getSupabaseAdmin(env);
+    if (fromBonus) { await admin.rpc('refund_search_bonus', { p_user_id: userId }); return; }
     const istDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
     const windowStart = windowStartFor(istDate, kind);
     const { data } = await admin.from('rate_limits').select('count').eq('user_id', userId).eq('window_start', windowStart).maybeSingle();

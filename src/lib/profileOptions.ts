@@ -10,7 +10,7 @@ export type ProfileAnswers = {
   diet: string | null;
 };
 
-export const BONUS_SEARCHES = 5;
+export const BONUS_SEARCHES = 4; // one time only, when the profile is completed
 
 export const AGE_BANDS = [
   { v: '18-24', label: '18 to 24' }, { v: '25-34', label: '25 to 34' }, { v: '35-44', label: '35 to 44' },

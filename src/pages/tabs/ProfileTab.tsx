@@ -570,7 +570,7 @@ export default function ProfileTab() {
               )}
             </div>
             {!profile?.is_pro && (
-              <span className="text-xs text-[#636366]">{profileDone ? '10 AI searches a day.' : '5 AI searches a day. Complete your profile for 10 AI searches.'}</span>
+              <span className="text-xs text-[#636366]">{profileDone ? '5 AI searches a day, plus a one-time bonus of 4.' : '5 AI searches a day. Complete your profile for 4 extra, one time.'}</span>
             )}
           </div>
         </div>

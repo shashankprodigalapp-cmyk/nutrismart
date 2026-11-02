@@ -687,6 +687,7 @@ function TodayLog({
                     </div>
                     <div className="flex gap-3 mt-0.5">
                       <span className="text-[10px] text-[#8DB4FF]">P {entry.protein.toFixed(0)}g</span>
+                      <span className="text-[10px] text-[#FF8FAB]">C {(entry.carbs ?? 0).toFixed(0)}g</span>
                       <span className="text-[10px] text-[#FFB347]">F {entry.fat.toFixed(0)}g</span>
                       <span className="text-[10px] text-[#C4A8FF]">GL {entry.gl.toFixed(0)}</span>
                       <span className="text-[9px] text-[#636366]">
@@ -1463,6 +1464,12 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-medium text-[#F5F5F5] truncate">{food.name}</div>
                     <div className="text-[10px] text-[#636366] mt-0.5">{food.portion}</div>
+                    <div className="flex gap-2 mt-0.5" aria-label="Nutrition per portion">
+                      <span className="text-[10px] text-[#8DB4FF]">P {Number(food.protein).toFixed(0)}g</span>
+                      <span className="text-[10px] text-[#FF8FAB]">C {Number(food.carbs).toFixed(0)}g</span>
+                      <span className="text-[10px] text-[#FFB347]">F {Number(food.fat).toFixed(0)}g</span>
+                      <span className="text-[10px] text-[#C4A8FF]">GL {Number(food.gl).toFixed(0)}</span>
+                    </div>
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="text-[13px] font-bold text-[#E8D5B0]">{food.calories}</div>

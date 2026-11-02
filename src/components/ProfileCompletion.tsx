@@ -1,5 +1,5 @@
 /**
- * ProfileCompletion.tsx: five optional questions that earn 5 extra AI searches a day.
+ * ProfileCompletion.tsx: five optional questions that earn 4 extra AI searches, one time.
  * Lives in the Profile tab (and a gentle nudge on Today). Sign-in stays exactly as easy as before.
  * The database decides whether a profile counts as complete, so the bonus cannot be faked.
  */
@@ -87,7 +87,7 @@ export default function ProfileCompletionCard() {
     track('profile_saved', { answered: n });
     if (isComplete(a, consent)) track('profile_completed');
     setMsg({ ok: true, text: isComplete(a, consent)
-      ? `Done! You now get ${5 + BONUS_SEARCHES} AI searches every day.`
+      ? `Done! You have ${BONUS_SEARCHES} extra AI searches to use whenever your daily ones run out. This is a one-time bonus.`
       : `Saved. ${5 - n} more to go.` });
     window.dispatchEvent(new Event(UPDATED));
     void reload();
@@ -108,7 +108,7 @@ export default function ProfileCompletionCard() {
       <button type="button" onClick={() => setOpen(o => !o)} className="w-full text-left flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-bold text-white">
-            {completed ? `Profile complete. ${5 + BONUS_SEARCHES} AI searches a day unlocked` : `Complete your profile, get ${BONUS_SEARCHES} more AI searches every day`}
+            {completed ? `Profile complete. ${BONUS_SEARCHES} extra AI searches unlocked (one time)` : `Complete your profile, get ${BONUS_SEARCHES} extra AI searches (one time)`}
           </p>
           <p className="text-xs text-[#8E8E93] mt-0.5">{completed ? 'Tap to review or change your answers' : `${n} of 5 answered. Takes about 30 seconds.`}</p>
         </div>
@@ -169,7 +169,7 @@ export function ProfileNudge() {
   return (
     <div className="rounded-2xl bg-[#C8F75E]/10 border border-[#C8F75E]/30 p-3 flex items-center gap-3">
       <button type="button" className="flex-1 text-left" onClick={() => { track('profile_nudge_tapped'); navigate('/app/profile'); }}>
-        <p className="text-sm font-semibold text-white">Get {BONUS_SEARCHES} more AI searches every day</p>
+        <p className="text-sm font-semibold text-white">Get {BONUS_SEARCHES} extra AI searches, one time</p>
         <p className="text-xs text-[#8E8E93]">Answer 5 quick questions in your profile. About 30 seconds.</p>
       </button>
       <button type="button" onClick={dismiss} aria-label="Hide for a week" className="text-[#8E8E93] text-lg px-1">×</button>
