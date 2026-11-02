@@ -106,6 +106,13 @@ function getHinglishFallback(description: string): ValidNutrition[] {
     }));
 }
 
+/** Safe facts about the stored key, to tell "missing" from "wrong" without revealing it: how long it is, how it starts, whether it has stray characters. */
+function keyDiag(env: Env): string {
+  const raw = String(env.GEMINI_API_KEY ?? '');
+  const k = raw.trim().replace(/^["']|["']$/g, '');
+  return `key: ${raw ? 'set' : 'MISSING'}, length ${raw.length}${raw.length !== k.length ? ` (${k.length} after trimming)` : ''}, starts ${k.slice(0, 3) || 'n/a'}, header-mode`;
+}
+
 async function geminiNameLookup(foodName: string, env: Env, dbg: { reason?: string } = {}): Promise<ValidNutrition | null> {
   const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${env.GEMINI_API_KEY}`;
   const prompt = `You are a nutrition database for Indian cuisine. Return ONLY valid JSON, no markdown.
@@ -135,7 +142,7 @@ Calories must be > 0. Protein must be less than calories/4.`;
     if (!res.ok) {
       const errText = (await res.text()).slice(0, 300);
       console.error('[ai-search] Gemini error', res.status, errText);
-      dbg.reason = `gemini_http_${res.status}: ${errText.replace(/key=[^&\s"]+/g, 'key=…').slice(0, 160)}`;
+      dbg.reason = `gemini_http_${res.status}: ${errText.replace(/key=[^&\s"]+/g, 'key=…').replace(/\s+/g, ' ').slice(0, 110)} | ${keyDiag(env)}`;
       return null;
     }
 
