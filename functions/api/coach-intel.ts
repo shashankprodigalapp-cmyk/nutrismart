@@ -1,7 +1,7 @@
 import type { Env } from '../_shared/auth';
 import { getSupabaseAdmin, verifyJWT, preflightResponse, jsonResponse } from '../_shared/auth';
 import { throttle, flagOn, getRoles } from '../_shared/roles';
-import { loadSnapshot } from '../_shared/intelServer';
+import { loadSnapshot, forecastFlags, forecastsFor } from '../_shared/intelServer';
 import { coachBrief, type Intervention } from '../../src/lib/intel/coachIntel';
 
 // POST /api/coach-intel {client_id}  (active coach of that client, food shared)
@@ -35,5 +35,7 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
   ];
   const { data: cl } = await admin.from('users').select('name').eq('id', client).maybeSingle();
   const brief = coachBrief({ features: snap.index, rows: snap.rows, targets: snap.targets, today: snap.today, interventions, firstName: String(cl?.name ?? '').split(' ')[0] || undefined });
-  return jsonResponse(env, 200, { ok: true, brief, shares_energy: !!rel.share_scope?.energy });
+  const fon = await forecastFlags(admin);
+  const forecasts = forecastsFor(snap, now, fon, { food: true, energy: !!rel.share_scope?.energy }).filter(f => f.status === 'ready' && f.key !== 'protein_catchup').map(f => ({ key: f.key, headline: f.headline, evidence: f.evidence, confidence: f.confidence }));
+  return jsonResponse(env, 200, { ok: true, brief, forecasts, shares_energy: !!rel.share_scope?.energy });
 };

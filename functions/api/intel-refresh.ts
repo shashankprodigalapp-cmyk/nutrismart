@@ -1,7 +1,7 @@
 import type { Env } from '../_shared/auth';
 import { getSupabaseAdmin, verifyJWT, preflightResponse, jsonResponse } from '../_shared/auth';
 import { throttle, flagOn } from '../_shared/roles';
-import { loadSnapshot, think, persist } from '../_shared/intelServer';
+import { loadSnapshot, think, persist, forecastFlags, forecastsFor, persistForecasts } from '../_shared/intelServer';
 import { todaySignal } from '../../src/lib/intel/signal';
 import { personalLearning } from '../../src/lib/intel/reports';
 
@@ -32,8 +32,13 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
     const lines = personalLearning({ today: snap.today, features: snap.index, meals: snap.meals, recs: [], observations: brief.observations.map(o => o.text) }).sections[0].lines;
     learned = lines.find(l => l !== 'Not enough data yet.') ?? null;
   }
+  // Predictive insights: pure arithmetic on the snapshot above, saved only when an answer changes.
+  const fon = await forecastFlags(admin);
+  const forecasts = forecastsFor(snap, now, fon);
+  try { await persistForecasts(admin, auth.userId, forecasts); } catch { /* saving is best effort; the screen still gets its answer */ }
+  const shown = forecasts.filter(f => f.status === 'ready' && (f.key !== 'lapse_risk' || (f.data as any).level !== 'low')).map(f => ({ key: f.key, headline: f.headline, evidence: f.evidence, confidence: f.confidence }));
   return jsonResponse(env, 200, {
-    ok: true, today: snap.today, signal,
+    ok: true, today: snap.today, signal, forecasts: shown,
     progress: { calories: Math.round(snap.todayTotals.calories), protein: Math.round(snap.todayTotals.protein), target_cal: snap.targets.cal, target_protein: snap.targets.protein },
     learned, recommendations: saved.slice(0, 2), smart_meal: adaptive ? brief.smartMeal : null, observations: energy ? brief.observations : [],
   });

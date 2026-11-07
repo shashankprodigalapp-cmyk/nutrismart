@@ -133,3 +133,36 @@ begin
   if n <> 0 then raise exception 'FAIL 044: used went below zero or stuck (%)', n; end if;
   raise notice 'PASS 044 one-time bonus and food import';
 end $$;
+-- ── 045: forecasts ───────────────────────────────────────────────────────────
+do $$
+declare a uuid := gen_random_uuid(); b uuid := gen_random_uuid(); n int; on_count int;
+begin
+  insert into auth.users(id,email) values (a,'fc-a@example.com'),(b,'fc-b@example.com');
+  insert into public.forecasts(user_id,key,status,confidence,headline,input_hash,calculated_at,expires_at)
+    values (a,'lapse_risk','ready','low','Logging has been steady lately.','x',now(),now()+interval '1 day');
+  select count(*) into on_count from public.feature_flags where key like 'forecast\_%' and enabled;
+  if on_count <> 0 then raise exception 'FAIL 045: % forecast switches are on by default', on_count; end if;
+  select count(*) into n from public.feature_flags where key like 'forecast\_%';
+  if n <> 5 then raise exception 'FAIL 045: expected 5 forecast switches, found %', n; end if;
+  begin
+    insert into public.forecasts(user_id,key,status,confidence,headline,input_hash,calculated_at,expires_at)
+      values (a,'weight_loss','ready','low','x','x',now(),now());
+    raise exception 'FAIL 045: an unknown forecast key was accepted';
+  exception when check_violation then null; end;
+  set local role authenticated;
+  perform set_config('request.jwt.claim.sub', b::text, true);
+  select count(*) into n from public.forecasts where user_id = a;
+  if n <> 0 then raise exception 'FAIL 045: another person can read a forecast'; end if;
+  perform set_config('request.jwt.claim.sub', a::text, true);
+  select count(*) into n from public.forecasts where user_id = a;
+  if n <> 1 then raise exception 'FAIL 045: owner cannot read own forecast'; end if;
+  begin
+    insert into public.forecasts(user_id,key,status,confidence,headline,input_hash,calculated_at,expires_at)
+      values (a,'week_landing','ready','low','x','x',now(),now());
+    raise exception 'FAIL 045: browser could write a forecast';
+  exception when insufficient_privilege or others then
+    if sqlerrm like 'FAIL 045%' then raise; end if;
+  end;
+  reset role;
+  raise notice 'PASS 045 forecasts: switches off, own rows only, server-only writes';
+end $$;

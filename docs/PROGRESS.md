@@ -15,3 +15,6 @@
 | 2026-11-01 | P7 coach brief, drafts, intervention outcomes (coachIntel.ts, coach-intel) | DONE in code |
 | | Tests: 61 intel unit + 14 loop/security + SQL + 10 browser cases | written; browser run awaits CI |
 | | P8 predictive models, P9 billing | deliberately not started |
+
+## P8 predictive insights (migration 045)
+Five forecasts built as pure code, each behind its own switch (all off by default; energy patterns stays off until reviewed). See docs/FORECASTING_ENGINE.md.

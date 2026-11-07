@@ -8,6 +8,7 @@ import { recommend } from '../../src/lib/intel/recommend';
 import { suggestSmartMeal, type SmartMeal } from '../../src/lib/intel/smartMeal';
 import { observe, type Observation } from '../../src/lib/intel/energyIntel';
 import { addDays, istDay, weekStart } from '../../src/lib/intel/dates';
+import { runForecasts, forecastHash, FORECAST_FLAGS, FORECAST_KEYS, type Forecast, type ForecastKey } from '../../src/lib/intel/forecast';
 import type { DayRow, MealRow, Meal, Targets, Feature, Recommendation } from '../../src/lib/intel/types';
 
 export interface Scope { food: boolean; energy: boolean }
@@ -73,3 +74,29 @@ export async function persist(admin: SupabaseClient, userId: string, s: Snapshot
   return data ?? [];
 }
 export { weekStart };
+/** Which forecast switches are on: one small query for all five. */
+export async function forecastFlags(admin: SupabaseClient): Promise<Partial<Record<ForecastKey, boolean>>> {
+  const { data } = await admin.from('feature_flags').select('key, enabled').in('key', Object.values(FORECAST_FLAGS));
+  const on = new Set((data ?? []).filter((r: any) => r.enabled).map((r: any) => String(r.key)));
+  return Object.fromEntries(FORECAST_KEYS.map(k => [k, on.has(FORECAST_FLAGS[k])]));
+}
+/** Pure arithmetic on the snapshot already loaded: no extra reads, no AI. */
+export function forecastsFor(s: Snapshot, now: Date, on: Partial<Record<ForecastKey, boolean>>, scope: Scope = { food: true, energy: true }): Forecast[] {
+  const hour = new Date(now.getTime() + 5.5 * 3_600_000).getUTCHours();
+  return runForecasts({ rows: s.rows, meals: s.meals, targets: s.targets, today: s.today, now, hour }, on, scope);
+}
+/** Saves only what changed (one read, then writes only for changed forecasts). History keeps changes for 90 days. */
+export async function persistForecasts(admin: SupabaseClient, userId: string, list: Forecast[]) {
+  if (!list.length) return;
+  const { data: old } = await admin.from('forecasts').select('key, input_hash, expires_at').eq('user_id', userId);
+  const prev = new Map<string, { h: string; exp: string }>((old ?? []).map((r: any) => [String(r.key), { h: String(r.input_hash), exp: String(r.expires_at) }]));
+  const nowIso = new Date().toISOString();
+  const changed = list.filter(f => { const p = prev.get(f.key); return !p || p.h !== forecastHash(f) || p.exp < nowIso; });
+  if (!changed.length) return;
+  await admin.from('forecasts').upsert(changed.map(f => ({ user_id: userId, key: f.key, version: f.version, status: f.status, confidence: f.confidence, headline: f.headline, evidence: f.evidence, data: f.data, sample_size: f.sample_size, min_needed: f.min_needed, input_hash: forecastHash(f), calculated_at: f.calculated_at, expires_at: f.expires_at })), { onConflict: 'user_id,key' });
+  const hist = changed.filter(f => f.key !== 'protein_catchup' && prev.get(f.key)?.h !== forecastHash(f));
+  if (hist.length) {
+    await admin.from('forecast_history').insert(hist.map(f => ({ user_id: userId, key: f.key, status: f.status, confidence: f.confidence, headline: f.headline, data: f.data, calculated_at: f.calculated_at })));
+    await admin.from('forecast_history').delete().eq('user_id', userId).lt('calculated_at', new Date(Date.now() - 90 * 86_400_000).toISOString());
+  }
+}

@@ -8,10 +8,11 @@ const OUT: Record<string, string> = { too_early: 'Too early to tell', improved: 
 /** Coach: who needs me, why, what changed, what to ask, what to do, and what happened after my last message. */
 export function CoachBrief({ clientId }: { clientId: string }) {
   const [b, setB] = useState<Brief | null>(null);
+  const [fc, setFc] = useState<Array<{ key: string; headline: string; evidence: string[]; confidence: string }>>([]);
   const [draft, setDraft] = useState<{ id: string; body: string } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  useEffect(() => { coachApi<{ brief: Brief }>('/api/coach-intel', { client_id: clientId }).then(r => setB(r.ok ? r.data.brief : null)); }, [clientId]);
+  useEffect(() => { coachApi<{ brief: Brief; forecasts?: Array<{ key: string; headline: string; evidence: string[]; confidence: string }> }>('/api/coach-intel', { client_id: clientId }).then(r => { setB(r.ok ? r.data.brief : null); setFc(r.ok ? r.data.forecasts ?? [] : []); }); }, [clientId]);
 
   async function makeDraft() {
     setBusy(true); setMsg(null);
@@ -35,6 +36,10 @@ export function CoachBrief({ clientId }: { clientId: string }) {
     <section aria-label="Coach brief" className="bg-[#1C1C1E] rounded-2xl p-4 space-y-3">
       <div><p className="text-[11px] uppercase tracking-wide text-[#8E8E93]">Who needs me today</p><p className="text-sm font-semibold mt-1">{b.headline}</p></div>
       {list('What changed', b.whatChanged)}{list('Evidence', b.evidence)}{list('What to ask', b.questions)}{list('What you could do', b.actions)}
+      {fc.length > 0 && (
+        <div data-testid="coach-forecasts"><p className="text-[11px] uppercase tracking-wide text-[#8E8E93]">Looking ahead (patterns so far, not predictions)</p>
+          <ul className="mt-1 space-y-1">{fc.map(f => <li key={f.key} className="text-sm text-[#EBEBF5]/90">{f.headline} <span className="text-[#8E8E93] text-xs uppercase">· {f.confidence} confidence</span><span className="block text-xs text-[#8E8E93]">{f.evidence[0]}</span></li>)}</ul></div>
+      )}
       {b.outcomes.length > 0 && (
         <div><p className="text-[11px] uppercase tracking-wide text-[#8E8E93]">After your earlier messages</p>
           <ul className="mt-1 space-y-1">{b.outcomes.slice(0, 3).map((o, i) => <li key={i} className="text-sm"><span className="font-semibold">{OUT[o.status] ?? o.status}</span> · {o.label} on {o.at}. <span className="text-[#8E8E93]">{o.text}</span></li>)}</ul></div>

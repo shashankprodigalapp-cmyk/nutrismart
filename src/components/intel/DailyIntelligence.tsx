@@ -7,6 +7,7 @@ interface Rec { id: string; reason: string; evidence: string[]; confidence: stri
 interface Data {
   signal: { headline: string; detail: string }; progress: { calories: number; protein: number; target_cal: number; target_protein: number };
   learned: string | null; recommendations: Rec[];
+  forecasts?: Array<{ key: string; headline: string; evidence: string[]; confidence: string }>;
   smart_meal: { meal: string; items: Array<{ name: string; cal: number; protein: number }>; total: { cal: number; protein: number }; why: string; note?: string } | null;
 }
 
@@ -70,6 +71,21 @@ export function DailyIntelligence() {
               <button onClick={() => act(rec.id, 'dismissed')} className="px-4 min-h-[44px] rounded-full bg-[#242426] text-sm">Not now</button>
             </div>
           )}
+        </div>
+      )}
+
+      {d.forecasts && d.forecasts.length > 0 && (
+        <div data-testid="forecasts" className="bg-[#1C1C1E] rounded-2xl p-4">
+          <h2 className="text-[11px] uppercase tracking-wide text-[#8E8E93]">Looking ahead</h2>
+          <ul className="mt-1 space-y-3">
+            {d.forecasts.map(f => (
+              <li key={f.key}>
+                <p className="text-sm font-semibold">{f.headline}</p>
+                <p className="text-xs text-[#8E8E93] mt-0.5">{f.evidence[0]} <span className="uppercase">· {f.confidence} confidence</span></p>
+              </li>
+            ))}
+          </ul>
+          <p className="text-[11px] text-[#8E8E93] mt-2">Patterns from your own logs so far. Not a promise and not medical advice.</p>
         </div>
       )}
 

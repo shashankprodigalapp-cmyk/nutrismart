@@ -8,6 +8,8 @@ import { join } from 'node:path';
  */
 const NOT_EXPORTED: Record<string, string> = {
   search_bonus: 'server counter for the one-time AI search bonus, no personal content',
+  forecasts: 'derived: recomputed from the logs that are exported',
+  forecast_history: 'derived: recomputed from the logs that are exported',
   rate_limits: 'server counter, no personal content',
   v2_rate_limits: 'server counter, no personal content',
   ai_call_log: 'technical log of AI calls, no meal or personal content',
