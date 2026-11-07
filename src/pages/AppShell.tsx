@@ -13,6 +13,8 @@ import { ensurePushSubscription }   from '../lib/pushRegistration';
 import { track, trackSessionStart, installHealthTracking } from '../lib/analytics';
 import FeedbackPrompts              from '../components/FeedbackPrompts';
 import { ThemeHost } from '../components/theme/ThemeHost';
+import { NavIcon } from '../components/screens/NavIcon';
+import { useFlag } from '../lib/useFlag';
 import { CelebrationHost }          from '../components/delight/CelebrationHost';
 
 const TodayTab    = React.lazy(() => import('./tabs/TodayTab'));
@@ -38,6 +40,7 @@ function Spinner() {
 export default function AppShell() {
   const { user }     = useAuth();
   const isRefreshing = useIsRefreshing();
+  const iconsOn = useFlag('ui_screens_a');
 
   useEffect(() => {
     if (!user) return;
@@ -100,7 +103,7 @@ export default function AppShell() {
                   isActive ? 'bg-[#C8F75E]/10 text-[#C8F75E]' : 'text-[#636366] hover:text-white hover:bg-white/[0.04]'
                 }`
               }>
-              <span className="text-base">{tab.icon}</span>
+              <span className="text-base">{iconsOn ? <NavIcon name={tab.label} size={20} /> : tab.icon}</span>
               <span>{tab.label}</span>
             </NavLink>
           ))}
@@ -133,7 +136,7 @@ export default function AppShell() {
                   isActive ? 'text-[#C8F75E]' : 'text-[#636366]'
                 }`
               }>
-              <span className="text-[22px] leading-none">{tab.icon}</span>
+              <span className="text-[22px] leading-none">{iconsOn ? <NavIcon name={tab.label} /> : tab.icon}</span>
               <span className="text-[10px] font-semibold uppercase tracking-[0.5px]">{tab.label}</span>
             </NavLink>
           ))}

@@ -24,3 +24,6 @@ Celebration pop, Today's plate and welcome-back card, each behind its own switch
 
 ## New look (migration 047)
 Evergreen/Ivory theme with Light, Dark and Same-as-phone, behind the switch ui_new_design (off by default). See docs/NEW_DESIGN.md. Per-screen layout changes come next.
+
+## New screens, Stage A (migration 048)
+Today hero (thali + one next step) and line icons, behind ui_screens_a (off by default). See docs/NEW_SCREENS_A.md.

@@ -15,6 +15,7 @@ import { DailyIntelligence } from '../../components/intel/DailyIntelligence';
 import { useFlag } from '../../lib/useFlag';
 import { PlateCard } from '../../components/delight/PlateCard';
 import { WelcomeBackCard } from '../../components/delight/WelcomeBackCard';
+import { TodayHero } from '../../components/screens/TodayHero';
 import { caloriesHidden, plateSectors, setCaloriesHidden } from '../../lib/delight';
 
 interface TodaySummary {
@@ -38,6 +39,7 @@ export default function TodayTab() {
   const intelOn = useFlag('daily_intelligence');
   const plateOn = useFlag('ui_plate');
   const welcomeOn = useFlag('ui_welcome_back');
+  const heroOn = useFlag('ui_screens_a');
   const { carbs: CARBS_GOAL, fat: FAT_GOAL } = useTargets();
   const [hideCal, setHideCal] = useState<boolean>(() => caloriesHidden());
   // Same rule as the Log tab: an active event budget replaces the daily calorie goal.
@@ -104,6 +106,8 @@ export default function TodayTab() {
 
       {welcomeOn && <WelcomeBackCard />}
 
+      {heroOn && <TodayHero sectors={plate} meals={summary.meals} hourIST={hourIST} />}
+
       {intelOn && <DailyIntelligence />}
 
       {checkinsOn && <DailyCheckInCard />}
@@ -121,7 +125,7 @@ export default function TodayTab() {
         </Link>
       )}
 
-      {plateOn && (
+      {plateOn && !heroOn && (
         <PlateCard
           sectors={plate} meals={summary.meals} hourIST={hourIST}
           caloriesHidden={hideCal}
