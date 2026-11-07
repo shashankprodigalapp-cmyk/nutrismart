@@ -57,13 +57,13 @@ describe('blueprint contract: routes and functions', () => {
     const admin = read('src/pages/AdminPage.tsx');
     expect(ADMIN_ROUTES.filter(r => !admin.includes(`'${r}'`))).toEqual([]);
   });
-  it('the blueprint says 41 server functions; the folder agrees', () => {
+  it('the blueprint says 42 server functions; the folder agrees', () => {
     const n = readdirSync(join(root, 'functions/api')).filter(f => f.endsWith('.ts')).length;
-    expect(n).toBe(41);
+    expect(n).toBe(42);
   });
-  it('the blueprint says 48 migrations; the folder agrees', () => {
+  it('the blueprint says 49 migrations; the folder agrees', () => {
     const n = readdirSync(join(root, 'supabase/migrations')).filter(f => f.endsWith('.sql')).length;
-    expect(n).toBe(48);
+    expect(n).toBe(49);
   });
   it('the blueprint lists 16 v2 switches; the migrations create exactly these', () => {
     const found = new Set<string>();

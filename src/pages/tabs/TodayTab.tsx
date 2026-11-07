@@ -16,6 +16,7 @@ import { useFlag } from '../../lib/useFlag';
 import { PlateCard } from '../../components/delight/PlateCard';
 import { WelcomeBackCard } from '../../components/delight/WelcomeBackCard';
 import { TodayHero } from '../../components/screens/TodayHero';
+import { SparksCard } from '../../components/sparks/SparksCard';
 import { caloriesHidden, plateSectors, setCaloriesHidden } from '../../lib/delight';
 
 interface TodaySummary {
@@ -107,6 +108,8 @@ export default function TodayTab() {
       {welcomeOn && <WelcomeBackCard />}
 
       {heroOn && <TodayHero sectors={plate} meals={summary.meals} hourIST={hourIST} />}
+
+      <SparksCard />
 
       {intelOn && <DailyIntelligence />}
 

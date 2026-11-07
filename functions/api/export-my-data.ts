@@ -43,6 +43,7 @@ const TABLES: { table: string; col: string; select: string; filter?: [string, bo
   { table: 'intel_reports',      col: 'user_id', select: '*' },
   { table: 'notification_decisions', col: 'user_id', select: '*' },
   { table: 'intel_messages',     col: 'user_id', select: 'sender_type, reason, body, status, delivery, response, outcome, created_at, sent_at, responded_at', filter: ['status', 'sent'] },
+  { table: 'sparks_ledger',     col: 'user_id', select: '*' },
   { table: 'coach_profiles',     col: 'user_id', select: 'display_name, credentials, status, created_at' },
   { table: 'coach_client_relationships', col: 'client_id', select: 'id, coach_id, status, share_scope, invited_at, accepted_at, ended_at' },
 ];

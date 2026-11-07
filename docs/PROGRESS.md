@@ -27,3 +27,6 @@ Evergreen/Ivory theme with Light, Dark and Same-as-phone, behind the switch ui_n
 
 ## New screens, Stage A (migration 048)
 Today hero (thali + one next step) and line icons, behind ui_screens_a (off by default). See docs/NEW_SCREENS_A.md.
+
+## Stage B: Sparks, levels, daily quests (migration 049)
+Server-verified points from real logs, six levels, two daily quests, behind ui_sparks (off by default). See docs/SPARKS.md.
