@@ -52,6 +52,7 @@ import { useAlerts } from './ContextualAlerts';
 import { track } from '../lib/analytics';
 import { useFlag } from '../lib/useFlag';
 import { parseUtterance } from '../lib/voiceParse';
+import { announceLogged } from '../lib/delight';
 import { VoiceLogButton } from './voice/VoiceLogButton';
 import { VoiceReview, type VoiceRow } from './voice/VoiceReview';
 
@@ -1023,6 +1024,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
 
     await localDb.daily_logs.add(entry);
     if (sheetFood && !editEntry) await recordFoodUsage(sheetFood, entryData.meal, entryData.cal);
+    if (!editEntry) announceLogged(entryData.meal);
 
     // Enqueue sync
     try {
@@ -1245,6 +1247,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
       };
       await localDb.daily_logs.add(entry);
       try { await getSyncManager().enqueue('insert_log', entry); } catch {}
+      announceLogged(meal);
       setEntries(prev => [...prev, entry]);
     }
     track('food_logged', { method: 'template', meal });

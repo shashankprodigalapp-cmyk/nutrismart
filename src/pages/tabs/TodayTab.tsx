@@ -13,6 +13,9 @@ import { FlexibleMealCard } from '../../components/FlexibleMealCard';
 import { DailyCheckInCard } from '../../components/energy/DailyCheckInCard';
 import { DailyIntelligence } from '../../components/intel/DailyIntelligence';
 import { useFlag } from '../../lib/useFlag';
+import { PlateCard } from '../../components/delight/PlateCard';
+import { WelcomeBackCard } from '../../components/delight/WelcomeBackCard';
+import { caloriesHidden, plateSectors, setCaloriesHidden } from '../../lib/delight';
 
 interface TodaySummary {
   calories:  number;
@@ -33,6 +36,10 @@ export default function TodayTab() {
   const reviewOn = useFlag('v2_weekly_review');
   const checkinsOn = useFlag('v2_checkins');
   const intelOn = useFlag('daily_intelligence');
+  const plateOn = useFlag('ui_plate');
+  const welcomeOn = useFlag('ui_welcome_back');
+  const { carbs: CARBS_GOAL, fat: FAT_GOAL } = useTargets();
+  const [hideCal, setHideCal] = useState<boolean>(() => caloriesHidden());
   // Same rule as the Log tab: an active event budget replaces the daily calorie goal.
   const CALORIE_GOAL = eventBudget.active ? eventBudget.daytimeBudget : baseGoal;
   const WATER_GOAL = waterGlasses * GLASS_ML;
@@ -76,6 +83,12 @@ export default function TodayTab() {
   const waterPct   = Math.min(100, Math.round((summary.water_ml / WATER_GOAL)    * 100));
 
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] ?? 'there';
+  const plate = plateSectors(
+    { protein: summary.protein, carbs: summary.carbs, fat: summary.fat, water_ml: summary.water_ml },
+    { protein: PROTEIN_GOAL, carbs: CARBS_GOAL, fat: FAT_GOAL, water_ml: WATER_GOAL },
+  );
+  const hourIST = Number(new Date().toLocaleString('en-GB', { hour: '2-digit', hour12: false, timeZone: 'Asia/Kolkata' })) % 24;
+  const showCal = !(plateOn && hideCal);
 
   return (
     <div className="p-4 pb-24 max-w-lg md:max-w-3xl md:p-8 lg:max-w-4xl mx-auto space-y-4">
@@ -88,6 +101,8 @@ export default function TodayTab() {
       </div>
 
       <ProfileNudge />
+
+      {welcomeOn && <WelcomeBackCard />}
 
       {intelOn && <DailyIntelligence />}
 
@@ -106,7 +121,16 @@ export default function TodayTab() {
         </Link>
       )}
 
+      {plateOn && (
+        <PlateCard
+          sectors={plate} meals={summary.meals} hourIST={hourIST}
+          caloriesHidden={hideCal}
+          onToggleCalories={() => { const next = !hideCal; setCaloriesHidden(next); setHideCal(next); }}
+        />
+      )}
+
       {/* Calories ring card */}
+      {showCal && (
       <div className="bg-[#1C1C1E] rounded-2xl p-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium text-[#EBEBF5]/60">Calories today</span>
@@ -148,6 +172,7 @@ export default function TodayTab() {
           {Math.round(summary.calories)} <span className="text-base font-normal text-[#636366]">kcal</span>
         </p>
       </div>
+      )}
 
       {/* Macro chips */}
       <div className="grid grid-cols-3 gap-2">

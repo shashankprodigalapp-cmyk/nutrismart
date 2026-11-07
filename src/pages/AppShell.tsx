@@ -12,6 +12,7 @@ import { localDb }                  from '../lib/localDb';
 import { ensurePushSubscription }   from '../lib/pushRegistration';
 import { track, trackSessionStart, installHealthTracking } from '../lib/analytics';
 import FeedbackPrompts              from '../components/FeedbackPrompts';
+import { CelebrationHost }          from '../components/delight/CelebrationHost';
 
 const TodayTab    = React.lazy(() => import('./tabs/TodayTab'));
 const LogTab      = React.lazy(() => import('./tabs/LogTab'));
@@ -83,6 +84,7 @@ export default function AppShell() {
   return (
     <div className="min-h-dvh bg-[#111113] flex">
       <FeedbackPrompts />
+      <CelebrationHost />
       {/* ── Desktop sidebar (md+) ── */}
       <aside className="hidden md:flex flex-col w-56 lg:w-64 border-r border-white/[0.07] bg-[#111113] sticky top-0 h-screen shrink-0">
         <div className="px-5 py-6">

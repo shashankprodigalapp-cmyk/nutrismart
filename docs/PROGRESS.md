@@ -18,3 +18,6 @@
 
 ## P8 predictive insights (migration 045)
 Five forecasts built as pure code, each behind its own switch (all off by default; energy patterns stays off until reviewed). See docs/FORECASTING_ENGINE.md.
+
+## Stage 1 delight layer (migration 046)
+Celebration pop, Today's plate and welcome-back card, each behind its own switch (all off by default). See docs/DELIGHT_LAYER.md. Points, levels, Food Explorer and the light theme are not built yet.
