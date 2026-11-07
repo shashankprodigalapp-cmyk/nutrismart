@@ -1,0 +1,97 @@
+/* newdesign.css — NutriSmart IQ look. Applies ONLY when <html data-ui="new"> is set (switch ui_new_design).
+   Colours come from the --n-* tokens below. Nothing here runs while the switch is off. */
+
+html[data-ui="new"][data-theme="light"] { color-scheme: light;
+  --n-bg: #F5F3ED;
+  --n-card: #FBFAF6;
+  --n-card2: #EFEBE0;
+  --n-card3: #E6E1D3;
+  --n-card4: #E0DACA;
+  --n-t1: #183C32;
+  --n-t2: #33453D;
+  --n-t3: #475850;
+  --n-t4: #52625A;
+  --n-accent: #2F6B55;
+  --n-red: #B42318;
+  --n-amber: #8A5300;
+  --n-green: #1F7A3A;
+  --n-lav: #6B4FC4;
+  --n-sky: #0F6C94;
+  --n-pink: #B02A55;
+  --n-blue: #2C5FC0;
+  --n-gold: #7A5B1E;
+  --n-yellow: #7A5700;
+  --n-lime: #D7F27A;
+  --n-line: #E6E1D3;
+}
+
+html[data-ui="new"][data-theme="dark"] { color-scheme: dark;
+  --n-bg: #0E1B17;
+  --n-card: #15281F;
+  --n-card2: #1B3329;
+  --n-card3: #234236;
+  --n-card4: #2C4F42;
+  --n-t1: #F2F0E8;
+  --n-t2: #CFD6D0;
+  --n-t3: #A9B4AD;
+  --n-t4: #97A59D;
+  --n-accent: #C8F75E;
+  --n-red: #FF6B6B;
+  --n-amber: #FFB347;
+  --n-green: #6BCB77;
+  --n-lav: #C4A8FF;
+  --n-sky: #7DD3FC;
+  --n-pink: #FF8FAB;
+  --n-blue: #8DB4FF;
+  --n-gold: #E8D5B0;
+  --n-yellow: #FFD93D;
+  --n-lime: #C8F75E;
+  --n-line: #23423A;
+}
+
+html[data-ui="new"], html[data-ui="new"] body, html[data-ui="new"] #root { background: var(--n-bg); color: var(--n-t1); }
+html[data-ui="new"] .bg-\[\#111113\] { background-color: var(--n-bg); }
+html[data-ui="new"] .bg-\[\#1C1C1E\] { background-color: var(--n-card); }
+html[data-ui="new"] .bg-\[\#242426\] { background-color: var(--n-card2); }
+html[data-ui="new"] .bg-\[\#2C2C2E\] { background-color: var(--n-card3); }
+html[data-ui="new"] .bg-\[\#3C3C3E\] { background-color: var(--n-card4); }
+html[data-ui="new"] .bg-white { background-color: var(--n-card); }
+html[data-ui="new"] .bg-\[\#C8F75E\] { background-color: var(--n-lime); }
+html[data-ui="new"] .text-\[\#F5F5F5\] { color: var(--n-t1); }
+html[data-ui="new"] .text-\[\#EBEBF5\] { color: var(--n-t2); }
+html[data-ui="new"] .text-\[\#C7C7CC\] { color: var(--n-t2); }
+html[data-ui="new"] .text-\[\#A1A1A1\] { color: var(--n-t3); }
+html[data-ui="new"] .text-\[\#8E8E93\] { color: var(--n-t3); }
+html[data-ui="new"] .text-\[\#636366\] { color: var(--n-t4); }
+html[data-ui="new"] .text-\[\#C8F75E\] { color: var(--n-accent); }
+html[data-ui="new"] .text-\[\#FF6B6B\] { color: var(--n-red); }
+html[data-ui="new"] .text-\[\#FF5D5D\] { color: var(--n-red); }
+html[data-ui="new"] .text-\[\#FF453A\] { color: var(--n-red); }
+html[data-ui="new"] .text-\[\#ffb3b3\] { color: var(--n-red); }
+html[data-ui="new"] .text-\[\#FFB347\] { color: var(--n-amber); }
+html[data-ui="new"] .text-\[\#FFB340\] { color: var(--n-amber); }
+html[data-ui="new"] .text-\[\#6BCB77\] { color: var(--n-green); }
+html[data-ui="new"] .text-\[\#30D158\] { color: var(--n-green); }
+html[data-ui="new"] .text-\[\#C4A8FF\] { color: var(--n-lav); }
+html[data-ui="new"] .text-\[\#7DD3FC\] { color: var(--n-sky); }
+html[data-ui="new"] .text-\[\#FF8FAB\] { color: var(--n-pink); }
+html[data-ui="new"] .text-\[\#8DB4FF\] { color: var(--n-blue); }
+html[data-ui="new"] .text-\[\#E8D5B0\] { color: var(--n-gold); }
+html[data-ui="new"] .text-\[\#FFD93D\] { color: var(--n-yellow); }
+html[data-ui="new"] .text-white, html[data-ui="new"] .text-gray-400 { color: var(--n-t1); }
+html[data-ui="new"] .text-red-400 { color: var(--n-red); }
+html[data-ui="new"] .text-yellow-400 { color: var(--n-yellow); }
+html[data-ui="new"] .text-green-400 { color: var(--n-green); }
+html[data-ui="new"] .placeholder-\[\#636366\]::placeholder { color: var(--n-t4); }
+html[data-ui="new"] .border-\[\#C8F75E\] { border-color: var(--n-accent); }
+html[data-ui="new"] [class*="border-white/"] { border-color: var(--n-line); }
+html[data-ui="new"][data-theme="light"] [class*="bg-white/"] { background-color: rgba(24,60,50,0.06); }
+html[data-ui="new"][data-theme="dark"] [class*="bg-white/"] { background-color: rgba(242,240,232,0.07); }
+html[data-ui="new"] .bg-\[\#FF5D5D\].text-white, html[data-ui="new"] .bg-\[\#FF5D5D\] .text-white, html[data-ui="new"] .bg-\[\#FF453A\].text-white, html[data-ui="new"] .bg-\[\#FF453A\] .text-white, html[data-ui="new"] .bg-\[\#30D158\].text-white, html[data-ui="new"] .bg-\[\#30D158\] .text-white, html[data-ui="new"] .bg-\[\#25D366\].text-white, html[data-ui="new"] .bg-\[\#25D366\] .text-white, html[data-ui="new"] .bg-\[\#FF6B6B\].text-white, html[data-ui="new"] .bg-\[\#FF6B6B\] .text-white, html[data-ui="new"] .bg-\[\#6BCB77\].text-white, html[data-ui="new"] .bg-\[\#6BCB77\] .text-white, html[data-ui="new"] .bg-\[\#FFB347\].text-white, html[data-ui="new"] .bg-\[\#FFB347\] .text-white { color: #FFFFFF; }
+html[data-ui="new"] .bg-\[\#C8F75E\] { color: #183C32; }
+html[data-ui="new"][data-theme="light"] .bg-\[\#1C1C1E\] { box-shadow: 0 0 0 1px var(--n-line); }
+html[data-ui="new"] [data-testid="plate-card"] path[stroke] { stroke: var(--n-card); }
+html[data-ui="new"] [data-testid="plate-card"] path[fill="#2C2C2E"] { fill: var(--n-card3); }
+html[data-ui="new"] [data-testid="plate-card"] circle { fill: var(--n-card); }
+html[data-ui="new"][data-theme="light"] [data-testid="plate-card"] path[fill="#C8F75E"] { fill: #2F6B55; }
+html[data-ui="new"] h1 { font-family: "Playfair Display", Georgia, serif; letter-spacing: -0.01em; }

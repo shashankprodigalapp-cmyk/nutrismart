@@ -21,3 +21,6 @@ Five forecasts built as pure code, each behind its own switch (all off by defaul
 
 ## Stage 1 delight layer (migration 046)
 Celebration pop, Today's plate and welcome-back card, each behind its own switch (all off by default). See docs/DELIGHT_LAYER.md. Points, levels, Food Explorer and the light theme are not built yet.
+
+## New look (migration 047)
+Evergreen/Ivory theme with Light, Dark and Same-as-phone, behind the switch ui_new_design (off by default). See docs/NEW_DESIGN.md. Per-screen layout changes come next.

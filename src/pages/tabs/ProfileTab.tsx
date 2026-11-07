@@ -2,6 +2,7 @@
  * ProfileTab.tsx — User profile, subscription status, settings
  */
 import { useFlag } from '../../lib/useFlag';
+import { AppearanceCard } from '../../components/theme/AppearanceCard';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
@@ -611,6 +612,8 @@ export default function ProfileTab() {
             </a>
           ))}
         </div>
+
+        <AppearanceCard />
 
         {/* Sign out */}
         <button
