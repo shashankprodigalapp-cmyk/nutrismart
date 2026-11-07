@@ -78,6 +78,10 @@ html[data-ui="new"] .text-\[\#FF8FAB\] { color: var(--n-pink); }
 html[data-ui="new"] .text-\[\#8DB4FF\] { color: var(--n-blue); }
 html[data-ui="new"] .text-\[\#E8D5B0\] { color: var(--n-gold); }
 html[data-ui="new"] .text-\[\#FFD93D\] { color: var(--n-yellow); }
+html[data-ui="new"] .text-\[\#FF9F0A\] { color: var(--n-amber); }
+html[data-ui="new"] .text-\[\#7AB8FF\] { color: var(--n-blue); }
+html[data-ui="new"] .text-\[\#BF5AF2\] { color: var(--n-lav); }
+html[data-ui="new"] .text-\[\#34C759\] { color: var(--n-green); }
 html[data-ui="new"] .text-white, html[data-ui="new"] .text-gray-400 { color: var(--n-t1); }
 html[data-ui="new"] .text-red-400 { color: var(--n-red); }
 html[data-ui="new"] .text-yellow-400 { color: var(--n-yellow); }
@@ -90,6 +94,48 @@ html[data-ui="new"][data-theme="dark"] [class*="bg-white/"] { background-color: 
 html[data-ui="new"] .bg-\[\#FF5D5D\].text-white, html[data-ui="new"] .bg-\[\#FF5D5D\] .text-white, html[data-ui="new"] .bg-\[\#FF453A\].text-white, html[data-ui="new"] .bg-\[\#FF453A\] .text-white, html[data-ui="new"] .bg-\[\#30D158\].text-white, html[data-ui="new"] .bg-\[\#30D158\] .text-white, html[data-ui="new"] .bg-\[\#25D366\].text-white, html[data-ui="new"] .bg-\[\#25D366\] .text-white, html[data-ui="new"] .bg-\[\#FF6B6B\].text-white, html[data-ui="new"] .bg-\[\#FF6B6B\] .text-white, html[data-ui="new"] .bg-\[\#6BCB77\].text-white, html[data-ui="new"] .bg-\[\#6BCB77\] .text-white, html[data-ui="new"] .bg-\[\#FFB347\].text-white, html[data-ui="new"] .bg-\[\#FFB347\] .text-white { color: #FFFFFF; }
 html[data-ui="new"] .bg-\[\#C8F75E\] { color: #183C32; }
 html[data-ui="new"][data-theme="light"] .bg-\[\#1C1C1E\] { box-shadow: 0 0 0 1px var(--n-line); }
+html[data-ui="new"] [class*="text-[#F5F5F5]/"] { color: var(--n-t1); }
+html[data-ui="new"] [class*="text-[#EBEBF5]/"] { color: var(--n-t2); }
+html[data-ui="new"] [class*="text-[#C7C7CC]/"] { color: var(--n-t2); }
+html[data-ui="new"] [class*="text-[#A1A1A1]/"] { color: var(--n-t3); }
+html[data-ui="new"] [class*="text-[#8E8E93]/"] { color: var(--n-t3); }
+html[data-ui="new"] [class*="text-[#636366]/"] { color: var(--n-t4); }
+html[data-ui="new"] [class*="text-[#C8F75E]/"] { color: var(--n-accent); }
+html[data-ui="new"] [class*="text-[#FF6B6B]/"] { color: var(--n-red); }
+html[data-ui="new"] [class*="text-[#FF5D5D]/"] { color: var(--n-red); }
+html[data-ui="new"] [class*="text-[#FF453A]/"] { color: var(--n-red); }
+html[data-ui="new"] [class*="text-[#ffb3b3]/"] { color: var(--n-red); }
+html[data-ui="new"] [class*="text-[#FFB347]/"] { color: var(--n-amber); }
+html[data-ui="new"] [class*="text-[#FFB340]/"] { color: var(--n-amber); }
+html[data-ui="new"] [class*="text-[#6BCB77]/"] { color: var(--n-green); }
+html[data-ui="new"] [class*="text-[#30D158]/"] { color: var(--n-green); }
+html[data-ui="new"] [class*="text-[#C4A8FF]/"] { color: var(--n-lav); }
+html[data-ui="new"] [class*="text-[#7DD3FC]/"] { color: var(--n-sky); }
+html[data-ui="new"] [class*="text-[#FF8FAB]/"] { color: var(--n-pink); }
+html[data-ui="new"] [class*="text-[#8DB4FF]/"] { color: var(--n-blue); }
+html[data-ui="new"] [class*="text-[#E8D5B0]/"] { color: var(--n-gold); }
+html[data-ui="new"] [class*="text-[#FFD93D]/"] { color: var(--n-yellow); }
+html[data-ui="new"] [class*="text-[#FF9F0A]/"] { color: var(--n-amber); }
+html[data-ui="new"] [class*="text-[#7AB8FF]/"] { color: var(--n-blue); }
+html[data-ui="new"] [class*="text-[#BF5AF2]/"] { color: var(--n-lav); }
+html[data-ui="new"] [class*="text-[#34C759]/"] { color: var(--n-green); }
+html[data-ui="new"] [style^="color: rgb(48, 209, 88)"], html[data-ui="new"] [style*="; color: rgb(48, 209, 88)"] { color: var(--n-green) !important; }
+html[data-ui="new"] [style^="color: rgb(107, 203, 119)"], html[data-ui="new"] [style*="; color: rgb(107, 203, 119)"] { color: var(--n-green) !important; }
+html[data-ui="new"] [style^="color: rgb(255, 159, 10)"], html[data-ui="new"] [style*="; color: rgb(255, 159, 10)"] { color: var(--n-amber) !important; }
+html[data-ui="new"] [style^="color: rgb(255, 179, 71)"], html[data-ui="new"] [style*="; color: rgb(255, 179, 71)"] { color: var(--n-amber) !important; }
+html[data-ui="new"] [style^="color: rgb(255, 179, 64)"], html[data-ui="new"] [style*="; color: rgb(255, 179, 64)"] { color: var(--n-amber) !important; }
+html[data-ui="new"] [style^="color: rgb(255, 69, 58)"], html[data-ui="new"] [style*="; color: rgb(255, 69, 58)"] { color: var(--n-red) !important; }
+html[data-ui="new"] [style^="color: rgb(255, 107, 107)"], html[data-ui="new"] [style*="; color: rgb(255, 107, 107)"] { color: var(--n-red) !important; }
+html[data-ui="new"] [style^="color: rgb(141, 180, 255)"], html[data-ui="new"] [style*="; color: rgb(141, 180, 255)"] { color: var(--n-blue) !important; }
+html[data-ui="new"] [style^="color: rgb(122, 184, 255)"], html[data-ui="new"] [style*="; color: rgb(122, 184, 255)"] { color: var(--n-blue) !important; }
+html[data-ui="new"] [style^="color: rgb(196, 168, 255)"], html[data-ui="new"] [style*="; color: rgb(196, 168, 255)"] { color: var(--n-lav) !important; }
+html[data-ui="new"] [style^="color: rgb(191, 90, 242)"], html[data-ui="new"] [style*="; color: rgb(191, 90, 242)"] { color: var(--n-lav) !important; }
+html[data-ui="new"] [style^="color: rgb(255, 143, 171)"], html[data-ui="new"] [style*="; color: rgb(255, 143, 171)"] { color: var(--n-pink) !important; }
+html[data-ui="new"] [style^="color: rgb(255, 217, 61)"], html[data-ui="new"] [style*="; color: rgb(255, 217, 61)"] { color: var(--n-yellow) !important; }
+html[data-ui="new"] [style^="color: rgb(200, 247, 94)"], html[data-ui="new"] [style*="; color: rgb(200, 247, 94)"] { color: var(--n-accent) !important; }
+html[data-ui="new"] [style^="color: rgb(99, 99, 102)"], html[data-ui="new"] [style*="; color: rgb(99, 99, 102)"] { color: var(--n-t4) !important; }
+html[data-ui="new"] [style^="color: rgb(142, 142, 147)"], html[data-ui="new"] [style*="; color: rgb(142, 142, 147)"] { color: var(--n-t3) !important; }
+html[data-ui="new"] [style^="color: rgb(161, 161, 161)"], html[data-ui="new"] [style*="; color: rgb(161, 161, 161)"] { color: var(--n-t3) !important; }
 html[data-ui="new"] [data-testid="plate-card"] path[stroke] { stroke: var(--n-card); }
 html[data-ui="new"] [data-testid="plate-card"] path[fill="#2C2C2E"] { fill: var(--n-card3); }
 html[data-ui="new"] [data-testid="plate-card"] circle { fill: var(--n-card); }

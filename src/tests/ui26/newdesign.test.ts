@@ -60,7 +60,7 @@ describe('stylesheet is fenced', () => {
   it('every rule starts with the new-look attribute, so switch off = old look', () => {
     const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
     const selectors = stripped.split('}').map(b => b.split('{')[0].trim()).filter(Boolean);
-    for (const sel of selectors) for (const part of sel.split(',')) expect(part.trim().startsWith('html[data-ui="new"]'), part).toBe(true);
+    for (const sel of selectors) for (const part of sel.split(/,\s*(?=html\[)/)) expect(part.trim().startsWith('html[data-ui="new"]'), part).toBe(true);
   });
   it('white text stays white on solid colour buttons, lime buttons keep dark text', () => {
     expect(css).toMatch(/bg-\\\[\\#FF5D5D\\\]\.text-white/);
@@ -91,5 +91,16 @@ describe('wiring', () => {
   it('the radio buttons are reachable (44px) and labelled', () => {
     const c = read('src/components/theme/AppearanceCard.tsx');
     expect(c).toContain('min-h-[44px]'); expect(c).toContain('role="radiogroup"'); expect(c).toContain('aria-checked');
+  });
+});
+
+describe('colours that carry an opacity or are set in code (found in a live check)', () => {
+  it('opacity variants like text-[#EBEBF5]/70 are re-pointed, so they cannot vanish on ivory', () => {
+    expect(css).toContain('[class*="text-[#EBEBF5]/"]');
+    expect(css).toContain('[class*="text-[#8E8E93]/"]');
+  });
+  it('colours set inline (macro numbers) are re-pointed with !important', () => {
+    expect(css).toContain('[style^="color: rgb(48, 209, 88)"]');
+    expect(css).toMatch(/\[style\^="color: rgb\(99, 99, 102\)"\][^}]*!important/);
   });
 });
