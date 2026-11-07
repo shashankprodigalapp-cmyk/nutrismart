@@ -13,7 +13,7 @@ import { LEVELS, levelFor, POINTS_NAME } from '../lib/sparks';
 import { REGIONS, explorerLine, nextIdea, regionsTried } from '../lib/regions';
 import { LESSONS } from '../content/lessons';
 import { setLang, useLang } from '../lib/lang';
-import { tr } from '../lib/copyHi';
+import { hiExplorerLine, hiIdea, tr } from '../lib/copyHi';
 
 export default function JourneyPage() {
   const { user } = useAuth();
@@ -64,14 +64,14 @@ export default function JourneyPage() {
 
           <section data-testid="journey-explorer" className="bg-[#1C1C1E] rounded-2xl p-4" aria-label={tr(lang, 'Food Explorer')}>
             <h2 className="text-[11px] uppercase tracking-wide text-[#8E8E93]">{tr(lang, 'Food Explorer')}</h2>
-            <p className="mt-1 text-sm">{explorerLine(tried.length)}</p>
+            <p className="mt-1 text-sm">{lang === 'hi' ? hiExplorerLine(tried.length, REGIONS.length) : explorerLine(tried.length)}</p>
             <ul className="mt-3 flex flex-wrap gap-2">
               {REGIONS.map(r => {
                 const t = tried.includes(r.key);
                 return <li key={r.key} className={'rounded-full px-3 min-h-[36px] inline-flex items-center text-xs ' + (t ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#EBEBF5]')}>{t ? '✓ ' : ''}{r.label}</li>;
               })}
             </ul>
-            {idea && <p className="mt-3 text-sm text-[#EBEBF5]/80">If you feel like it: {idea.label} — {idea.ideas.join(', ')}.</p>}
+            {idea && <p className="mt-3 text-sm text-[#EBEBF5]/80">{lang === 'hi' ? hiIdea(idea.label, idea.ideas) : `If you feel like it: ${idea.label} — ${idea.ideas.join(', ')}.`}</p>}
             <p className="mt-2 text-xs text-[#8E8E93]">{tr(lang, 'Based on the foods you have logged on this device.')}</p>
           </section>
 

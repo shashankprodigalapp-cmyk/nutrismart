@@ -12,7 +12,6 @@ import { localDb }                  from '../lib/localDb';
 import { ensurePushSubscription }   from '../lib/pushRegistration';
 import { track, trackSessionStart, installHealthTracking } from '../lib/analytics';
 import FeedbackPrompts              from '../components/FeedbackPrompts';
-import { ThemeHost } from '../components/theme/ThemeHost';
 import { NavIcon } from '../components/screens/NavIcon';
 import { useFlag } from '../lib/useFlag';
 import { CelebrationHost }          from '../components/delight/CelebrationHost';
@@ -87,7 +86,6 @@ export default function AppShell() {
 
   return (
     <div className="min-h-dvh bg-[#111113] flex">
-      <ThemeHost />
       <FeedbackPrompts />
       <CelebrationHost />
       {/* ── Desktop sidebar (md+) ── */}

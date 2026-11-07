@@ -45,3 +45,10 @@ export function hinglishNext(a: NextAction): NextAction {
   }
 }
 export const HI_COPY = HI;
+
+export function hiExplorerLine(tried: number, total: number): string {
+  if (tried <= 0) return 'Kisi doosre regional kitchen ka koi dish try karein, woh yahan dikhega.';
+  if (tried >= total) return `Aapne saare ${total} regional kitchens try kar liye. Kya variety hai.`;
+  return `Aapne ${tried} / ${total} regional kitchens try kiye hain.`;
+}
+export function hiIdea(label: string, ideas: string[]): string { return `Mann ho toh: ${label} — ${ideas.join(', ')}.`; }

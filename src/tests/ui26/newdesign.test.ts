@@ -77,7 +77,7 @@ describe('wiring', () => {
     expect(/DROP|DELETE|ALTER\s+TABLE/i.test(sql)).toBe(false);
   });
   it('shell mounts the host; Profile shows the card above Sign out', () => {
-    expect(read('src/pages/AppShell.tsx')).toContain('<ThemeHost />');
+    expect(read('src/App.tsx')).toContain('<ThemeHost />');
     const p = read('src/pages/tabs/ProfileTab.tsx');
     expect(p).toContain('<AppearanceCard />');
     expect(p.indexOf('<AppearanceCard />')).toBeLessThan(p.indexOf('{/* Sign out */}'));
