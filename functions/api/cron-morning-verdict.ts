@@ -243,7 +243,7 @@ async function computeVerdict(env: Env, userId: string): Promise<Verdict | null>
   } else if (yGL !== null && yGL > 45) {
     if (variant === 'scientific') {
       headline   = `Yesterday: GL ${yGL} (target <45)`;
-      suggestion = `Glycemic load ran ${yGL - 45} points over. Protein at breakfast slows glucose absorption — front-load it to flatten today's curve.`;
+      suggestion = `Glycemic load was ${yGL} yesterday. Protein at breakfast slows glucose absorption — front-load it to flatten today's curve.`;
     } else {
       headline   = `Yesterday ran a little high — no stress`;
       suggestion = `GL ${yGL} happens to everyone. Today's a clean slate: a protein-rich breakfast is the easiest win, and you've done it plenty of times before.`;

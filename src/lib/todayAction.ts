@@ -5,7 +5,7 @@
  */
 import type { PlateSector } from './delight';
 
-export interface NextAction { id: string; title: string; body: string; cta: string; to: string; }
+export interface NextAction { id: string; title: string; body: string; cta: string; to: string; n?: number; }
 
 function pctOf(sectors: PlateSector[], key: PlateSector['key']): number {
   return sectors.find(s => s.key === key)?.pct ?? 0;
@@ -18,10 +18,10 @@ export function nextAction(sectors: PlateSector[], hourIST: number, meals: numbe
     return { id: 'first-meal', title: 'Start with one meal', body: 'Log what you ate, even a small one. Your plate fills in from there.', cta: 'Log a meal', to: '/app/log' };
   }
   if (hourIST >= 14 && protein < 40) {
-    return { id: 'protein', title: 'Add some protein', body: `Protein is at ${protein}%. Dal, paneer, eggs or curd are easy options.`, cta: 'Log a meal', to: '/app/log' };
+    return { id: 'protein', n: protein, title: 'Add some protein', body: `Protein is at ${protein}%. Dal, paneer, eggs or curd are easy options.`, cta: 'Log a meal', to: '/app/log' };
   }
   if (hourIST >= 11 && water < 40) {
-    return { id: 'water', title: 'Time for a glass of water', body: `Water is at ${water}%. A glass now would help.`, cta: 'Open Log', to: '/app/log' };
+    return { id: 'water', n: water, title: 'Time for a glass of water', body: `Water is at ${water}%. A glass now would help.`, cta: 'Open Log', to: '/app/log' };
   }
   if (protein >= 100) {
     return { id: 'protein-done', title: 'Protein is covered', body: 'Nicely done. See what your week is telling you.', cta: 'See Insights', to: '/app/insights' };

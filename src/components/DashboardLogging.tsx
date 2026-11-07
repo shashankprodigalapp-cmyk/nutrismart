@@ -1422,7 +1422,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
         {/* AI search button */}
         <button
           onClick={handleAISearch}
-          className="w-full mt-2 bg-[#C8F75E]/10 border border-[#C8F75E]/25 rounded-xl py-2.5 text-[12px] font-semibold text-[#C8F75E] flex items-center justify-center gap-2"
+          className="min-h-[44px] w-full mt-2 bg-[#C8F75E]/10 border border-[#C8F75E]/25 rounded-xl py-2.5 text-[12px] font-semibold text-[#C8F75E] flex items-center justify-center gap-2"
         >
           🤖 Not found? Search with AI
           {!aiOk && <span className="text-[10px] text-[#636366]">(Pro)</span>}
@@ -1462,7 +1462,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
           <button
             onClick={() => setAiError(null)}
             aria-label="Dismiss"
-            className="text-[#636366] text-[16px] flex-shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center"
+            className="text-[#636366] text-[16px] flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
           >×</button>
         </div>
       )}

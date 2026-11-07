@@ -46,7 +46,7 @@ describe('colour contrast (both themes)', () => {
   for (const theme of ['light', 'dark'] as const) {
     it(`${theme}: every text colour reads on page, card and card2 (4.5:1)`, () => {
       const t = tokens(theme);
-      for (const k of TEXT) for (const bg of ['bg', 'card', 'card2']) {
+      for (const k of TEXT) for (const bg of ['bg', 'card', 'card2', 'card3']) {
         expect(ratio(t[k], t[bg]), `${theme} ${k} on ${bg}`).toBeGreaterThanOrEqual(4.5);
       }
     });

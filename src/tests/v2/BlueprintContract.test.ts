@@ -61,9 +61,9 @@ describe('blueprint contract: routes and functions', () => {
     const n = readdirSync(join(root, 'functions/api')).filter(f => f.endsWith('.ts')).length;
     expect(n).toBe(42);
   });
-  it('the blueprint says 49 migrations; the folder agrees', () => {
+  it('the blueprint says 50 migrations; the folder agrees', () => {
     const n = readdirSync(join(root, 'supabase/migrations')).filter(f => f.endsWith('.sql')).length;
-    expect(n).toBe(49);
+    expect(n).toBe(50);
   });
   it('the blueprint lists 16 v2 switches; the migrations create exactly these', () => {
     const found = new Set<string>();

@@ -1,11 +1,13 @@
 /**
  * TodayHero.tsx — the new top of the Today tab: today's thali and one next step.
- * Shown when the switch 'ui_screens_a' is on. Uses only totals the app already computes.
+ * Shown when the switch 'ui_screens_a' is on. Uses only totals the app already computes. English or Hinglish.
  */
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { type PlateSector } from '../../lib/delight';
 import { nextAction } from '../../lib/todayAction';
+import { useLang } from '../../lib/lang';
+import { hinglishNext, tr } from '../../lib/copyHi';
 
 const COLORS: Record<PlateSector['key'], string> = { protein: '#C8F75E', carbs: '#FF9F0A', fat: '#BF5AF2', water: '#64D2FF' };
 const PATHS: Record<PlateSector['key'], string> = {
@@ -16,7 +18,9 @@ const PATHS: Record<PlateSector['key'], string> = {
 };
 
 export function TodayHero({ sectors, meals, hourIST }: { sectors: PlateSector[]; meals: number; hourIST: number }) {
-  const a = nextAction(sectors, hourIST, meals);
+  const lang = useLang();
+  const base = nextAction(sectors, hourIST, meals);
+  const a = lang === 'hi' ? hinglishNext(base) : base;
   const label = sectors.map(s => `${s.label} ${s.pct} percent`).join(', ');
   return (
     <section data-testid="today-hero" className="bg-[#1C1C1E] rounded-3xl p-5" aria-label="Today at a glance">
@@ -31,7 +35,7 @@ export function TodayHero({ sectors, meals, hourIST }: { sectors: PlateSector[];
           <circle cx="80" cy="80" r="20" fill="#000" />
         </svg>
         <div className="flex-1 min-w-0">
-          <p className="text-[11px] uppercase tracking-wide text-[#8E8E93]">Your next step</p>
+          <p className="text-[11px] uppercase tracking-wide text-[#8E8E93]">{tr(lang, 'Your next step')}</p>
           <h2 className="text-lg font-semibold leading-snug mt-1">{a.title}</h2>
           <p className="text-sm text-[#EBEBF5]/70 mt-1">{a.body}</p>
         </div>

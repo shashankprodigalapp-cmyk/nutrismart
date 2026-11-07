@@ -3,11 +3,14 @@
  * Shown when the switch 'ui_sparks' is on. The numbers come from the server (/api/progress), which awards from real logs.
  */
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useFlag } from '../../lib/useFlag';
 import { coachApi } from '../../lib/coachApi';
 import { LOGGED_EVENT } from '../../lib/delight';
 import { POINTS_NAME, SPARKS_NOTE, levelUpLine, shouldShowLevelUp, type LevelInfo, type Quest } from '../../lib/sparks';
+import { useLang } from '../../lib/lang';
+import { tr } from '../../lib/copyHi';
 
 interface Progress { total: number; today: number; cap: number; level: LevelInfo; quests: Quest[]; }
 const SEEN_KEY = 'ns-level-seen';
@@ -16,7 +19,9 @@ const setSeen = (n: number) => { try { localStorage.setItem(SEEN_KEY, String(n))
 
 export function SparksCard() {
   const { user } = useAuth();
+  const lang = useLang();
   const on = useFlag('ui_sparks');
+  const journeyOn = useFlag('ui_journey');
   const [p, setP] = useState<Progress | null>(null);
   const [up, setUp] = useState<string | null>(null);
 
@@ -41,10 +46,12 @@ export function SparksCard() {
 
   if (!on || !p) return null;
   const l = p.level;
+  const toNext = l.toNext === null ? tr(lang, 'You are at the top level.')
+    : lang === 'hi' ? `${l.nextName} tak ${l.toNext} ${POINTS_NAME} baaki` : `${l.toNext} ${POINTS_NAME} to ${l.nextName}`;
   return (
     <section data-testid="sparks-card" className="bg-[#1C1C1E] rounded-2xl p-4" aria-label={POINTS_NAME}>
       <div className="flex items-center justify-between">
-        <h2 className="text-[11px] uppercase tracking-wide text-[#8E8E93]">Your {POINTS_NAME}</h2>
+        <h2 className="text-[11px] uppercase tracking-wide text-[#8E8E93]">{tr(lang, 'Your Sparks')}</h2>
         <span className="text-sm font-semibold">✨ {p.total}</span>
       </div>
       {up && <p role="status" className="mt-2 rounded-xl bg-[#C8F75E]/15 px-3 py-2 text-sm font-medium">{up}</p>}
@@ -52,18 +59,19 @@ export function SparksCard() {
       <div className="mt-2 h-2 rounded-full bg-[#2C2C2E] overflow-hidden" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={l.pct} aria-label={`Progress to the next level, ${l.pct} percent`}>
         <div className="h-full rounded-full bg-[#C8F75E]" style={{ width: `${l.pct}%` }} />
       </div>
-      <p className="mt-1 text-xs text-[#8E8E93]">{l.toNext === null ? 'You are at the top level.' : `${l.toNext} ${POINTS_NAME} to ${l.nextName}`}</p>
-      <p className="mt-3 text-[11px] uppercase tracking-wide text-[#8E8E93]">Today · {p.today} of {p.cap}</p>
+      <p className="mt-1 text-xs text-[#8E8E93]">{toNext}</p>
+      <p className="mt-3 text-[11px] uppercase tracking-wide text-[#8E8E93]">{tr(lang, 'Today')} · {p.today} / {p.cap}</p>
       <ul className="mt-1 space-y-1">
         {p.quests.map(q => (
           <li key={q.id} className="flex items-center gap-2 text-sm">
             <span aria-hidden="true">{q.done ? '✅' : '○'}</span>
-            <span className={q.done ? 'text-[#8E8E93]' : ''}>{q.label}</span>
+            <span className={q.done ? 'text-[#8E8E93]' : ''}>{tr(lang, q.label)}</span>
             <span className="sr-only">{q.done ? 'done' : 'not yet'}</span>
           </li>
         ))}
       </ul>
-      <p className="mt-3 text-xs text-[#8E8E93]">{SPARKS_NOTE}</p>
+      <p className="mt-3 text-xs text-[#8E8E93]">{tr(lang, SPARKS_NOTE)}</p>
+      {journeyOn && <Link to="/app/journey" data-testid="journey-link" className="mt-2 inline-flex items-center min-h-[44px] text-sm text-[#C8F75E] underline">{tr(lang, 'See your journey')} →</Link>}
     </section>
   );
 }

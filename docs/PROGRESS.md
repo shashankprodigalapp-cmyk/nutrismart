@@ -30,3 +30,6 @@ Today hero (thali + one next step) and line icons, behind ui_screens_a (off by d
 
 ## Stage B: Sparks, levels, daily quests (migration 049)
 Server-verified points from real logs, six levels, two daily quests, behind ui_sparks (off by default). See docs/SPARKS.md.
+
+## Stage C: Journey, Food Explorer, Kitchen Detective, Hinglish (migration 050)
+Journey page with levels and regional kitchens tried (ui_journey), Detective lessons held back until professionally reviewed (ui_detective), Hinglish for the new screens. See docs/JOURNEY.md.

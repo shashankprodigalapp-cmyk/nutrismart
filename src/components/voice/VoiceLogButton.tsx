@@ -53,11 +53,11 @@ export function VoiceLogButton({ onTranscript, onStatus, disabled }: Props) {
     <>
       <button onClick={listening ? stop : start} disabled={disabled} aria-pressed={listening}
         aria-label={listening ? 'Stop listening' : 'Say what you ate'} title="Say what you ate"
-        className={`text-[20px] min-w-[40px] min-h-[40px] flex items-center justify-center active:scale-90 transition-all ${listening ? 'text-[#FF6B6B] animate-pulse' : 'opacity-60 hover:opacity-100'} disabled:opacity-30`}>
+        className={`text-[20px] min-w-[44px] min-h-[44px] flex items-center justify-center active:scale-90 transition-all ${listening ? 'text-[#FF6B6B] animate-pulse' : 'opacity-60 hover:opacity-100'} disabled:opacity-30`}>
         {listening ? '⏺' : '🎤'}
       </button>
       <button onClick={toggleLang} aria-label={`Voice language: ${lang === 'en-IN' ? 'English' : 'Hindi'}. Tap to switch`}
-        className="text-[11px] min-w-[40px] min-h-[40px] text-[#8E8E93]">{lang === 'en-IN' ? 'EN' : 'हि'}</button>
+        className="text-[11px] min-w-[44px] min-h-[44px] text-[#8E8E93]">{lang === 'en-IN' ? 'EN' : 'हि'}</button>
     </>
   );
 }
