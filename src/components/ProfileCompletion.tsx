@@ -172,7 +172,7 @@ export function ProfileNudge() {
         <p className="text-sm font-semibold text-white">Get {BONUS_SEARCHES} extra AI searches, one time</p>
         <p className="text-xs text-[#8E8E93]">Answer 5 quick questions in your profile. About 30 seconds.</p>
       </button>
-      <button type="button" onClick={dismiss} aria-label="Hide for a week" className="text-[#8E8E93] text-lg px-1">×</button>
+      <button type="button" onClick={dismiss} aria-label="Hide for a week" className="text-[#8E8E93] text-lg px-1 min-w-[44px] min-h-[44px]">×</button>
     </div>
   );
 }

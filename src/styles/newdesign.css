@@ -140,6 +140,13 @@ html[data-ui="new"] [data-testid="plate-card"] path[stroke] { stroke: var(--n-ca
 html[data-ui="new"] [data-testid="plate-card"] path[fill="#2C2C2E"] { fill: var(--n-card3); }
 html[data-ui="new"] [data-testid="plate-card"] circle { fill: var(--n-card); }
 html[data-ui="new"][data-theme="light"] [data-testid="plate-card"] path[fill="#C8F75E"] { fill: #2F6B55; }
+html[data-ui="new"] [data-testid="today-hero"] path[stroke] { stroke: var(--n-card); }
+html[data-ui="new"] [data-testid="today-hero"] path[fill="#2C2C2E"] { fill: var(--n-card3); }
+html[data-ui="new"] [data-testid="today-hero"] circle { fill: var(--n-card); }
+html[data-ui="new"][data-theme="light"] [data-testid="today-hero"] path[fill="#C8F75E"] { fill: #2F6B55; }
+html[data-ui="new"] [class*="bg-[#111113]/"] { background-color: var(--n-bg); background-color: color-mix(in srgb, var(--n-bg) 95%, transparent); }
+html[data-ui="new"] [class*="bg-[#1C1C1E]/"] { background-color: var(--n-card); background-color: color-mix(in srgb, var(--n-card) 92%, transparent); }
+html[data-ui="new"][data-theme="light"] [class*="bg-[#C8F75E]/"] { background-color: rgba(47,107,85,0.12); }
 html[data-ui="new"] [stroke="#2C2C2E"] { stroke: var(--n-card3); }
 html[data-ui="new"] [stroke="#1C1C1E"] { stroke: var(--n-card); }
 html[data-ui="new"][data-theme="light"] [stroke="#C8F75E"] { stroke: var(--n-accent); }

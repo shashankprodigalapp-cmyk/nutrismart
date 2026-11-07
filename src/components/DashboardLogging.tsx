@@ -211,7 +211,7 @@ function WaterQuickAdd({
       <div className="flex items-center gap-2 flex-shrink-0">
         <button
           onPointerDown={(e) => { e.preventDefault(); onRemove(); }}
-          className="w-8 h-8 rounded-full bg-[#2C2C2E] text-[#7DD3FC] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
+          className="w-11 h-11 rounded-full bg-[#2C2C2E] text-[#7DD3FC] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
           aria-label="Remove glass"
         >−</button>
         <span className="text-[14px] font-bold text-[#7DD3FC] w-10 text-center">
@@ -220,7 +220,7 @@ function WaterQuickAdd({
         <span className="sr-only">glasses</span>
         <button
           onPointerDown={(e) => { e.preventDefault(); onAdd(); }}
-          className="w-8 h-8 rounded-full bg-[#7DD3FC]/20 text-[#7DD3FC] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
+          className="w-11 h-11 rounded-full bg-[#7DD3FC]/20 text-[#7DD3FC] font-bold text-lg flex items-center justify-center active:scale-90 transition-transform"
           aria-label="Add glass"
         >+</button>
       </div>
@@ -674,7 +674,7 @@ function TodayLog({
                     type="button"
                     onClick={() => onEdit(entry)}
                     aria-label={`Edit ${entry.food_name}`}
-                    className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                    className="flex items-center gap-3 flex-1 min-w-0 min-h-[44px] text-left"
                   >
                   <span className="text-[18px] w-7 text-center flex-shrink-0">
                     {getFoodEmoji(entry.food_name)}
@@ -705,7 +705,7 @@ function TodayLog({
                         if (confirmId === entry.id) { setConfirmId(null); onDelete(entry.id); }
                         else { setConfirmId(entry.id); setTimeout(() => setConfirmId(c => (c === entry.id ? null : c)), 3000); }
                       }}
-                      className={`mt-0.5 min-h-[32px] min-w-[44px] px-2 rounded-lg text-[11px] font-semibold transition-colors ${confirmId === entry.id ? 'bg-[#FF6B6B]/15 text-[#FF6B6B]' : 'text-[#8E8E93] hover:text-[#FF6B6B]'}`}
+                      className={`mt-0.5 min-h-[44px] min-w-[44px] px-2 rounded-lg text-[11px] font-semibold transition-colors ${confirmId === entry.id ? 'bg-[#FF6B6B]/15 text-[#FF6B6B]' : 'text-[#8E8E93] hover:text-[#FF6B6B]'}`}
                       aria-label={confirmId === entry.id ? `Confirm remove ${entry.food_name}` : `Remove ${entry.food_name}`}
                     >
                       {confirmId === entry.id ? 'Remove?' : '✕'}

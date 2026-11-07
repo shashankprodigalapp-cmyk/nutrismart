@@ -87,7 +87,7 @@ export function FlexibleMealCard() {
     <div className="bg-[#1C1C1E] rounded-2xl p-4 space-y-3" aria-label="Flexible meal">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-white">Flexible meal</h2>
-        {!open && <button onClick={() => setOpen(true)} className="text-xs text-[#C8F75E] underline min-h-[32px]">Plan one</button>}
+        {!open && <button onClick={() => setOpen(true)} className="text-xs text-[#C8F75E] underline min-h-[44px]">Plan one</button>}
       </div>
       {error && <p role="alert" className="text-xs text-[#FF6B6B]">{error}</p>}
       {meals === null && !error && <p className="text-xs text-[#8E8E93]">Loading…</p>}

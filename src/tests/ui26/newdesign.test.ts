@@ -111,3 +111,18 @@ describe('drawings with fixed colours (calorie ring, charts)', () => {
     expect(css).toContain('[fill="#8E8E93"] { fill: var(--n-t3); }');
   });
 });
+
+describe('fixes from the live phone-width check', () => {
+  it('translucent backgrounds (bottom bar) follow the theme', () => {
+    expect(css).toContain('[class*="bg-[#111113]/"]');
+    expect(css).toContain('color-mix(in srgb, var(--n-bg) 95%, transparent)');
+  });
+  it('small buttons are at least 44px tall or wide', () => {
+    const d = read('src/components/DashboardLogging.tsx');
+    expect(d).toContain('w-11 h-11 rounded-full bg-[#2C2C2E] text-[#7DD3FC]');
+    expect(d).toContain('w-11 h-11 rounded-full bg-[#7DD3FC]/20');
+    expect(d).toContain('flex items-center gap-3 flex-1 min-w-0 min-h-[44px] text-left');
+    expect(read('src/components/ProfileCompletion.tsx')).toContain('min-w-[44px] min-h-[44px]');
+    expect(read('src/components/FlexibleMealCard.tsx')).toContain('min-h-[44px]">Plan one');
+  });
+});
