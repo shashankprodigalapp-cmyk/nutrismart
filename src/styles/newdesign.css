@@ -140,4 +140,10 @@ html[data-ui="new"] [data-testid="plate-card"] path[stroke] { stroke: var(--n-ca
 html[data-ui="new"] [data-testid="plate-card"] path[fill="#2C2C2E"] { fill: var(--n-card3); }
 html[data-ui="new"] [data-testid="plate-card"] circle { fill: var(--n-card); }
 html[data-ui="new"][data-theme="light"] [data-testid="plate-card"] path[fill="#C8F75E"] { fill: #2F6B55; }
+html[data-ui="new"] [stroke="#2C2C2E"] { stroke: var(--n-card3); }
+html[data-ui="new"] [stroke="#1C1C1E"] { stroke: var(--n-card); }
+html[data-ui="new"][data-theme="light"] [stroke="#C8F75E"] { stroke: var(--n-accent); }
+html[data-ui="new"] [fill="#8E8E93"] { fill: var(--n-t3); }
+html[data-ui="new"] [fill="#C7C7CC"] { fill: var(--n-t2); }
+html[data-ui="new"][data-theme="light"] [fill="#C8F75E"] { fill: var(--n-accent); }
 html[data-ui="new"] h1 { font-family: "Playfair Display", Georgia, serif; letter-spacing: -0.01em; }

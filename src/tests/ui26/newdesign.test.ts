@@ -104,3 +104,10 @@ describe('colours that carry an opacity or are set in code (found in a live chec
     expect(css).toMatch(/\[style\^="color: rgb\(99, 99, 102\)"\][^}]*!important/);
   });
 });
+
+describe('drawings with fixed colours (calorie ring, charts)', () => {
+  it('SVG strokes and fills follow the theme', () => {
+    expect(css).toContain('[stroke="#2C2C2E"] { stroke: var(--n-card3); }');
+    expect(css).toContain('[fill="#8E8E93"] { fill: var(--n-t3); }');
+  });
+});
