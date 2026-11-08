@@ -13,6 +13,7 @@ import { ensurePushSubscription }   from '../lib/pushRegistration';
 import { track, trackSessionStart, installHealthTracking } from '../lib/analytics';
 import FeedbackPrompts              from '../components/FeedbackPrompts';
 import { NavIcon } from '../components/screens/NavIcon';
+import { BrandMark } from '../components/brand/BrandMark';
 import { useFlag } from '../lib/useFlag';
 import { CelebrationHost }          from '../components/delight/CelebrationHost';
 
@@ -91,7 +92,7 @@ export default function AppShell() {
       {/* ── Desktop sidebar (md+) ── */}
       <aside className="hidden md:flex flex-col w-56 lg:w-64 border-r border-white/[0.07] bg-[#111113] sticky top-0 h-screen shrink-0">
         <div className="px-5 py-6">
-          <span className="text-[#C8F75E] font-bold text-lg tracking-tight">NutriSmart IQ</span>
+          <BrandMark />
         </div>
         <nav className="flex-1 px-3 space-y-1">
           {TABS.map(tab => (
@@ -130,12 +131,12 @@ export default function AppShell() {
           {TABS.map(tab => (
             <NavLink key={tab.to} to={tab.to}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-0.5 py-2.5 px-1 min-h-[56px] justify-center transition-colors ${
+                `flex flex-col items-center gap-0.5 py-2.5 px-1 min-h-[64px] justify-center transition-colors ${
                   isActive ? 'text-[#C8F75E]' : 'text-[#636366]'
                 }`
               }>
               <span className="text-[22px] leading-none">{iconsOn ? <NavIcon name={tab.label} /> : tab.icon}</span>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.5px]">{tab.label}</span>
+              <span className="text-xs font-medium [.active_&]:font-bold">{tab.label}</span>
             </NavLink>
           ))}
         </nav>
