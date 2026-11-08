@@ -21,6 +21,7 @@ async function setFlags(on: boolean, keys = SWITCHES) { for (const k of keys) aw
 const openCtx: Array<{ close: () => Promise<void> }> = [];
 async function as(browser: Browser, email: string, landing = '/app/today'): Promise<Page> {
   const ctx = await browser.newContext({ baseURL: BASE }); openCtx.push(ctx);
+  await ctx.addInitScript(() => { try { localStorage.setItem('ns-today-expanded', '1'); } catch { /* ignore */ } });
   const page = await ctx.newPage();
   await page.goto('/login');
   await page.getByPlaceholder('Email address').fill(email);

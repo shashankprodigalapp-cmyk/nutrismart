@@ -1,0 +1,48 @@
+/* today.css — the Today screen from the design canvas (artboards 03 and 16). Colours come from variables so Light and Dark follow the theme. */
+:root {
+  --ns-ink: #183C32; --ns-sub: #4F5F57; --ns-act: #2F6B55; --ns-lime: #D7F27A;
+  --ns-hero: #183C32; --ns-hero-text: #F5F3ED; --ns-hero-sub: #D9D4C4; --ns-hero-gold: #D6A96B; --ns-hub: #183C32;
+  --ns-list-bg: #FBFAF6; --ns-list-line: #E6E1D3;
+  --ns-tint-gold: #F3E4C8; --ns-tint-lav: #D9D0F7; --ns-tint-lime: #EAF3C4; --ns-tint-ink: #183C32;
+  --ns-pill-bg: #183C32; --ns-pill-text: #F5F3ED;
+}
+html[data-theme="dark"] {
+  --ns-ink: #F1EFE6; --ns-sub: #A9B8B0; --ns-act: #8FCDB3;
+  --ns-hero: #1F4A3C; --ns-hero-text: #F1EFE6; --ns-hero-sub: #C9D3CC; --ns-hero-gold: #E3BD86; --ns-hub: #0E1B17;
+  --ns-list-bg: #15281F; --ns-list-line: #24402F;
+  --ns-tint-gold: #3A3020; --ns-tint-lav: #2A2650; --ns-tint-lime: #2C3D14; --ns-tint-ink: #F1EFE6;
+  --ns-pill-bg: #1B332B; --ns-pill-text: #F1EFE6;
+}
+html:not([data-ui="new"]) { --ns-ink: #F5F5F5; --ns-sub: #8E8E93; --ns-list-bg: #1C1C1E; --ns-list-line: #2C2C2E; --ns-act: #C8F75E; --ns-tint-ink: #F5F5F5;
+  --ns-tint-gold: #3A3020; --ns-tint-lav: #2A2650; --ns-tint-lime: #2C3D14; }
+
+.ns-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; }
+.ns-head-sub { margin: 0; font-size: 13px; color: var(--ns-sub); }
+.ns-title { margin: 2px 0 0; font-family: 'Playfair Display', Georgia, serif; font-size: 26px; line-height: 32px; font-weight: 700; color: var(--ns-ink); }
+.ns-pill { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 999px; background: var(--ns-pill-bg); color: var(--ns-pill-text); font-size: 13px; font-weight: 700; white-space: nowrap; text-decoration: none; }
+.ns-dot { width: 10px; height: 10px; border-radius: 50%; background: #D6A96B; display: inline-block; }
+.ns-note { margin: 0; padding: 10px 14px; border-radius: 14px; background: var(--ns-tint-lime); color: var(--ns-ink); font-size: 14px; font-weight: 600; }
+
+.ns-hero { position: relative; overflow: hidden; padding: 18px; border-radius: 26px; background: var(--ns-hero); color: var(--ns-hero-text); }
+.ns-hero-orb { position: absolute; right: -50px; bottom: -50px; width: 160px; height: 160px; border-radius: 50%; background: #43866D; opacity: .3; }
+.ns-hero-row { position: relative; display: flex; align-items: center; gap: 16px; }
+.ns-hero-copy { flex: 1; min-width: 0; }
+.ns-eyebrow { margin: 0; font-size: 11.5px; font-weight: 700; letter-spacing: .8px; color: var(--ns-hero-gold); text-transform: uppercase; }
+.ns-hero-title { margin: 6px 0 0; font-size: 17px; line-height: 23px; font-weight: 600; color: var(--ns-hero-text); }
+.ns-hero-body { margin: 6px 0 0; font-size: 13.5px; line-height: 19px; color: var(--ns-hero-sub); }
+.ns-legend { position: relative; display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 14px 0 0; padding: 0; list-style: none; font-size: 12px; color: var(--ns-hero-sub); }
+.ns-cta { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; border-radius: 18px; background: var(--ns-lime); color: #183C32; font-size: 16px; font-weight: 700; text-decoration: none; }
+
+.ns-more-h { margin: 6px 0 0; padding: 0 2px; font-size: 15px; font-weight: 700; color: var(--ns-ink); }
+.ns-list { margin-top: 10px; border-radius: 20px; background: var(--ns-list-bg); border: 1px solid var(--ns-list-line); overflow: hidden; }
+.ns-row { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 16px; color: var(--ns-ink); text-decoration: none; cursor: pointer; list-style: none; }
+.ns-row::-webkit-details-marker { display: none; }
+.ns-item + .ns-item { border-top: 1px solid var(--ns-list-line); }
+.ns-tile { flex: none; width: 36px; height: 36px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--ns-tint-ink); }
+.ns-tile-gold { background: var(--ns-tint-gold); } .ns-tile-lav { background: var(--ns-tint-lav); } .ns-tile-lime { background: var(--ns-tint-lime); }
+.ns-row-t { flex: 1; min-width: 0; }
+.ns-row-title { margin: 0; font-size: 14.5px; font-weight: 600; }
+.ns-row-sub { margin: 1px 0 0; font-size: 12.5px; color: var(--ns-sub); }
+.ns-row-act { font-size: 13px; font-weight: 700; color: var(--ns-act); }
+.ns-row-body { padding: 0 12px 12px; }
+details[open] > .ns-row .ns-row-act { opacity: .7; }

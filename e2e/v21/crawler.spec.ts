@@ -27,6 +27,7 @@ async function settle(page: Page) {
 }
 async function loginAs(browser: Browser, email: string) {
   const ctx = await browser.newContext({ baseURL: BASE, viewport: { width: 1280, height: 900 } });
+  await ctx.addInitScript(() => { try { localStorage.setItem('ns-today-expanded', '1'); } catch { /* ignore */ } });
   const page = await ctx.newPage();
   await page.goto('/login');
   await page.getByPlaceholder('Email address').fill(email);
@@ -141,6 +142,7 @@ test('CR-3 admin: every section loads and every tab, range and refresh works (lo
 
 test('CR-4 phone size: customer screens fit without sideways scrolling', async ({ browser }, info) => {
   const ctx = await browser.newContext({ baseURL: BASE, viewport: { width: 375, height: 800 } });
+  await ctx.addInitScript(() => { try { localStorage.setItem('ns-today-expanded', '1'); } catch { /* ignore */ } });
   const page = await ctx.newPage();
   await page.goto('/login');
   await page.getByPlaceholder('Email address').fill(client.email);

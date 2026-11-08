@@ -36,6 +36,7 @@ const opened: Page[] = [];
 const openCtx: Array<{ close: () => Promise<void> }> = [];
 async function as(browser: Browser, email: string, landing: string | null = '/app/today') {
   const ctx = await browser.newContext({ baseURL: BASE });
+  await ctx.addInitScript(() => { try { localStorage.setItem('ns-today-expanded', '1'); } catch { /* ignore */ } });
   openCtx.push(ctx);
   const page = await ctx.newPage();
   opened.push(page);

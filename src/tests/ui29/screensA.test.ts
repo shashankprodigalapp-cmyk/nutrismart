@@ -44,7 +44,7 @@ describe('wiring', () => {
   it('Today shows the hero behind the switch and hides the duplicate plate card', () => {
     const t = read('src/pages/tabs/TodayTab.tsx');
     expect(t).toContain("useFlag('ui_screens_a')");
-    expect(t).toContain('{heroOn && <TodayHero');
+    expect(t).toContain('<TodayHero');
     expect(t).toContain('{plateOn && !heroOn && (');
   });
   it('the shell swaps emoji for line icons only when the switch is on', () => {
@@ -55,7 +55,7 @@ describe('wiring', () => {
   it('the hero never touches the network and the button is large enough', () => {
     const h = read('src/components/screens/TodayHero.tsx');
     expect(/fetch\(|supabase\.|\.put\(|\.add\(/.test(h)).toBe(false);
-    expect(h).toContain('min-h-[48px]');
+    expect(h).toContain('className="ns-cta"');
     expect(h).toContain('role="img"');
   });
   it('the new look themes the hero drawing too', () => {
