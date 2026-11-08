@@ -97,7 +97,7 @@ export default function TodayTab() {
     <div className="p-4 pb-24 max-w-lg md:max-w-3xl md:p-8 lg:max-w-4xl mx-auto space-y-4">
       {/* Greeting */}
       <div className="pt-2">
-        <h1 className="text-xl font-semibold text-white">{greeting}, {firstName} 👋</h1>
+        <h1 className="text-xl font-semibold text-white">{greeting}, {firstName}{heroOn ? '' : ' 👋'}</h1>
         <p className="text-sm text-[#636366] mt-0.5">
           {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Asia/Kolkata' })}
         </p>
@@ -111,6 +111,7 @@ export default function TodayTab() {
 
       <SparksCard />
 
+      <MoreWrap clean={heroOn}>
       {intelOn && <DailyIntelligence />}
 
       {checkinsOn && <DailyCheckInCard />}
@@ -127,6 +128,7 @@ export default function TodayTab() {
           <span className="block text-xs text-[#8E8E93]">How last week went, with the numbers behind it</span>
         </Link>
       )}
+      </MoreWrap>
 
       {plateOn && !heroOn && (
         <PlateCard
@@ -181,6 +183,12 @@ export default function TodayTab() {
       </div>
       )}
 
+      {heroOn && (
+        <p data-testid="today-macros" className="px-1 text-xs text-[#636366]">
+          Protein {Math.round(summary.protein)}g · Carbs {Math.round(summary.carbs)}g · Fat {Math.round(summary.fat)}g · {summary.meals} {summary.meals === 1 ? 'meal' : 'meals'} logged
+        </p>
+      )}
+      {!heroOn && (<>
       {/* Macro chips */}
       <div className="grid grid-cols-3 gap-2">
         {[
@@ -211,6 +219,20 @@ export default function TodayTab() {
           <p className="text-xs text-[#636366] mt-1">Tap <Link to="/app/log" className="font-semibold text-white underline">Log</Link> to log your first meal today.</p>
         </div>
       )}
+      </>)}
     </div>
+  );
+}
+
+/** Folds the extra cards under one calm row when the new screens are on; shows them as before otherwise. */
+function MoreWrap({ clean, children }: { clean: boolean; children: React.ReactNode }) {
+  if (!clean) return <>{children}</>;
+  return (
+    <details data-testid="today-more" className="group">
+      <summary className="min-h-[44px] flex items-center justify-between px-4 rounded-2xl bg-[#1C1C1E] text-sm font-semibold cursor-pointer list-none">
+        More for today<span aria-hidden="true" className="text-[#8E8E93] group-open:rotate-90 transition-transform">›</span>
+      </summary>
+      <div className="space-y-4 mt-4">{children}</div>
+    </details>
   );
 }

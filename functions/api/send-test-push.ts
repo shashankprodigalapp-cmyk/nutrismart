@@ -36,7 +36,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   for (const s of subs) {
     try {
       const { ok, status } = await sendWebPush(env, s, {
-        title: 'Nutri Smart',
+        title: 'NutriSmart IQ',
         body:  'Notifications are working. You will get your morning verdict and check-ins here.',
         tag:   'test-push-' + Date.now(),
         url:   '/app/today',

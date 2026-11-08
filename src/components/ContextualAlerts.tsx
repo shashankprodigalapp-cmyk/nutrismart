@@ -32,6 +32,7 @@ import { supabase }        from '../lib/supabase';
 import { localDb }        from '../lib/localDb';
 import { usePlan }        from '../utils/proGatekeeper';
 import { useAuth }        from '../context/AuthContext';
+import { useInRouterContext, useLocation } from 'react-router-dom';
 import { todayIST }       from '../lib/kitchenIntelligence';
 
 // ── FESTIVAL DATA ─────────────────────────────────────────────────────────────
@@ -480,6 +481,9 @@ export function EventBudgetCard() {
   const [selType,    setSelType]    = useState<EventType>('restaurant');
   const [estCals,    setEstCals]    = useState(600);
   const [eventName,  setEventName]  = useState('');
+  const inRouter = useInRouterContext();
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const loc = inRouter ? useLocation() : null;
 
   if (eventBudget.active) {
     return (
@@ -501,6 +505,8 @@ export function EventBudgetCard() {
       </div>
     );
   }
+
+  if (!open && loc && !loc.pathname.endsWith('/today') && document.documentElement.getAttribute('data-ui') === 'new') return null;
 
   return (
     <div className="mx-4 md:mx-8 mb-3 bg-[#1C1C1E] border border-white/[0.07] rounded-xl overflow-hidden">
