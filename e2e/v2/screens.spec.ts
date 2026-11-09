@@ -175,7 +175,7 @@ test.describe('Customer: main screens', () => {
   test('CU-09 Profile: sections, footer, and the very-low-calorie warning', async ({ browser }) => {
     const { ctx, page } = await as(browser, client.email);
     await page.goto('/app/profile');
-    for (const t of ['Nutrition Goals', 'Data & Privacy', 'Nutri Smart v2.0']) await expect(page.locator('body')).toContainText(t, { timeout: 20_000 });
+    for (const t of ['Nutrition Goals', 'Data & Privacy', 'NutriSmart IQ v2.0']) await expect(page.locator('body')).toContainText(t, { timeout: 20_000 });
     await page.getByText('Data & Privacy').first().click();
     await expect(page.locator('body')).toContainText('support@nutrismart.co.in', { timeout: 20_000 });
     await page.keyboard.press('Escape');
@@ -227,7 +227,7 @@ test.describe('Customer: main screens', () => {
   });
   test('CU-15 the app is installable: manifest, service worker, icons', async ({ request }) => {
     const m = await request.get('/manifest.webmanifest'); expect(m.status()).toBe(200);
-    const j = await m.json(); expect(j.name).toContain('Nutri Smart'); expect(j.display).toMatch(/standalone|fullscreen|minimal-ui/);
+    const j = await m.json(); expect(j.name).toContain('NutriSmart IQ'); expect(j.display).toMatch(/standalone|fullscreen|minimal-ui/);
     expect(j.icons.length).toBeGreaterThanOrEqual(2);
     expect((await request.get('/sw.js')).status()).toBe(200);
   });
