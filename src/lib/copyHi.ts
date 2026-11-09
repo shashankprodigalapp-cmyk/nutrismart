@@ -28,6 +28,10 @@ const HI: Record<string, string> = {
   'Show': 'Dikhayein',
   'Your Sparks': 'Aapke Sparks',
   'Today': 'Aaj',
+  'Today’s mini quests': 'Aaj ke chhote quests',
+  'This week': 'Is hafta',
+  'Done': 'Ho gaya',
+  'Mon': 'Som', 'Tue': 'Mangal', 'Wed': 'Budh', 'Thu': 'Guru', 'Fri': 'Shukra', 'Sat': 'Shani', 'Sun': 'Ravi',
   'Log two meals': 'Do meals log karein',
   'Drink 4 glasses of water': '4 glass paani piyein',
   'You are at the top level.': 'Aap sabse upar ke level par hain.',
@@ -71,3 +75,11 @@ export function hiExplorerLine(tried: number, total: number): string {
   return `Aapne ${tried} / ${total} regional kitchens try kiye hain.`;
 }
 export function hiIdea(label: string, ideas: string[]): string { return `Mann ho toh: ${label} — ${ideas.join(', ')}.`; }
+
+export function hiLevelOf(n: number, of: number): string { return `Level ${n} / ${of}`; }
+export function hiLevelGap(toNext: number, nextName: string): string { return `${nextName} tak ${toNext} Sparks`; }
+export function hiQuestsDone(done: number, total: number): string { return `${total} mein se ${done} ho gaye`; }
+export function hiWeekLine(n: number): string {
+  if (n <= 0) return 'Is hafta abhi kuch log nahi hua. Jis din log karein, wahi achha din hai shuru karne ka.';
+  return `Is hafta ${n} din log hue. Chhoota hua din bas khaali rehta hai. Kuch reset nahi hota, kuch khota nahi.`;
+}

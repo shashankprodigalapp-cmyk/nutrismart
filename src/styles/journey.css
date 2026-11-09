@@ -1,0 +1,44 @@
+/* journey.css — the Journey screen from the design canvas (artboard 04). Uses the same colour variables as today.css. */
+.nj { display: flex; flex-direction: column; gap: 16px; }
+.nj-back { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; color: var(--ns-sub); text-decoration: underline; }
+.nj-kicker { margin: 0; font-size: 13px; color: var(--ns-sub); }
+.nj-title { margin: 2px 0 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; line-height: 34px; font-weight: 700; color: var(--ns-ink); }
+.nj-hero { padding: 20px; border-radius: 24px; background: var(--ns-hero); color: var(--ns-hero-text); }
+.nj-hero-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: 13px; color: var(--ns-hero-sub); }
+.nj-hero-gold { color: var(--ns-hero-gold); font-weight: 700; }
+.nj-big { display: flex; align-items: baseline; gap: 6px; margin-top: 6px; }
+.nj-big b { font-size: 40px; line-height: 44px; font-weight: 700; letter-spacing: -1px; }
+.nj-big span { font-size: 15px; color: var(--ns-hero-sub); }
+.nj-bar { height: 10px; margin-top: 12px; border-radius: 5px; background: rgba(255,255,255,.16); overflow: hidden; }
+.nj-bar > i { display: block; height: 100%; border-radius: 5px; background: var(--ns-lime); }
+.nj-note { margin: 12px 0 0; font-size: 13px; line-height: 19px; color: var(--ns-hero-sub); }
+.nj-h { display: flex; align-items: baseline; justify-content: space-between; margin: 6px 0 0; font-size: 17px; font-weight: 700; color: var(--ns-ink); }
+.nj-h small { font-size: 13px; font-weight: 400; color: var(--ns-sub); }
+.nj-quests { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.nj-q { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 18px; background: var(--ns-list-bg); border: 1px solid var(--ns-list-line); color: var(--ns-ink); font-size: 15px; font-weight: 600; }
+.nj-q.done { background: var(--ns-tint-lime); }
+.nj-q-ico { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--ns-sub); display: flex; align-items: center; justify-content: center; box-sizing: border-box; }
+.nj-q.done .nj-q-ico { border: 0; background: #183C32; }
+.nj-card { padding: 16px; border-radius: 20px; background: var(--ns-list-bg); border: 1px solid var(--ns-list-line); color: var(--ns-ink); }
+.nj-card h2 { margin: 0; font-size: 11.5px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--ns-sub); }
+.nj-card p { margin: 6px 0 0; font-size: 14px; line-height: 20px; }
+.nj-week { display: flex; justify-content: space-between; margin: 0; padding: 0; list-style: none; }
+.nj-day { text-align: center; font-size: 11.5px; color: var(--ns-sub); }
+.nj-day.today { color: var(--ns-ink); font-weight: 700; }
+.nj-dot { width: 34px; height: 34px; margin: 0 auto 5px; border-radius: 50%; box-sizing: border-box; }
+.nj-dot.done { background: #43866D; }
+.nj-dot.empty { background: var(--ns-list-line); }
+.nj-dot.today { border: 2px solid #D6A96B; }
+.nj-dot.today_done { background: #43866D; border: 2px solid #D6A96B; }
+.nj-dot.future { border: 2px dashed var(--ns-sub); opacity: .55; }
+.nj-levels { display: flex; flex-direction: column; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.nj-level { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 12px; border-radius: 12px; font-size: 14px; background: transparent; }
+.nj-level.here { background: var(--ns-tint-lime); font-weight: 700; }
+.nj-level small { font-size: 12px; color: var(--ns-sub); }
+.nj-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.nj-chip { display: inline-flex; align-items: center; min-height: 36px; padding: 0 12px; border-radius: 999px; font-size: 13px; background: var(--ns-list-line); color: var(--ns-ink); }
+.nj-chip.tried { background: var(--ns-lime); color: #183C32; font-weight: 700; }
+.nj-lang { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.nj-lang button { min-height: 44px; border-radius: 12px; border: 0; font-size: 14px; font-weight: 600; background: var(--ns-list-line); color: var(--ns-ink); }
+.nj-lang button[aria-checked="true"] { background: var(--ns-lime); color: #183C32; }
+.nj-sub { font-size: 12.5px; color: var(--ns-sub); }
