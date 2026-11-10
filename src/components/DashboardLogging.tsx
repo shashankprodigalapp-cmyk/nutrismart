@@ -52,7 +52,8 @@ import { useAlerts } from './ContextualAlerts';
 import { track } from '../lib/analytics';
 import { useFlag } from '../lib/useFlag';
 import { parseUtterance } from '../lib/voiceParse';
-import { announceLogged } from '../lib/delight';
+import { announceLogged, caloriesHidden, setCaloriesHidden } from '../lib/delight';
+import { NewLogHeader, MicHero, NewUsuals, UndoBar } from './screens/LogNew';
 import { VoiceLogButton } from './voice/VoiceLogButton';
 import { VoiceReview, type VoiceRow } from './voice/VoiceReview';
 
@@ -1045,6 +1046,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
       try { await getSyncManager().enqueue('delete_log', { id: editEntry.id }); } catch { /* offline ok */ }
     }
     setEntries(prev => [...prev.filter(e => !editEntry || e.id !== editEntry.id), entry]);
+    if (!editEntry) setUndo({ id, name: entryData.food_name });
     setEditEntry(null);
     setSheetFood(null);
     setQuery('');
@@ -1310,6 +1312,10 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
 
   // ── Render ────────────────────────────────────────────────────────────────
   const hour = new Date().getHours();
+  const nl = typeof document !== 'undefined' && document.documentElement.getAttribute('data-ui') === 'new';
+  const [showNumbers, setShowNumbers] = useState(() => !caloriesHidden());
+  const [undo, setUndo] = useState<{ id: string; name: string } | null>(null);
+  useEffect(() => { if (!undo) return; const t = setTimeout(() => setUndo(null), 7000); return () => clearTimeout(t); }, [undo]);
 
   return (
     <div className="min-h-dvh bg-[#111113] pb-24">
@@ -1323,6 +1329,8 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
         {/* ══ LEFT COLUMN — stats + today's log ══ */}
         <div>
           {/* Header */}
+          {nl && <NewLogHeader meal={mealForHour(hour)} showNumbers={showNumbers} onToggle={() => { setCaloriesHidden(showNumbers); setShowNumbers(v => !v); }} />}
+          {!nl && (
           <div className="px-4 pt-5 pb-0 flex justify-between items-start md:px-0">
             <div>
               <p className="text-[11px] text-[#636366]">
@@ -1333,7 +1341,9 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
               </h1>
             </div>
           </div>
+          )}
 
+          {(!nl || showNumbers) && (<>
           {/* Calorie ring */}
           <div className="mt-4 flex justify-center">
             <CalorieRing consumed={Math.round(totals.cal)} target={effectiveCal} />
@@ -1346,6 +1356,8 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
             <MacroPill label="Fat"      value={parseFloat(totals.fat.toFixed(0))}     target={targets.fat}     unit="g" color="#FFB347" />
             <MacroPill label="Carbs"    value={parseFloat(totals.carbs.toFixed(0))}   target={targets.carbs}   unit="g" color="#FF8FAB" />
           </div>
+
+          </>)}
 
           {/* Water quick-add */}
           <WaterQuickAdd
@@ -1389,12 +1401,12 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
                   </div>
                 </div>
               )}
-              <MyUsualsGrid
+              {!nl && <MyUsualsGrid
                 usuals={usuals}
                 recents={frequents}
                 onSelect={handleFrequentTap}
                 onHide={handleHideUsual}
-              />
+              />}
             </>
           )}
 
@@ -1413,7 +1425,7 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
             className="flex-1 bg-transparent text-[#F5F5F5] text-[14px] outline-none placeholder-[#636366]"
             autoComplete="off"
           />
-          {voiceOn && <VoiceLogButton onTranscript={handleTranscript} onStatus={setVoiceStatus} disabled={aiLoading} />}
+          {voiceOn && !nl && <VoiceLogButton onTranscript={handleTranscript} onStatus={setVoiceStatus} disabled={aiLoading} />}
           {query && (
             <button onClick={() => setQuery('')} aria-label="Clear search" className="text-[#636366] text-[18px] min-w-[40px] min-h-[40px] flex items-center justify-center">×</button>
           )}
@@ -1429,6 +1441,8 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
         </button>
       </div>
 
+      {nl && <MicHero typed={!voiceOn} onType={() => document.querySelector<HTMLInputElement>('input[aria-label="Search food"]')?.focus()}>{voiceOn && <VoiceLogButton onTranscript={handleTranscript} onStatus={setVoiceStatus} disabled={aiLoading} />}</MicHero>}
+      {nl && !query && <NewUsuals usuals={usuals} recents={frequents} emojiFor={getFoodEmoji} onSelect={handleFrequentTap} onHide={handleHideUsual} />}
       {voiceOn && voiceStatus.listening && <p role="status" className="mx-4 mt-2 text-xs text-[#FF6B6B] md:mx-0">Listening… say what you ate, like “2 roti and dal”.</p>}
       {voiceOn && !voiceStatus.listening && voiceStatus.message && <p role="alert" className="mx-4 mt-2 text-xs text-[#FFB347] md:mx-0">{voiceStatus.message}</p>}
       {voiceOn && voiceHeard !== null && (
@@ -1498,6 +1512,8 @@ export function DashboardLogging({ onLogConfirmed }: DashboardLoggingProps) {
         </div>
         {/* ── end two-column grid ── */}
       </div>
+
+      {nl && undo && <UndoBar name={undo.name} onUndo={() => { void handleDelete(undo.id); setUndo(null); }} />}
 
       {/* Add food sheet */}
       {sheetFood && (

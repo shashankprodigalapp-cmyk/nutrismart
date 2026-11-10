@@ -4,3 +4,36 @@ html[data-ui="new"] h1[class*="Playfair"] { font-weight: 700; letter-spacing: -0
 html[data-ui="new"] div:has(> input[aria-label="Search food"]) { min-height: 52px; border-radius: 16px; background: var(--ns-list-bg, #FBFAF6); }
 html[data-ui="new"] div:has(> input[aria-label="Search food"]):focus-within { outline: 2px solid #43866D; outline-offset: 1px; }
 html[data-ui="new"] input[aria-label="Search food"]::placeholder { color: var(--ns-sub, #4F5F57); opacity: .85; }
+
+/* ── the new Log screen (design artboards 05 and 20) ── */
+.nl-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 20px 16px 0; }
+@media (min-width: 768px) { .nl-head { padding-left: 0; padding-right: 0; } }
+.nl-title { margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 28px; line-height: 34px; font-weight: 700; color: var(--ns-ink, #183C32); }
+.nl-switch { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 2px 0 6px; border: 0; background: none; font-size: 12.5px; color: var(--ns-sub, #4F5F57); }
+.nl-track { position: relative; width: 40px; height: 24px; border-radius: 12px; background: #B8B29E; flex: none; transition: background .15s; }
+.nl-switch[aria-checked="true"] .nl-track { background: #43866D; }
+.nl-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #F5F3ED; transition: left .15s; }
+.nl-switch[aria-checked="true"] .nl-knob { left: 19px; }
+.nl-mic { margin: 16px 16px 0; padding: 20px; border-radius: 24px; background: var(--ns-hero, #183C32); color: var(--ns-hero-text, #F5F3ED); text-align: center; }
+@media (min-width: 768px) { .nl-mic { margin-left: 0; margin-right: 0; } }
+.nl-mic-btns { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.nl-mic-btns button:first-child { width: 76px; height: 76px; border-radius: 50%; background: #D6A96B; color: #183C32; font-size: 30px; box-shadow: 0 0 0 10px rgba(214,169,107,.25); }
+.nl-mic-btns button:last-child { color: var(--ns-hero-sub, #D9D4C4); }
+.nl-mic-t { margin: 14px 0 0; font-size: 17px; font-weight: 700; }
+.nl-mic-s { margin: 4px 0 0; font-size: 13px; color: var(--ns-hero-sub, #D9D4C4); }
+.nl-usuals { padding: 8px 16px 0; }
+@media (min-width: 768px) { .nl-usuals { padding-left: 0; padding-right: 0; } }
+.nl-h { margin: 14px 0 0; font-size: 12px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--ns-act, #2F6B55); }
+.nl-list { margin-top: 8px; border-radius: 20px; background: var(--ns-list-bg, #FBFAF6); border: 1px solid var(--ns-list-line, #E6E1D3); overflow: hidden; }
+.nl-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; padding: 8px 16px; border: 0; background: none; text-align: left; color: var(--ns-ink, #183C32); user-select: none; }
+.nl-row + .nl-row { border-top: 1px solid var(--ns-list-line, #E6E1D3); }
+.nl-tile { flex: none; width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+.nl-t-gold { background: var(--ns-tint-gold, #F3E4C8); } .nl-t-lime { background: var(--ns-tint-lime, #EAF3C4); } .nl-t-lav { background: var(--ns-tint-lav, #D9D0F7); }
+.nl-row-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.nl-row-n { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nl-row-m { display: flex; align-items: center; gap: 6px; }
+.nl-pill { padding: 3px 8px; border-radius: 999px; background: var(--ns-tint-lime, #EAF3C4); color: var(--ns-ink, #183C32); font-size: 11.5px; font-weight: 700; }
+.nl-kcal { font-size: 11.5px; color: var(--ns-sub, #4F5F57); }
+.nl-undo { position: fixed; left: 16px; right: 16px; bottom: 92px; z-index: 40; display: flex; align-items: center; gap: 12px; max-width: 28rem; margin: 0 auto; padding: 8px 8px 8px 16px; border-radius: 16px; background: #183C32; color: #F5F3ED; box-shadow: 0 10px 28px rgba(0,0,0,.25); }
+.nl-undo-t { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nl-undo-b { min-height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: none; color: #D7F27A; font-size: 14px; font-weight: 700; }
