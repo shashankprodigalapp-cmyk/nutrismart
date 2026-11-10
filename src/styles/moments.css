@@ -22,3 +22,6 @@
 .nm-up-line { margin: 8px 0 0; font-size: 15px; line-height: 22px; color: var(--ns-hero-sub, #D9D4C4); }
 .nm-up-cta { display: flex; align-items: center; justify-content: center; min-height: 54px; margin-top: 16px; border-radius: 16px; background: #D6A96B; color: #183C32; font-size: 16px; font-weight: 700; text-decoration: none; }
 .nm-up-later { display: block; width: 100%; min-height: 46px; margin-top: 4px; border: 0; background: none; color: var(--ns-hero-sub, #D9D4C4); font-size: 14.5px; font-weight: 600; }
+
+/* v2-44: keep the Undo bar reachable above the celebration toast */
+html[data-ui="new"] [data-testid="celebration"] { bottom: 176px; }

@@ -37,3 +37,6 @@ html[data-ui="new"] input[aria-label="Search food"]::placeholder { color: var(--
 .nl-undo { position: fixed; left: 16px; right: 16px; bottom: 92px; z-index: 40; display: flex; align-items: center; gap: 12px; max-width: 28rem; margin: 0 auto; padding: 8px 8px 8px 16px; border-radius: 16px; background: #183C32; color: #F5F3ED; box-shadow: 0 10px 28px rgba(0,0,0,.25); }
 .nl-undo-t { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nl-undo-b { min-height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: none; color: #D7F27A; font-size: 14px; font-weight: 700; }
+
+/* v2-44 */
+.nl-undo { z-index: 60; }
