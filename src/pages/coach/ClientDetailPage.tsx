@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import '../../styles/screens-b.css';
 import { Link, useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import { ClientCharts } from '../../components/coach/CoachInsights';
@@ -178,7 +179,7 @@ export default function ClientDetailPage() {
       {state === 'missing' && <p className="bg-[#1C1C1E] rounded-2xl p-5 text-sm text-[#8E8E93]">This client was not found, or is not linked to you.</p>}
       {state === 'ready' && row && (
         <>
-          <h1 className="text-xl font-bold">{row.client_name}</h1>
+          <h1 className="nc-h1 text-xl font-bold">{row.client_name}</h1>
           <div role="tablist" className="flex flex-wrap gap-1.5">
             {(['overview', 'adherence', 'energy', 'weekly', 'timeline'] as const).map(t => (
               <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)}

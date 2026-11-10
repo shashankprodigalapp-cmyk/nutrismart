@@ -10,6 +10,7 @@ import { localDb }     from '../lib/localDb';
 import { buildKitchenProfile, formatMultiplierForDisplay } from '../lib/kitchenIntelligence';
 import type { KitchenAnswers } from '../lib/kitchenIntelligence';
 import { useAuth } from '../context/AuthContext';
+import '../styles/screens-b.css';
 
 const QUESTIONS = [
   {
@@ -119,24 +120,24 @@ export default function OnboardingPage() {
     ? buildKitchenProfile(answers as KitchenAnswers) : null;
 
   return (
-    <div className="min-h-dvh bg-[#111113] px-5 py-10">
+    <div className="nx-page min-h-dvh bg-[#111113] px-5 py-10">
       {/* Progress */}
-      <div className="text-[11px] font-bold text-[#C8F75E] uppercase tracking-[1px] mb-2">
+      <div className="nx-kicker text-[11px] font-bold text-[#C8F75E] uppercase tracking-[1px] mb-2">
         Kitchen Intelligence · {step + 1} of {QUESTIONS.length}
       </div>
       <div className="flex gap-2 mb-6">
         {QUESTIONS.map((_, i) => (
-          <div key={i} className={`flex-1 h-1 rounded-full ${i <= step ? 'bg-[#C8F75E]' : 'bg-[#2C2C2E]'}`} />
+          <div key={i} className={`nx-bar flex-1 h-1 rounded-full ${i <= step ? 'bg-[#C8F75E]' : 'bg-[#2C2C2E]'}`} />
         ))}
       </div>
 
-      <h1 className="font-['Playfair_Display'] text-[26px] font-black text-white mb-2 leading-tight">{q.q}</h1>
+      <h1 className="nx-h1 font-['Playfair_Display'] text-[26px] font-black text-white mb-2 leading-tight">{q.q}</h1>
       <p className="text-[12px] text-[#636366] mb-6 leading-relaxed">{q.hint}</p>
 
       <div className="flex flex-col gap-3 mb-8">
         {q.opts.map(opt => (
           <button key={opt.v} onClick={() => handleSelect(opt.v)}
-            className={`flex items-center gap-4 bg-[#1C1C1E] border rounded-2xl px-4 py-4 text-left transition-all ${
+            className={`nx-opt ${selected === opt.v ? 'nx-opt-on' : ''} flex items-center gap-4 bg-[#1C1C1E] border rounded-2xl px-4 py-4 text-left transition-all ${
               selected === opt.v
                 ? 'border-[#C8F75E]/50 bg-[#C8F75E]/8'
                 : 'border-white/10'
@@ -166,7 +167,7 @@ export default function OnboardingPage() {
       )}
 
       <button onClick={handleNext} disabled={!selected || saving}
-        className="w-full bg-[#C8F75E] text-[#111113] font-bold text-[15px] rounded-2xl py-4 disabled:opacity-40">
+        className="nx-cta w-full bg-[#C8F75E] text-[#111113] font-bold text-[15px] rounded-2xl py-4 disabled:opacity-40">
         {saving ? 'Building your profile…' : step < QUESTIONS.length - 1 ? 'Next →' : 'Build my Kitchen Profile'}
       </button>
     </div>

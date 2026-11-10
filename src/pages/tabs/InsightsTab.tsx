@@ -45,6 +45,9 @@ import {
 } from '../../lib/mealPatterns';
 import { getSyncManager } from '../../lib/SyncManager';
 import { useAuth } from '../../context/AuthContext';
+import { Link } from 'react-router-dom';
+import { useFlag } from '../../lib/useFlag';
+import '../../styles/screens-b.css';
 import { todayIST }  from '../../lib/kitchenIntelligence';
 import type { KitchenProfile } from '../../lib/localDb';
 import { correlateEnergyToFoods } from '../../lib/energyCorrelation';
@@ -257,6 +260,7 @@ function EnergyInsightRow({
 
 export default function InsightsTab() {
   const { user } = useAuth();
+  const journeyOn = useFlag('ui_journey');
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [templates,         setTemplates]         = useState<MealTemplate[]>([]);
@@ -468,6 +472,7 @@ export default function InsightsTab() {
         <p className={`text-[11px] ${T.t3} mt-1`}>
           The more you log, the more personalised this gets.
         </p>
+        {journeyOn && <Link to="/app/journey" className="nx-journey">Your journey →</Link>}
       </div>
 
       {/* Logged confirmation toast */}

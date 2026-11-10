@@ -5,6 +5,9 @@ import { coachApi } from '../../lib/coachApi';
 import { track } from '../../lib/analytics';
 import { NudgeBox } from '../nudge/NudgeBox';
 import { buildAttention, type AttentionAction, type ScoredClient } from '../../lib/attention';
+import '../../styles/screens-b.css';
+
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]!.toUpperCase()).join('');
 
 export function AttentionPanel({ clients, onChanged }: { clients: ScoredClient[]; onChanged?: () => void }) {
   const [actions, setActions] = useState<AttentionAction[] | null>(null);
@@ -32,7 +35,7 @@ export function AttentionPanel({ clients, onChanged }: { clients: ScoredClient[]
 
   if (actions === null) return null;
   return (
-    <section aria-label="Needs attention" className="bg-[#1C1C1E] rounded-2xl p-4 space-y-3">
+    <section aria-label="Needs attention" className="nc-att bg-[#1C1C1E] rounded-2xl p-4 space-y-3">
       <div className="flex items-baseline justify-between">
         <h2 className="text-sm font-semibold">Needs your attention {items.length > 0 && <span className="text-[#FF6B6B]">({items.length})</span>}</h2>
         {hiddenCount > 0 && <span className="text-[11px] text-[#8E8E93]">{hiddenCount} snoozed or dismissed</span>}
@@ -43,15 +46,18 @@ export function AttentionPanel({ clients, onChanged }: { clients: ScoredClient[]
       ) : (
         <ul className="space-y-3">
           {items.map(it => (
-            <li key={it.client_id} className="bg-[#242426] rounded-xl p-3">
-              <Link to={`/coach/client/${it.client_id}`} className="font-medium text-sm underline decoration-white/20">{it.client_name}</Link>
+            <li key={it.client_id} className="nc-case bg-[#242426] rounded-xl p-3">
+              <div className="nc-head">
+                <span className="nc-av" aria-hidden="true">{initials(it.client_name)}</span>
+                <Link to={`/coach/client/${it.client_id}`} className="nc-name font-medium text-sm underline decoration-white/20">{it.client_name}</Link>
+              </div>
               <ul className="mt-2 space-y-2">
                 {it.reasons.map(r => (
                   <li key={r.signal} className="text-xs">
-                    <p className={r.severity === 'attention' ? 'text-[#FF6B6B]' : 'text-[#FFB347]'}>{r.text}</p>
+                    <p className={`nc-reason ${r.severity === 'attention' ? 'text-[#FF6B6B]' : 'text-[#FFB347]'}`}>{r.text}</p>
                     <div className="flex gap-2 mt-1">
-                      <button disabled={busy === it.client_id + r.signal} onClick={() => act(it.client_id, r.signal, r.severity, 'snooze', 3)} className="px-3 min-h-[36px] rounded-full bg-[#1C1C1E] text-[#C7C7CC]">Snooze 3 days</button>
-                      <button disabled={busy === it.client_id + r.signal} onClick={() => act(it.client_id, r.signal, r.severity, 'dismiss')} className="px-3 min-h-[36px] rounded-full bg-[#1C1C1E] text-[#C7C7CC]">Dismiss</button>
+                      <button disabled={busy === it.client_id + r.signal} onClick={() => act(it.client_id, r.signal, r.severity, 'snooze', 3)} className="nc-chip px-3 min-h-[36px] rounded-full bg-[#1C1C1E] text-[#C7C7CC]">Snooze 3 days</button>
+                      <button disabled={busy === it.client_id + r.signal} onClick={() => act(it.client_id, r.signal, r.severity, 'dismiss')} className="nc-chip px-3 min-h-[36px] rounded-full bg-[#1C1C1E] text-[#C7C7CC]">Dismiss</button>
                     </div>
                   </li>
                 ))}

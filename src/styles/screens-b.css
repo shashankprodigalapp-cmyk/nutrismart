@@ -1,0 +1,22 @@
+/* screens-b.css — Onboarding (artboard 02), Insights header (10), Coach dashboard and client (13, 14, 21). New look only: every rule starts with html[data-ui="new"]. */
+html[data-ui="new"] .nx-page { background: var(--n-bg); color: var(--ns-ink); max-width: 32rem; margin: 0 auto; }
+html[data-ui="new"] .nx-kicker { color: var(--ns-act); letter-spacing: .12em; }
+html[data-ui="new"] .nx-h1 { color: var(--ns-ink); font-weight: 700; font-size: 28px; line-height: 34px; }
+html[data-ui="new"] .nx-opt { min-height: 64px; border-radius: 20px; }
+html[data-ui="new"] .nx-opt-on { background: var(--ns-tint-lime); border-color: var(--ns-act); }
+html[data-ui="new"] .nx-cta { min-height: 56px; border-radius: 28px; }
+html[data-ui="new"] .nx-bar { height: 6px; }
+html[data-ui="new"] .nx-journey { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; margin-top: 8px; border-radius: 999px; background: var(--ns-pill-bg); color: var(--ns-pill-text); font-size: 13px; font-weight: 700; text-decoration: none; }
+html[data-ui="new"] .nx-title { font-weight: 700; font-size: 28px; line-height: 34px; color: var(--ns-ink); }
+
+html[data-ui="new"] .nc-h1 { font-family: 'Playfair Display', Georgia, serif; font-size: 28px; line-height: 34px; font-weight: 700; color: var(--ns-ink); }
+html[data-ui="new"] .nc-lead { font-family: 'Playfair Display', Georgia, serif; font-size: 22px; line-height: 28px; font-weight: 700; color: var(--ns-ink); opacity: 1; }
+html[data-ui="new"] .nc-tile { border-radius: 20px; background: var(--ns-list-bg); border: 1px solid var(--ns-list-line); }
+html[data-ui="new"] .nc-tile p:first-child { font-size: 32px; line-height: 36px; }
+html[data-ui="new"] .nc-att { border-radius: 24px; background: transparent; padding: 0; box-shadow: none; }
+html[data-ui="new"] .nc-case { display: block; border-radius: 20px; background: var(--ns-list-bg); border: 1px solid var(--ns-list-line); padding: 16px; }
+html[data-ui="new"] .nc-head { display: flex; align-items: center; gap: 12px; }
+html[data-ui="new"] .nc-av { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--ns-tint-lav); color: var(--ns-ink); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+html[data-ui="new"] .nc-name { font-size: 16px; font-weight: 700; color: var(--ns-ink); text-decoration: none; }
+html[data-ui="new"] .nc-reason { font-size: 14px; line-height: 20px; }
+html[data-ui="new"] .nc-chip { min-height: 44px; padding: 0 16px; border-radius: 22px; background: var(--ns-tint-lime); color: var(--ns-ink); border: 0; font-weight: 600; }

@@ -5,6 +5,7 @@ import { coachApi } from '../lib/coachApi';
 import { useRoles } from '../lib/useRoles';
 import { AppSkeleton } from '../components/AppSkeleton';
 import { CoachDashboard } from '../components/coach/CoachDashboard';
+import '../styles/screens-b.css';
 
 interface Invite { id: string; invite_label: string | null; invite_expires_at: string | null }
 
@@ -66,7 +67,7 @@ export default function CoachPage() {
   return (
     <div className="min-h-dvh bg-[#111113] text-white p-4 md:p-8 max-w-6xl mx-auto space-y-4">
       <div className="flex items-center justify-between pt-2">
-        <h1 className="text-xl font-bold">Coach</h1>
+        <h1 className="nc-h1 text-xl font-bold">Coach</h1>
         <Link to="/app/profile" className="text-xs text-[#8E8E93] underline">Back to app</Link>
       </div>
       {!coachEnabled && !roles.coach && <p className="bg-[#1C1C1E] rounded-2xl p-5 text-sm text-[#8E8E93]">The coach area is not switched on yet.</p>}

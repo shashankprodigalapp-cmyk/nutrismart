@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase';
 import { AttentionPanel } from './AttentionPanel';
 import { CoachInsights } from './CoachInsights';
 import { useFlag } from '../../lib/useFlag';
+import '../../styles/screens-b.css';
 import { classify, pct, daysSince, STATUS_ORDER, type ClientMetrics, type ClientStatus, type Reason } from '../../lib/coachMetrics';
 
 interface Row extends ClientMetrics {
@@ -66,12 +67,12 @@ export function CoachDashboard() {
   if (!rows) return <div className="bg-[#1C1C1E] rounded-2xl p-5 text-sm text-[#8E8E93]">Loading your clients…</div>;
 
   const tile = (label: string, n: number, color: string) => (
-    <div className="bg-[#1C1C1E] rounded-2xl p-4"><p className="text-2xl font-bold" style={{ color }}>{n}</p><p className="text-[11px] text-[#8E8E93] mt-0.5">{label}</p></div>
+    <div className="nc-tile bg-[#1C1C1E] rounded-2xl p-4"><p className="text-2xl font-bold" style={{ color }}>{n}</p><p className="text-[11px] text-[#8E8E93] mt-0.5">{label}</p></div>
   );
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-[#EBEBF5]/70">Who needs your attention today?</p>
+      <p className="nc-lead text-sm text-[#EBEBF5]/70">Who needs your attention today?</p>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
         {tile('Active clients', counts.total, '#FFFFFF')}
         {tile('Needs attention', counts.attention, '#FF6B6B')}
