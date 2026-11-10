@@ -18,6 +18,7 @@ import { DashboardLogging }     from '../../components/DashboardLogging';
 import { EnergyCheckIn, scheduleEnergyCheckIn } from '../../components/EnergyCheckIn';
 import { PushPermissionPrompt } from '../../components/PushPermissionPrompt';
 import type { LogEntry } from '../../lib/localDb';
+import '../../styles/log.css';
 
 export default function LogTab() {
   // Track whether the user has logged at least one food this session.

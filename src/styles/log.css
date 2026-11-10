@@ -1,0 +1,6 @@
+/* log.css — small touches so the Log screen matches the design canvas (artboard 05). Layout is unchanged. New look only. */
+html[data-ui="new"] h1[class*="Playfair"]::first-letter { text-transform: uppercase; }
+html[data-ui="new"] h1[class*="Playfair"] { font-weight: 700; letter-spacing: -0.2px; }
+html[data-ui="new"] div:has(> input[aria-label="Search food"]) { min-height: 52px; border-radius: 16px; background: var(--ns-list-bg, #FBFAF6); }
+html[data-ui="new"] div:has(> input[aria-label="Search food"]):focus-within { outline: 2px solid #43866D; outline-offset: 1px; }
+html[data-ui="new"] input[aria-label="Search food"]::placeholder { color: var(--ns-sub, #4F5F57); opacity: .85; }
