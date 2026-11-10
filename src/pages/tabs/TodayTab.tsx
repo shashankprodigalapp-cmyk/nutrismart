@@ -15,6 +15,7 @@ import { DailyIntelligence } from '../../components/intel/DailyIntelligence';
 import { useFlag } from '../../lib/useFlag';
 import { PlateCard } from '../../components/delight/PlateCard';
 import { WelcomeBackCard } from '../../components/delight/WelcomeBackCard';
+import { LevelUpCard } from '../../components/sparks/LevelUpCard';
 import { TodayHero } from '../../components/screens/TodayHero';
 import { SparksCard } from '../../components/sparks/SparksCard';
 import { MoreForToday, type MoreRow } from '../../components/screens/MoreForToday';
@@ -180,7 +181,7 @@ export default function TodayTab() {
             ? <Link to="/app/journey" className="ns-pill" data-testid="sparks-pill"><span className="ns-dot" aria-hidden="true" />{prog.p.total} {POINTS_NAME}</Link>
             : <span className="ns-pill" data-testid="sparks-pill"><span className="ns-dot" aria-hidden="true" />{prog.p.total} {POINTS_NAME}</span>)}
         </header>
-        {prog.up && <p role="status" className="ns-note">{prog.up}</p>}
+        {prog.up && <LevelUpCard line={prog.up} name={prog.p?.level.name} journey={journeyOn} />}
         <ProfileNudge />
         {welcomeOn && <WelcomeBackCard />}
         <TodayHero sectors={plate} meals={summary.meals} hourIST={hourIST} />

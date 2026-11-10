@@ -1,0 +1,24 @@
+/* moments.css — celebration, welcome back and level up from the design canvas (artboards 22, 23, 24). Small cards: they never block logging. */
+.nm-card { position: relative; width: 100%; max-width: 24rem; padding: 18px; border-radius: 22px; background: var(--ns-list-bg, #FBFAF6); border: 1px solid var(--ns-list-line, #E6E1D3); color: var(--ns-ink, #183C32); box-shadow: 0 12px 32px rgba(24,60,50,.18); }
+.nm-row { display: flex; align-items: flex-start; gap: 12px; }
+.nm-emoji { font-size: 30px; line-height: 1; }
+.nm-title { margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 22px; line-height: 28px; font-weight: 700; color: var(--ns-ink, #183C32); }
+.nm-line { margin: 4px 0 0; font-size: 14.5px; line-height: 21px; color: var(--ns-sub, #4F5F57); }
+.nm-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.nm-chip { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; border-radius: 999px; background: var(--ns-pill-bg, #183C32); color: var(--ns-pill-text, #F5F3ED); font-size: 13px; font-weight: 700; }
+.nm-chip.soft { background: var(--ns-tint-lime, #EAF3C4); color: var(--ns-ink, #183C32); font-weight: 600; }
+.nm-link { margin-top: 8px; min-height: 44px; font-size: 13px; color: var(--ns-sub, #4F5F57); text-decoration: underline; background: none; border: 0; padding: 0; }
+.nm-x { flex: none; width: 44px; height: 44px; margin: -10px -10px 0 0; border: 0; background: none; font-size: 20px; color: var(--ns-sub, #4F5F57); }
+.nm-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.nm-btn { display: flex; align-items: center; min-height: 54px; padding: 0 18px; border-radius: 16px; border: 1px solid var(--ns-list-line, #CFC9B6); background: var(--ns-list-bg, #FBFAF6); color: var(--ns-ink, #183C32); font-size: 15.5px; font-weight: 600; text-decoration: none; }
+.nm-btn.primary { background: var(--ns-pill-bg, #183C32); color: var(--ns-pill-text, #F5F3ED); border-color: transparent; font-weight: 700; }
+.nm-welcome { padding: 20px; }
+.nm-welcome .nm-title { font-size: 28px; line-height: 34px; }
+.nm-up { padding: 20px; border-radius: 24px; background: var(--ns-hero, #183C32); color: var(--ns-hero-text, #F5F3ED); position: relative; overflow: hidden; }
+.nm-up::after { content: ''; position: absolute; left: -60px; top: -60px; width: 200px; height: 200px; border-radius: 50%; background: #43866D; opacity: .35; }
+.nm-up > * { position: relative; z-index: 1; }
+.nm-up-kicker { margin: 0; font-size: 12.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ns-hero-gold, #D6A96B); }
+.nm-up-title { margin: 8px 0 0; font-family: 'Playfair Display', Georgia, serif; font-size: 30px; line-height: 36px; font-weight: 700; }
+.nm-up-line { margin: 8px 0 0; font-size: 15px; line-height: 22px; color: var(--ns-hero-sub, #D9D4C4); }
+.nm-up-cta { display: flex; align-items: center; justify-content: center; min-height: 54px; margin-top: 16px; border-radius: 16px; background: #D6A96B; color: #183C32; font-size: 16px; font-weight: 700; text-decoration: none; }
+.nm-up-later { display: block; width: 100%; min-height: 46px; margin-top: 4px; border: 0; background: none; color: var(--ns-hero-sub, #D9D4C4); font-size: 14.5px; font-weight: 600; }

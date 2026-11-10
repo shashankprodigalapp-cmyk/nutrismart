@@ -4,6 +4,8 @@
  * Respects reduced motion, can be turned off by the user, and never blocks logging.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import '../../styles/today.css';
+import '../../styles/moments.css';
 import { useAuth } from '../../context/AuthContext';
 import { localDb } from '../../lib/localDb';
 import { useFlag } from '../../lib/useFlag';
@@ -15,9 +17,9 @@ import {
 
 const SHOW_MS = 3800;
 const CONFETTI = [
-  { l: 8, c: '#C8F75E', d: 0, r: 20 }, { l: 20, c: '#FF9F0A', d: 60, r: -30 }, { l: 32, c: '#BF5AF2', d: 20, r: 45 },
-  { l: 44, c: '#30D158', d: 90, r: -15 }, { l: 56, c: '#FFD60A', d: 40, r: 35 }, { l: 68, c: '#FF6B6B', d: 10, r: -40 },
-  { l: 80, c: '#C8F75E', d: 70, r: 25 }, { l: 92, c: '#64D2FF', d: 30, r: -25 },
+  { l: 8, c: '#D7F27A', d: 0, r: 20 }, { l: 20, c: '#D6A96B', d: 60, r: -30 }, { l: 32, c: '#D9D0F7', d: 20, r: 45 },
+  { l: 44, c: '#43866D', d: 90, r: -15 }, { l: 56, c: '#FFD66B', d: 40, r: 35 }, { l: 68, c: '#FF8A6B', d: 10, r: -40 },
+  { l: 80, c: '#D7F27A', d: 70, r: 25 }, { l: 92, c: '#D9D0F7', d: 30, r: -25 },
 ];
 
 export function CelebrationHost() {
@@ -63,7 +65,7 @@ export function CelebrationHost() {
       <style>{`@keyframes nsFall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(90px) rotate(240deg);opacity:0}}@keyframes nsPop{0%{transform:translateY(16px) scale(.96);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}`}</style>
       <div
         role="status" aria-live="polite"
-        className="relative pointer-events-auto w-full max-w-sm rounded-2xl bg-[#1C1C1E] border border-[#C8F75E]/30 p-4 shadow-xl"
+        className="nm-card pointer-events-auto"
         style={reduced ? undefined : { animation: 'nsPop .25s ease-out' }}
       >
         {!reduced && (
@@ -73,20 +75,20 @@ export function CelebrationHost() {
             ))}
           </div>
         )}
-        <div className="flex items-start gap-3">
-          <div className="text-3xl" aria-hidden="true">{pop.emoji}</div>
+        <div className="nm-row">
+          <div className="nm-emoji" aria-hidden="true">{pop.emoji}</div>
           <div className="flex-1 min-w-0">
-            <p className="text-base font-semibold text-white">{pop.title}</p>
-            <p className="text-sm text-[#EBEBF5]/70 mt-0.5">{pop.line}</p>
+            <p className="nm-title">{pop.title}</p>
+            <p className="nm-line">{pop.line}</p>
             <button
               type="button"
               onClick={() => { setCelebrationsOff(true); close(); }}
-              className="mt-2 text-xs text-[#8E8E93] underline min-h-[44px]"
+              className="nm-link"
             >
               Not for me, turn these off
             </button>
           </div>
-          <button type="button" aria-label="Close" onClick={close} className="w-11 h-11 -mr-2 -mt-2 text-[#8E8E93] text-lg">×</button>
+          <button type="button" aria-label="Close" onClick={close} className="nm-x">×</button>
         </div>
       </div>
     </div>
