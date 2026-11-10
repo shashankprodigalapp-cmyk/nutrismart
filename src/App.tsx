@@ -35,6 +35,8 @@ const WeeklyReviewPage = React.lazy(() => import('./pages/WeeklyReviewPage'));
 const MyCoachPage    = React.lazy(() => import('./pages/MyCoachPage'));
 const LearnedPage    = React.lazy(() => import('./pages/LearnedPage'));
 const JourneyPage    = React.lazy(() => import('./pages/JourneyPage'));
+const DailyWrapPage  = React.lazy(() => import('./pages/DailyWrapPage'));
+const PlatePosterPage = React.lazy(() => import('./pages/PlatePosterPage'));
 
 const Spinner = (
   <div className="min-h-dvh bg-[#111113] flex items-center justify-center">
@@ -103,6 +105,8 @@ export default function App() {
               <Route path="/app/my-coach" element={<ProtectedRoute><MyCoachPage /></ProtectedRoute>} />
               <Route path="/app/learned" element={<ProtectedRoute><LearnedPage /></ProtectedRoute>} />
               <Route path="/app/journey" element={<ProtectedRoute><JourneyPage /></ProtectedRoute>} />
+              <Route path="/app/wrap" element={<ProtectedRoute><DailyWrapPage /></ProtectedRoute>} />
+              <Route path="/app/plate-poster" element={<ProtectedRoute><PlatePosterPage /></ProtectedRoute>} />
 
               {/* Admin */}
               <Route path="/admin/*" element={

@@ -116,6 +116,8 @@ export default function TodayTab() {
     if (checkinsOn) rows.push({ key: 'mood', tint: 'lime', icon: 'chart', title: 'Energy and mood', sub: tr(lang, 'Your trends, after-meal notes and patterns'), action: tr(lang, 'Open'), to: '/app/energy-mood' });
     if (flexOn) rows.push({ key: 'flex', tint: 'gold', icon: 'plate', title: tr(lang, 'Flexible meal'), sub: tr(lang, 'Set some calories aside for a bigger meal'), action: tr(lang, 'Plan'), body: <FlexibleMealCard /> });
     if (reviewOn) rows.push({ key: 'review', tint: 'lime', icon: 'book', title: 'Your weekly review', sub: tr(lang, 'How last week went, with the numbers behind it'), action: tr(lang, 'Open'), to: '/app/weekly-review' });
+    if (hourIST >= 18 && summary.meals > 0) rows.push({ key: 'wrap', tint: 'lav', icon: 'book', title: tr(lang, "Today's wrap"), sub: tr(lang, 'What you did today, in your own words'), action: tr(lang, 'Open'), to: '/app/wrap' });
+    rows.push({ key: 'poster', tint: 'gold', icon: 'plate', title: tr(lang, 'Your week on a plate'), sub: tr(lang, 'A picture you can share'), action: tr(lang, 'Open'), to: '/app/plate-poster' });
     rows.push({
       key: 'numbers', tint: 'gold', icon: 'chart', title: tr(lang, "Today's numbers"),
       sub: showCal ? `${Math.round(summary.calories)} kcal · ${summary.meals} ${summary.meals === 1 ? 'meal' : 'meals'}` : `${summary.meals} ${summary.meals === 1 ? 'meal' : 'meals'}`,
