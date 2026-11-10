@@ -1,4 +1,6 @@
 import React from 'react';
+import '../../styles/today.css';
+import '../../styles/weekly.css';
 
 export interface ReviewItem { text: string; fact_ids: string[] }
 export interface ReviewSections {
@@ -18,32 +20,32 @@ export default function ReviewView({ sections, facts, showCoachLine }: { section
     const lines = ids.map(i => byId.get(i)).filter(Boolean) as string[];
     if (!lines.length) return null;
     return (
-      <details className="mt-1">
-        <summary className="text-[11px] text-[#8E8E93] cursor-pointer min-h-[24px]">Based on</summary>
-        <ul className="text-[11px] text-[#8E8E93] list-disc pl-4">{lines.map(l => <li key={l}>{l}</li>)}</ul>
+      <details className="nr-ev">
+        <summary>Based on</summary>
+        <ul>{lines.map(l => <li key={l}>{l}</li>)}</ul>
       </details>
     );
   };
   return (
-    <div className="space-y-4">
-      <div className="bg-[#1C1C1E] rounded-2xl p-4">
-        <p className="text-base font-semibold">{sections.headline.text}</p>
+    <div className="nr-flow">
+      <div className="nr-lead">
+        <p>{sections.headline.text}</p>
         <Evidence ids={sections.headline.fact_ids} />
       </div>
       {BLOCKS.map(([key, title]) => {
         const items = sections[key] as ReviewItem[];
         if (!items?.length) return null;
         return (
-          <section key={key} className="bg-[#1C1C1E] rounded-2xl p-4">
-            <h3 className="text-xs uppercase tracking-wide text-[#8E8E93] mb-2">{title}</h3>
-            <ul className="space-y-2">{items.map((it, i) => <li key={i} className="text-sm"><span>{it.text}</span><Evidence ids={it.fact_ids} /></li>)}</ul>
+          <section key={key} className={'nr-sec' + (key === 'next_week_focus' ? ' nr-try' : '')}>
+            <h3>{title}</h3>
+            <ul>{items.map((it, i) => <li key={i}><span>{it.text}</span><Evidence ids={it.fact_ids} /></li>)}</ul>
           </section>
         );
       })}
       {showCoachLine && sections.coach_conversation?.text && (
-        <section className="bg-[#1C1C1E] rounded-2xl p-4">
-          <h3 className="text-xs uppercase tracking-wide text-[#8E8E93] mb-2">Worth talking about</h3>
-          <p className="text-sm">{sections.coach_conversation.text}</p>
+        <section className="nr-sec">
+          <h3>Worth talking about</h3>
+          <p style={{ margin: 0, fontSize: 15, lineHeight: '22px' }}>{sections.coach_conversation.text}</p>
           <Evidence ids={sections.coach_conversation.fact_ids} />
         </section>
       )}

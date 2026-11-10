@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { coachApi } from '../../lib/coachApi';
 import { track } from '../../lib/analytics';
+import '../../styles/today.css';
+import '../../styles/weekly.css';
 import ReviewView, { type ReviewSections, type ReviewFact } from './ReviewView';
 
 interface Review {
@@ -49,61 +51,61 @@ export default function WeeklyReviewPanel({ clientId, mode }: { clientId?: strin
     setDraft(d => d ? { ...d, [key]: d[key].map((it, j) => j === i ? { ...it, text } : it) } : d);
   }
 
-  if (state === 'off') return <p className="bg-[#1C1C1E] rounded-2xl p-5 text-sm text-[#8E8E93]">{period === 'month' ? 'Monthly' : 'Weekly'} reviews are not switched on yet.</p>;
+  if (state === 'off') return <p className="nr-note">{period === 'month' ? 'Monthly' : 'Weekly'} reviews are not switched on yet.</p>;
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
+    <div className="nr-flow">
+      <div className="nr-pills">
         {(['week', 'month'] as const).map(p => (
           <button key={p} onClick={() => setPeriod(p)} aria-pressed={period === p}
-            className={`px-3 min-h-[40px] rounded-full text-sm ${period === p ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{p === 'week' ? 'Weekly' : 'Monthly'}</button>
+            className="nr-pill">{p === 'week' ? 'Weekly' : 'Monthly'}</button>
         ))}
       </div>
-      <div className="flex items-center gap-2">
+      <div className="nr-pills">
         {(['last', 'current'] as const).map(w => (
           <button key={w} onClick={() => setWeek(w)} aria-pressed={week === w}
-            className={`px-3 min-h-[40px] rounded-full text-sm ${week === w ? 'bg-[#C8F75E] text-[#111113] font-semibold' : 'bg-[#242426] text-[#C7C7CC]'}`}>{w === 'last' ? `Last ${period}` : `This ${period} so far`}</button>
+            className="nr-pill">{w === 'last' ? `Last ${period}` : `This ${period} so far`}</button>
         ))}
       </div>
-      {state === 'loading' && <p className="text-sm text-[#8E8E93]">Preparing the review…</p>}
+      {state === 'loading' && <p className="nr-meta">Preparing the review…</p>}
       {state === 'error' && (
-        <div role="alert" className="bg-[#1C1C1E] rounded-2xl p-4 text-sm text-[#FF6B6B]">{msg}
-          <button onClick={() => load()} className="ml-3 underline min-h-[40px]">Try again</button></div>
+        <div role="alert" className="nr-err">{msg}
+          <button onClick={() => load()} className="ml-3 underline min-h-[44px]">Try again</button></div>
       )}
-      {state === 'pending' && <p className="bg-[#1C1C1E] rounded-2xl p-5 text-sm text-[#C7C7CC]">{msg}</p>}
+      {state === 'pending' && <p className="nr-note">{msg}</p>}
       {state === 'ready' && rev && (
         <>
-          <p className="text-xs text-[#8E8E93]">
+          <p className="nr-meta">
             {period === 'month' ? 'Month starting' : 'Week of'} {rev.week_start} · {rev.days_logged} of {rev.days_elapsed} days logged · {rev.source === 'ai' ? 'Written with AI from your numbers' : 'Written from your numbers'}
-            {mode === 'coach' && <> · <span className="text-[#C8F75E]">{LABEL[rev.status]}</span></>}
+            {mode === 'coach' && <> · <strong>{LABEL[rev.status]}</strong></>}
           </p>
-          {rev.days_logged < 3 && <p className="bg-[#1C1C1E] rounded-2xl p-3 text-xs text-[#8E8E93]">Fewer than 3 days logged, so this is only a light summary. Patterns need more days.</p>}
+          {rev.days_logged < 3 && <p className="nr-note">Fewer than 3 days logged, so this is only a light summary. Patterns need more days.</p>}
           {!editing && <ReviewView sections={rev.sections} facts={rev.facts} showCoachLine={mode === 'coach'} />}
           {editing && draft && (
-            <div className="space-y-3">
-              <label className="block text-xs text-[#8E8E93]">Headline
+            <div className="nr-flow nr-edit">
+              <label>Headline
                 <textarea value={draft.headline.text} onChange={e => setDraft({ ...draft, headline: { ...draft.headline, text: e.target.value } })} maxLength={280} rows={2}
-                  className="mt-1 w-full bg-[#242426] rounded-xl p-3 text-sm text-white" /></label>
+                  /></label>
               {(['wins', 'challenges', 'next_week_focus'] as const).map(k => draft[k].map((it, i) => (
-                <label key={k + i} className="block text-xs text-[#8E8E93]">{k === 'wins' ? 'Went well' : k === 'challenges' ? 'Harder' : 'Next week'} {i + 1}
-                  <textarea value={it.text} onChange={e => setItem(k, i, e.target.value)} maxLength={280} rows={2} className="mt-1 w-full bg-[#242426] rounded-xl p-3 text-sm text-white" /></label>
+                <label key={k + i}>{k === 'wins' ? 'Went well' : k === 'challenges' ? 'Harder' : 'Next week'} {i + 1}
+                  <textarea value={it.text} onChange={e => setItem(k, i, e.target.value)} maxLength={280} rows={2} /></label>
               )))}
-              <p className="text-[11px] text-[#8E8E93]">Other sections stay as generated.</p>
+              <p className="nr-meta">Other sections stay as generated.</p>
             </div>
           )}
-          {msg && <p role="alert" className="text-sm text-[#FF6B6B]">{msg}</p>}
+          {msg && <p role="alert" className="nr-err">{msg}</p>}
           {mode === 'coach' && (
-            <div className="flex flex-wrap gap-2">
+            <div className="nr-act">
               {!editing ? (
                 <>
-                  <button disabled={busy} onClick={() => decide('approve')} className="px-4 min-h-[44px] rounded-full bg-[#C8F75E] text-[#111113] font-semibold text-sm">Approve and share</button>
-                  <button disabled={busy} onClick={startEdit} className="px-4 min-h-[44px] rounded-full bg-[#242426] text-sm">Edit</button>
-                  <button disabled={busy} onClick={() => decide('reject')} className="px-4 min-h-[44px] rounded-full bg-[#242426] text-sm text-[#FF6B6B]">Reject</button>
-                  <button disabled={busy} onClick={() => load(true)} className="px-4 min-h-[44px] rounded-full bg-[#242426] text-sm">Refresh</button>
+                  <button disabled={busy} onClick={() => decide('approve')} className="nr-btn primary">Approve and share</button>
+                  <button disabled={busy} onClick={startEdit} className="nr-btn">Edit</button>
+                  <button disabled={busy} onClick={() => decide('reject')} className="nr-btn danger">Reject</button>
+                  <button disabled={busy} onClick={() => load(true)} className="nr-btn">Refresh</button>
                 </>
               ) : (
                 <>
-                  <button disabled={busy} onClick={() => decide('edit')} className="px-4 min-h-[44px] rounded-full bg-[#C8F75E] text-[#111113] font-semibold text-sm">Save and share</button>
-                  <button disabled={busy} onClick={() => setEditing(false)} className="px-4 min-h-[44px] rounded-full bg-[#242426] text-sm">Cancel</button>
+                  <button disabled={busy} onClick={() => decide('edit')} className="nr-btn primary">Save and share</button>
+                  <button disabled={busy} onClick={() => setEditing(false)} className="nr-btn">Cancel</button>
                 </>
               )}
             </div>

@@ -1,0 +1,35 @@
+/* weekly.css — the weekly review from the design canvas (artboard 11). Same words and buttons as before; only the look changes. */
+.nr-page { min-height: 100dvh; background: var(--n-bg, #111113); color: var(--ns-ink); padding: 16px 16px 96px; margin: 0 auto; max-width: 42rem; }
+.nr-back { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; color: var(--ns-sub); text-decoration: underline; }
+.nr-top { margin: 4px 0 16px; padding: 22px 20px; border-radius: 28px; background: var(--ns-hero); color: var(--ns-hero-text); position: relative; overflow: hidden; }
+.nr-top::after { content: ''; position: absolute; right: -50px; top: -50px; width: 170px; height: 170px; border-radius: 50%; background: #43866D; opacity: .4; }
+.nr-top > * { position: relative; z-index: 1; }
+.nr-kicker { margin: 0; font-size: 12.5px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--ns-hero-gold); }
+.nr-title { margin: 10px 0 0; font-family: 'Playfair Display', Georgia, serif; font-size: 30px; line-height: 36px; font-weight: 700; }
+.nr-flow { display: flex; flex-direction: column; gap: 14px; }
+.nr-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.nr-pill { min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--ns-list-line); background: var(--ns-list-bg); color: var(--ns-ink); font-size: 13.5px; font-weight: 500; }
+.nr-pill[aria-pressed="true"] { background: var(--ns-pill-bg); color: var(--ns-pill-text); border-color: transparent; font-weight: 600; }
+.nr-meta { margin: 0; font-size: 12.5px; line-height: 18px; color: var(--ns-sub); }
+.nr-note { margin: 0; padding: 12px 14px; border-radius: 16px; background: var(--ns-list-bg); border: 1px solid var(--ns-list-line); font-size: 13px; color: var(--ns-sub); }
+.nr-lead { padding: 18px; border-radius: 22px; background: var(--ns-list-bg); border: 1px solid var(--ns-list-line); }
+.nr-lead p { margin: 0; font-size: 16px; line-height: 23px; font-weight: 600; color: var(--ns-ink); }
+.nr-sec { padding: 4px 4px 0; }
+.nr-sec h3 { margin: 0 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; color: var(--ns-act); }
+.nr-sec ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.nr-sec li { font-size: 15px; line-height: 22px; color: var(--ns-ink); }
+.nr-try { padding: 16px; border-radius: 20px; background: var(--ns-lime); color: #183C32; }
+.nr-try h3 { color: #183C32; }
+.nr-try li { color: #183C32; font-weight: 600; }
+.nr-ev summary { min-height: 28px; font-size: 12px; color: var(--ns-sub); cursor: pointer; }
+.nr-try .nr-ev summary, .nr-try .nr-ev ul { color: #183C32; }
+.nr-ev ul { margin: 2px 0 0; padding-left: 16px; list-style: disc; font-size: 12px; line-height: 17px; color: var(--ns-sub); gap: 2px; }
+.nr-act { display: flex; flex-wrap: wrap; gap: 10px; }
+.nr-btn { min-height: 48px; padding: 0 20px; border-radius: 16px; border: 1px solid var(--ns-list-line); background: var(--ns-list-bg); color: var(--ns-ink); font-size: 14.5px; font-weight: 600; }
+.nr-btn.primary { background: var(--ns-pill-bg); color: var(--ns-pill-text); border-color: transparent; font-weight: 700; }
+.nr-btn.danger { color: #B3261E; }
+html[data-theme="dark"] .nr-btn.danger { color: #FF8A80; }
+.nr-edit label { display: block; font-size: 12px; color: var(--ns-sub); }
+.nr-edit textarea { margin-top: 4px; width: 100%; padding: 12px; border-radius: 14px; border: 1px solid var(--ns-list-line); background: var(--ns-list-bg); color: var(--ns-ink); font-size: 14px; }
+.nr-err { margin: 0; padding: 12px 14px; border-radius: 16px; background: var(--ns-list-bg); border: 1px solid var(--ns-list-line); font-size: 14px; color: #B3261E; }
+html[data-theme="dark"] .nr-err { color: #FF8A80; }

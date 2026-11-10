@@ -30,6 +30,8 @@ const HI: Record<string, string> = {
   'Today': 'Aaj',
   'Today’s mini quests': 'Aaj ke chhote quests',
   'This week': 'Is hafta',
+  'Your weekly review': 'Aapka weekly review',
+  'Your week in food': 'Aapka hafta, khane ke saath',
   'Done': 'Ho gaya',
   'Mon': 'Som', 'Tue': 'Mangal', 'Wed': 'Budh', 'Thu': 'Guru', 'Fri': 'Shukra', 'Sat': 'Shani', 'Sun': 'Ravi',
   'Log two meals': 'Do meals log karein',
