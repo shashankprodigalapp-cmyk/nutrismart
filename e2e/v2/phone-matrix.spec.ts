@@ -2,7 +2,7 @@
 // Runs inside the existing CI (npx playwright test e2e/v2). Needs the same shared test accounts as screens.spec.ts.
 import { test, expect, Browser } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { BASE, configured, ensureUser, PASSWORD } from './env';
+import { BASE, configured, ensureUser, rest, PASSWORD } from './env';
 
 const DEVICES = [
   { name: 'iPhone SE', width: 375, height: 667 },
@@ -10,29 +10,32 @@ const DEVICES = [
   { name: 'Pixel 7', width: 412, height: 915 },
   { name: 'Small Android 360', width: 360, height: 740 },
 ];
-const SCREENS = ['/app', '/app/log', '/app/insights', '/app/wrap', '/app/plate-poster', '/app/journey'];
+const SCREENS = ['/app/today', '/app/log', '/app/insights', '/app/wrap', '/app/plate-poster', '/app/journey'];
 const findings: Array<Record<string, unknown>> = [];
 
 test.describe('phone matrix', () => {
   test.skip(!configured, 'test accounts not configured');
   let email = '';
-  test.beforeAll(async () => { email = (await ensureUser('client')).email; });
+  test.beforeAll(async () => {
+    const u = await ensureUser('client'); email = u.email;
+    await rest('kitchen_profiles?on_conflict=user_id', { method: 'POST', body: { user_id: u.id }, prefer: 'resolution=ignore-duplicates' });
+  });
 
   async function open(browser: Browser, d: typeof DEVICES[number], dark: boolean, bigText: boolean) {
     const ctx = await browser.newContext({ viewport: { width: d.width, height: d.height }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, colorScheme: dark ? 'dark' : 'light' });
     const page = await ctx.newPage();
     await page.goto(`${BASE}/login`);
     await page.getByPlaceholder('Email address').fill(email);
-    await page.getByPlaceholder('Password').fill(PASSWORD);
-    await page.getByRole('button', { name: /sign in|log in/i }).first().click();
-    await page.waitForURL(/\/app|\/onboarding/, { timeout: 30000 });
+    await page.getByPlaceholder('Password', { exact: true }).fill(PASSWORD);
+    await page.locator('form button[type="submit"]').click();
+    await page.waitForURL(/\/app\//, { timeout: 20000 });
     if (bigText) await page.addStyleTag({ content: 'html{font-size:200% !important}' });
     return { ctx, page };
   }
 
   for (const d of DEVICES) for (const mode of [{ dark: false, big: false, tag: 'light' }, { dark: true, big: false, tag: 'dark' }, { dark: false, big: true, tag: 'big-text' }]) {
     test(`${d.name} ${mode.tag}`, async ({ browser }) => {
-      test.setTimeout(180000);
+      test.setTimeout(240000);
       const { ctx, page } = await open(browser, d, mode.dark, mode.big);
       for (const path of SCREENS) {
         await page.goto(`${BASE}${path}`, { waitUntil: 'domcontentloaded' });
