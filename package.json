@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "agent:test": "node scripts/agent/run.mjs",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
